@@ -1,1 +1,22 @@
-/* ------------------------------------------------------------ *//*  ExternalEditorSupport.h                                     *//*      äOïîÉGÉfÉBÉ^ÇÃÉTÉ|Å[ÉgÉãÅ[É`ÉìÇÃÉwÉbÉ_                  *//*                                                              *//*                 2001.1.27 - 2000.1.27  naoki iimura        	*//* ------------------------------------------------------------ *//* includes *//* definitions */enum {	kXIconOpenMode=1,	kXIconCloseMode,};/* prototypes */void	UpdateXIconList(void);OSErr	OpenByExternalEditor(WindowPtr fWindow);Boolean	IsOpenedByExternalEditor(WindowPtr fWindow,short iconKind,short mode);OSErr	CloseXIcon(WindowPtr fWindow);OSErr	DropFromExternalEditor(WindowPtr fWindow,short selectedIcon);
+/* ------------------------------------------------------------ */
+/*  ExternalEditorSupport.h                                     */
+/*      Â§ñÈÉ®„Ç®„Éá„Ç£„Çø„ÅÆ„Çµ„Éù„Éº„Éà„É´„Éº„ÉÅ„É≥„ÅÆ„Éò„ÉÉ„ÉÄ                  */
+/*                                                              */
+/*                 2001.1.27 - 2000.1.27  naoki iimura        	*/
+/* ------------------------------------------------------------ */
+
+/* includes */
+
+/* definitions */
+enum {
+	kXIconOpenMode=1,
+	kXIconCloseMode,
+};
+
+/* prototypes */
+void	UpdateXIconList(void);
+OSErr	OpenByExternalEditor(WindowPtr fWindow);
+Boolean	IsOpenedByExternalEditor(WindowPtr fWindow,short iconKind,short mode);
+OSErr	CloseXIcon(WindowPtr fWindow);
+OSErr	DropFromExternalEditor(WindowPtr fWindow,short selectedIcon);
+

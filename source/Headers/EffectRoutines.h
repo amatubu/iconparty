@@ -1,1 +1,28 @@
-/* ------------------------------------------------------------ *//*  EffectRoutines.h                                            *//*     Œø‰Êˆ—‚È‚Ç‚Ìƒwƒbƒ_ƒtƒ@ƒCƒ‹                             *//*                                                              *//*                 2001.11.17 - 2001.11.17  naoki iimura       	*//* ------------------------------------------------------------ *//* İ’èŠÖŒW */void	LoadPaintPrefs(void);void	SavePaintPrefs(void);/* Œø‰Ê */void	DoDarken(WindowPtr theWindow);void	DoLighten(WindowPtr theWindow);void	DoFill(WindowPtr theWindow);void	DoAntialias(WindowPtr theWindow);void	DoDotPicture(WindowPtr theWindow);void	DoWind(WindowPtr theWindow);void	DoRotate(WindowPtr theWindow);void	DoEdging(WindowPtr theWindow);void	FlipVertical(WindowPtr theWindow);void	FlipHorizontal(WindowPtr theWindow);void	ChangeColorMode(WindowPtr theWindow,short mode,Boolean dither);/* •¶š“ü—Í */void	TypeString(WindowPtr theWindow);
+/* ------------------------------------------------------------ */
+/*  EffectRoutines.h                                            */
+/*     åŠ¹æœå‡¦ç†ãªã©ã®ãƒ˜ãƒƒãƒ€ãƒ•ã‚¡ã‚¤ãƒ«                             */
+/*                                                              */
+/*                 2001.11.17 - 2001.11.17  naoki iimura       	*/
+/* ------------------------------------------------------------ */
+
+/* è¨­å®šé–¢ä¿‚ */
+void	LoadPaintPrefs(void);
+void	SavePaintPrefs(void);
+
+/* åŠ¹æœ */
+void	DoDarken(WindowPtr theWindow);
+void	DoLighten(WindowPtr theWindow);
+void	DoFill(WindowPtr theWindow);
+void	DoAntialias(WindowPtr theWindow);
+void	DoDotPicture(WindowPtr theWindow);
+void	DoWind(WindowPtr theWindow);
+void	DoRotate(WindowPtr theWindow);
+void	DoEdging(WindowPtr theWindow);
+
+void	FlipVertical(WindowPtr theWindow);
+void	FlipHorizontal(WindowPtr theWindow);
+
+void	ChangeColorMode(WindowPtr theWindow,short mode,Boolean dither);
+
+/* æ–‡å­—å…¥åŠ› */
+void	TypeString(WindowPtr theWindow);

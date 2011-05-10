@@ -1,1 +1,20 @@
-/* ------------------------------------------------------------ *//*  ToolRoutines.h                                              *//*     ÉcÅ[ÉãèàóùÇÃÉwÉbÉ_                                       *//*                                                              *//*                 2001.1.27 - 2001.1.27  naoki iimura        	*//* ------------------------------------------------------------ *//* prototypes */void	ToolSelect(short tool);void	DoubleClickTool(short tool);void	ChangePenSize(void);void	ChangeEraserSize(void);void	ChangeMode(short item);void	ChangeTransparency(void);void	ChangeGrid(short item);void	ChangeColor(RGBColor *newColor,Boolean isTransparent);void	ChangeBackColor(RGBColor *newColor,Boolean isTransparent);void	GetDesktopColor(void);void	FixColor(RGBColor *c);
+/* ------------------------------------------------------------ */
+/*  ToolRoutines.h                                              */
+/*     „ÉÑ„Éº„É´Âá¶ÁêÜ„ÅÆ„Éò„ÉÉ„ÉÄ                                       */
+/*                                                              */
+/*                 2001.1.27 - 2001.1.27  naoki iimura        	*/
+/* ------------------------------------------------------------ */
+
+
+/* prototypes */
+void	ToolSelect(short tool);
+void	DoubleClickTool(short tool);
+void	ChangePenSize(void);
+void	ChangeEraserSize(void);
+void	ChangeMode(short item);
+void	ChangeTransparency(void);
+void	ChangeGrid(short item);
+void	ChangeColor(RGBColor *newColor,Boolean isTransparent);
+void	ChangeBackColor(RGBColor *newColor,Boolean isTransparent);
+void	GetDesktopColor(void);
+void	FixColor(RGBColor *c);

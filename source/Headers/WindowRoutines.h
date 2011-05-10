@@ -1,1 +1,75 @@
-/* ------------------------------------------------------------ *//*  WindowRoutines.h                                            *//*     ƒEƒBƒ“ƒhƒEˆ—ƒ‹[ƒ`ƒ“‚Ìƒvƒƒgƒ^ƒCƒv                     *//*                                                              *//*                 2001.1.21 - 2001.1.21  naoki iimura		    *//* ------------------------------------------------------------ *//* prototypes *//* ‰Šú‰» */void	ToolWindowInit(void);/* ƒAƒbƒvƒf[ƒgAƒNƒŠƒbƒN */void	DoUpdate(EventRecord *theEvent);void	ContentClick(EventRecord *theEvent);void	DrawBlend(void);void	ChangeRatio(WindowPtr theWindow,Point popPt);void	UpdatePaletteCheck(void);void	RedrawInfo(void);void	UpdatePaintWindow(WindowPtr theWindow);void	UpdateBackInfo(WindowPtr theWindow);void	HiliteSelectedColor(short palNo,Boolean hilite);void	SetDotLibMain(FSSpec *theFile);/* ƒOƒŠƒbƒh */void	DrawGrid(WindowPtr theWindow);void	DrawGridMain(short ratio,Rect *iconSize);/* ruler */void	ResetRuler(void);void	DrawRuler(Point pt);/* scroll */void	DoScrollPaintWindowByKeys(WindowPtr theWindow,short theChar,short modifiers);/* resize */void	MyZoomWindow(WindowPtr theWindow,short thePart,const EventRecord *theEvent);void	ZoomPaintWindow(WindowPtr theWindow,short thePart);void	ResizePaintWindow(WindowPtr theWindow,Point globPt);void	ResizePatternPalette(void);/* dot command */void	UpdateRecordedCommand(Str31 command);void	UpdateInputCommand(Str31 command);/* update mouse cursor */void	UpdateCursorInBlendPalette(Point localPt);void	UpdateCursorInFavoritePalette(Point localPt,Boolean cmdDown);/* ƒyƒCƒ“ƒgƒEƒBƒ“ƒhƒE‚Ìƒ}ƒXƒN•\¦ */void	DispPaintMask(WindowPtr theWindow);void	ShowHidePalette(WindowPtr theWindow,Boolean visible);void	ShowHidePalette2(short item);void	ShowAllPalettes(void);void	SaveWindowPos(void);/* ƒtƒ[ƒeƒBƒ“ƒOƒEƒBƒ“ƒhƒEŠÖŒW */short	GetExtWindowKind(WindowPtr theWindow);void	SetExtWindowKind(WindowPtr theWindow,short windowKind);/* •`‰æ */void	DarkenRect(const Rect *r);void	ChangeRatioMain(WindowPtr theWindow,short ratio);void	SetPaintWindowSize(WindowPtr theWindow,Rect *iconSize,short ratio);void	SetScrollBarMax(WindowPtr theWindow);/* ƒ|ƒbƒvƒAƒbƒvƒƒjƒ…[ */long	PopUpMenuSelectWFontSize(MenuHandle popMenu,short top,short left,									short firstSelectedItem,short fontSize);/* ƒEƒBƒ“ƒhƒE‚ÌˆÊ’u */void	StackWindowPos(Point *startPt,Point offsetPt,Rect *validRect);void	MoveDialogToParentWindow(DialogPtr theDialog);
+/* ------------------------------------------------------------ */
+/*  WindowRoutines.h                                            */
+/*     ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦å‡¦ç†ãƒ«ãƒ¼ãƒãƒ³ã®ãƒ—ãƒ­ãƒˆã‚¿ã‚¤ãƒ—                     */
+/*                                                              */
+/*                 2001.1.21 - 2001.1.21  naoki iimura		    */
+/* ------------------------------------------------------------ */
+
+/* prototypes */
+/* åˆæœŸåŒ– */
+void	ToolWindowInit(void);
+
+/* ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆã€ã‚¯ãƒªãƒƒã‚¯ */
+void	DoUpdate(EventRecord *theEvent);
+void	ContentClick(EventRecord *theEvent);
+void	DrawBlend(void);
+void	ChangeRatio(WindowPtr theWindow,Point popPt);
+void	UpdatePaletteCheck(void);
+void	RedrawInfo(void);
+void	UpdatePaintWindow(WindowPtr theWindow);
+void	UpdateBackInfo(WindowPtr theWindow);
+void	HiliteSelectedColor(short palNo,Boolean hilite);
+
+void	SetDotLibMain(FSSpec *theFile);
+
+/* ã‚°ãƒªãƒƒãƒ‰ */
+void	DrawGrid(WindowPtr theWindow);
+void	DrawGridMain(short ratio,Rect *iconSize);
+
+/* ruler */
+void	ResetRuler(void);
+void	DrawRuler(Point pt);
+
+/* scroll */
+void	DoScrollPaintWindowByKeys(WindowPtr theWindow,short theChar,short modifiers);
+
+/* resize */
+void	MyZoomWindow(WindowPtr theWindow,short thePart,const EventRecord *theEvent);
+void	ZoomPaintWindow(WindowPtr theWindow,short thePart);
+void	ResizePaintWindow(WindowPtr theWindow,Point globPt);
+void	ResizePatternPalette(void);
+
+/* dot command */
+void	UpdateRecordedCommand(Str31 command);
+void	UpdateInputCommand(Str31 command);
+
+/* update mouse cursor */
+void	UpdateCursorInBlendPalette(Point localPt);
+void	UpdateCursorInFavoritePalette(Point localPt,Boolean cmdDown);
+
+/* ãƒšã‚¤ãƒ³ãƒˆã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ãƒã‚¹ã‚¯è¡¨ç¤º */
+void	DispPaintMask(WindowPtr theWindow);
+
+void	ShowHidePalette(WindowPtr theWindow,Boolean visible);
+void	ShowHidePalette2(short item);
+void	ShowAllPalettes(void);
+void	SaveWindowPos(void);
+
+/* ãƒ•ãƒ­ãƒ¼ãƒ†ã‚£ãƒ³ã‚°ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦é–¢ä¿‚ */
+short	GetExtWindowKind(WindowPtr theWindow);
+void	SetExtWindowKind(WindowPtr theWindow,short windowKind);
+
+/* æç”» */
+void	DarkenRect(const Rect *r);
+
+void	ChangeRatioMain(WindowPtr theWindow,short ratio);
+void	SetPaintWindowSize(WindowPtr theWindow,Rect *iconSize,short ratio);
+void	SetScrollBarMax(WindowPtr theWindow);
+
+/* ãƒãƒƒãƒ—ã‚¢ãƒƒãƒ—ãƒ¡ãƒ‹ãƒ¥ãƒ¼ */
+long	PopUpMenuSelectWFontSize(MenuHandle popMenu,short top,short left,
+									short firstSelectedItem,short fontSize);
+
+/* ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ä½ç½® */
+void	StackWindowPos(Point *startPt,Point offsetPt,Rect *validRect);
+void	MoveDialogToParentWindow(DialogPtr theDialog);

@@ -1,1 +1,18 @@
-/* ------------------------------------------------------------ *//*  EditRoutines.h                                              *//*     •ÒWƒƒjƒ…[iƒNƒŠƒbƒvƒ{[ƒhj‚Ìˆ—‚Ìƒwƒbƒ_             *//*                                                              *//*                 2001.1.27 - 2001.1.27  naoki iimura         	*//* ------------------------------------------------------------ *//* prototypes */void	DoCut(void);void	DoCopy(void);void	DoPaste(void);void	DoDelete(Boolean optDown);void	DoDuplicate(void);void	DoSelectAll(void);void	DoUndo(void);PicHandle	GetSelectionPic(WindowPtr theWindow,Boolean getBackground);OSErr	PutPictureIntoEditWin(PicHandle picture,WindowPtr theWindow);
+/* ------------------------------------------------------------ */
+/*  EditRoutines.h                                              */
+/*     ç·¨é›†ãƒ¡ãƒ‹ãƒ¥ãƒ¼ï¼ˆã‚¯ãƒªãƒƒãƒ—ãƒœãƒ¼ãƒ‰ï¼‰ã®å‡¦ç†ã®ãƒ˜ãƒƒãƒ€             */
+/*                                                              */
+/*                 2001.1.27 - 2001.1.27  naoki iimura         	*/
+/* ------------------------------------------------------------ */
+
+/* prototypes */
+void	DoCut(void);
+void	DoCopy(void);
+void	DoPaste(void);
+void	DoDelete(Boolean optDown);
+void	DoDuplicate(void);
+void	DoSelectAll(void);
+void	DoUndo(void);
+
+PicHandle	GetSelectionPic(WindowPtr theWindow,Boolean getBackground);
+OSErr	PutPictureIntoEditWin(PicHandle picture,WindowPtr theWindow);

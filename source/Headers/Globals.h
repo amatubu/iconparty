@@ -1,1 +1,281 @@
-/* ------------------------------------------------------------ *//*  Globals.h                                                   *//*     ƒOƒ[ƒoƒ‹•Ï”ƒŠƒXƒg                                     *//*                                                              *//*                 97.1.28 - 99.5.24  naoki iimura              *//* ------------------------------------------------------------ */#ifdef __APPLE_CC__#include	<Carbon/Carbon.h>#else#include	<QDOffscreen.h>#endif#if !TARGET_API_MAC_CARBON#include	"Wacom.h"#endif#include	"Definition.h"#pragma once#ifdef	GLOBAL_DEFINE#define	Extern	/* define */#else#define	Extern	extern#endif/* theWindow pointers */Extern WindowPtr	gPreviewWindow;Extern WindowPtr	gToolPalette;Extern WindowPtr	gBlendPalette;/* gworlds *///Extern GWorldPtr	currentPort;//Extern GDHandle		currentDevice;Extern Boolean quit;/* colors */typedef struct MyColorRec {	RGBColor	rgb;	Boolean		isTransparent;} MyColorRec;Extern MyColorRec	gCurrentColor;Extern MyColorRec	gPrevColor;Extern MyColorRec	gBackColor;Extern RGBColor	rgbBlackColor;Extern RGBColor	rgbWhiteColor;Extern RGBColor	rgbLBColor;/* blend mode */Extern RGBColor	gBlendRatio;Extern short	gBlendMode;Extern short	gBSelectedItem;/* tools */Extern short	gSelectedTool;Extern Rect		gToolRect;/* cursor */Extern RgnHandle	gCurRgnHand;/* pen&eraser size */Extern short	gPenWidth;Extern short	gPenHeight;Extern short	gEraserWidth;Extern short	gEraserHeight;/* dot command */Extern Str31	gDotCommand;/* ƒpƒ^[ƒ“ */Extern short	gPatternNo;/* blend palette */Extern GWorldPtr	gBlendPalettePtr;Extern Boolean		gBlendLocked;/* ruler */Extern Point	gPrevRulerPt;Extern RgnHandle	gRulerRgn;/* ƒpƒŒƒbƒg‚Ìí—Ş */Extern short	gPaletteCheck;Extern short	gPrevPaletteCheck;#pragma options align=mac68k#pragma mark _PNGPrefsRec/* PNGİ’è */typedef struct PNGPrefsRec{	short	transColor;		/* “§‰ßF */	Boolean	interlaced;		/* ƒCƒ“ƒ^ƒŒ[ƒX */		Boolean	useClip2gif;	/* (•sg—pj */		short	compLevel;		/* ˆ³kƒŒƒxƒ‹ */		Boolean	optimizeImage;	/* g—p‚³‚ê‚Ä‚¢‚éF”‚É‚ ‚í‚¹‚ÄÅ“K‰» */	struct {		Boolean	inSaving;		Boolean	inLoading;	} useTransColor;} PNGPrefsRec;Extern PNGPrefsRec	gPNGFilePrefs;#pragma mark _OtherPrefs/* ‚»‚Ì‘¼‚Ìİ’è */typedef struct OtherPrefs{	Boolean	checkWhenColorChanged;	/* F”•ÏX‚ÉƒJƒ‰[ƒpƒŒƒbƒg‚Éˆó */	Boolean	activateDroppedWindow;	/* ƒhƒƒbƒv‚³‚ê‚½ƒEƒBƒ“ƒhƒE‚ğƒAƒNƒeƒBƒu‚É */	Boolean maskAutoConvert;		/* ƒ}ƒXƒN•Û‘¶‚ÉˆÍ‚Ü‚ê‚½•”•ª‚ğƒ}ƒXƒN‰» */	Boolean	continuousIDs;			/* •¡”ƒAƒCƒRƒ“’Ç‰Á‚É˜A‘±‚·‚éID‚ğ•t‰Á */	Boolean	addForeground;			/* ƒŒƒCƒ„[‚ÅA‘OŒi‚ğ’Ç‰Á */	Boolean	copyIconWithPicture;	/* ƒyƒCƒ“ƒgƒEƒBƒ“ƒhƒE‚ÅƒRƒs[‚ÉƒAƒCƒRƒ“î•ñ‚àƒRƒs[ */	Boolean	useHyperCardPalette;	/* ƒpƒ^[ƒ“ƒpƒŒƒbƒg‚ÅHyperCardŒİŠ·ƒpƒŒƒbƒg‚ğg—p */		Boolean	importAsFamilyIcon;		/* 'icns'‚Æ‚µ‚Äæ‚è‚Ş */} OtherPrefs;Extern OtherPrefs	gOtherPrefs;typedef struct KeyThreshRec{	short	keyThresh;		/* ŒJ‚è•Ô‚·‚Ü‚Å‚Ì’x‚ê */	short	keyRepThresh;	/* ŒJ‚è•Ô‚µ‚Ì‘¬“x */} KeyThreshRec;#pragma mark _ToolPrefsRec/* paint prefs */typedef struct ToolPrefsRec{	Boolean			eraseSameColor;			/* “¯‚¶F‚Ìê‡Á‚· */	Boolean 		eraseSize11;			/* 1*1‚Ìê‡‚Ì‚İ */	Boolean 		selectionMasking;		/* ‘I‘ğ”ÍˆÍ‚Åƒ}ƒXƒLƒ“ƒO */		KeyThreshRec	dotDrawPrefs;			/* •`‰æ“_ƒc[ƒ‹‚Ìİ’è */		Boolean			changeSpoitCursor;		/* ƒXƒ|ƒCƒgƒc[ƒ‹‚ÌƒJ[ƒ\ƒ‹‚ğ•ÏX */	Boolean			changePencilCursor;		/* ‰”•Mƒc[ƒ‹‚ÌƒJ[ƒ\ƒ‹‚ğ•ÏX */		Boolean 		useColorCursor;			/* ƒJ[ƒ\ƒ‹‚ÉF‚ğg—p */	Boolean			eraserByCmdKey;			/* ƒRƒ}ƒ“ƒhƒL[‚ÅÁ‚µƒSƒ€ƒc[ƒ‹ */		short			gridMode;				/* ƒOƒŠƒbƒh */	Boolean			showRuler;				/* ƒ‹[ƒ‰[ */	RGBColor		gridColor;				/* ƒOƒŠƒbƒh‚ÌF */	RGBColor		gridColor2;				/* 32*32 or 16*16 ‚ÌƒOƒŠƒbƒh‚ÌF */} ToolPrefsRec;Extern KeyThreshRec	gKeyThreshStore;Extern ToolPrefsRec gToolPrefs;/* ƒAƒvƒŠƒP[ƒVƒ‡ƒ“‚Ìƒtƒ@ƒCƒ‹QÆ”Ô† */Extern short	gApplRefNum;Extern short	gPrefFileRefNum;/* •`‰æ“_ƒc[ƒ‹—p */Extern long		gDotLibFolderID;Extern short	gDotLibVRefNum;Extern Boolean	isDotLibAvailable;Extern Str31	gDotLibName;Extern short	gDotLibRefNum;/* ƒfƒtƒHƒ‹ƒg‚ÌƒNƒŠƒG[ƒ^ */Extern OSType	gPICTCreator;Extern OSType	gGIFCreator;Extern OSType	gIconCreator;Extern OSType	gPNGCreator;/* ‹N“®‚Ìˆ— */Extern short	gStartup; /* ‚OF‚È‚É‚à‚µ‚È‚¢A‚PFV‹KƒEƒBƒ“ƒhƒEA‚QFƒI[ƒvƒ“ƒ_ƒCƒAƒƒO *//* ƒvƒŒƒrƒ…[ƒAƒCƒRƒ“ƒtƒ‰ƒO */Extern short	gPreviewIconFlag;	/* ‚OF’Ç‰Á‚µ‚È‚¢A‚PF’Ç‰Á‚·‚é *//* ƒ^ƒuƒŒƒbƒgˆ—ŠÖ˜A */Extern Boolean	isTabletAvailable;#pragma mark _TabletPrefsRec/* ƒ^ƒuƒŒƒbƒgİ’è */typedef struct TabletPrefsRec{	Boolean	usePressure;			/* •Mˆ³‚ğg—p */	Boolean	overrideTransparency;	/* •Mˆ³g—p‚Éƒyƒ“‚Ì“§–¾“x‚ğ–³‹ */	Boolean	useEraser;				/* Á‚µƒSƒ€‚ğg—p */	Boolean useEraserPressure;		/* Á‚µƒSƒ€‚Ì•Mˆ³‚ğg—p */} TabletPrefsRec;Extern TabletPrefsRec	gTabletPrefs;Extern RGBColor	rgbGrayColor;#pragma mark _PaintWinPrefsRec/* ‰æ‘œƒTƒCƒY */typedef struct {	Rect	iconSize;	/* ƒfƒtƒHƒ‹ƒg‚Ì‘å‚«‚³ */	short	ratio;	/* ƒfƒtƒHƒ‹ƒg‚Ì”{—¦ */	Boolean	askSize;		/* ì¬‚ÉƒTƒCƒY‚ğw’è */	Boolean	referClip;		/* ƒTƒCƒYw’è‚ÉƒNƒŠƒbƒvƒ{[ƒh‚ğQÆ */	short	background;		/* ì¬‚Ì”wŒi */	short	colorMode;	/* Fƒ‚[ƒh */} PaintWinPrefsRec;Extern PaintWinPrefsRec	gPaintWinPrefs;/* ƒvƒŒƒrƒ…[‚Ì”wŒi */Extern short	gListBackground;Extern CTabHandle	gFavoriteColors;/* ‹N“®‰ñ”‚È‚Ç */typedef struct UsedCountRec{	unsigned long	usedCount;	/* g—p‰ñ” */	unsigned long	usedTime;	/* g—pŠÔi•b’PˆÊj */		unsigned long	newNum;	unsigned long	openNum;	unsigned long	saveNum;		unsigned long	fillNum;	unsigned long	lightenNum;	unsigned long	darkenNum;	unsigned long	antialiasNum;	unsigned long	dotPictureNum;	unsigned long	windNum;	unsigned long	edgeNum;	unsigned long	colorChangeNum;	unsigned long	rotateNum;	unsigned long	flipNum;	unsigned long	replaceNum;		unsigned long	undoNum;		unsigned long	importNum;	unsigned long	exportNum;		unsigned long	showCountNum;} UsedCountRec;#pragma options align=resetExtern UsedCountRec	gUsedCount;Extern Boolean		gIsDialog;Extern WindowPtr	gFrontWindow;/* ƒeƒ“ƒ|ƒ‰ƒŠƒtƒ@ƒCƒ‹‚Ì”Ô† */Extern short	gTempFileNum;/* ƒVƒXƒeƒ€ŠÖ˜A */Extern Boolean	isDragMgrPresent;Extern Boolean	isAppearanceAvailable;Extern Boolean	isContextualMenuAvailable;Extern Boolean	isTSMTEAvailable;Extern Boolean	isTSMgrAvailable;Extern Boolean	isNavServicesAvailable;Extern Boolean	isHelpMgrAvailable;Extern long		gQTVersion;Extern long		gSystemVersion;Extern UInt32	gNavLibraryVersion;#if TARGET_API_MAC_CARBONExtern SInt32	gCarbonLibVersion;#endifExtern Boolean	isOSX;Extern Boolean	useNavigationServices;Extern Boolean	isClip2gifAvailable;Extern Boolean	isResEditAvailable;Extern Boolean	isExternalEditorAvailable;Extern FSSpec	gExternalEditor;Extern Boolean	gUseExternalEditor;Extern Boolean	isIconServicesAvailable;Extern Boolean	is32BitIconsAvailable;Extern Boolean	isThumbnailIconsAvailable;
+/* ------------------------------------------------------------ */
+/*  Globals.h                                                   */
+/*     ã‚°ãƒ­ãƒ¼ãƒãƒ«å¤‰æ•°ãƒªã‚¹ãƒˆ                                     */
+/*                                                              */
+/*                 97.1.28 - 99.5.24  naoki iimura              */
+/* ------------------------------------------------------------ */
+
+#ifdef __APPLE_CC__
+#include	<Carbon/Carbon.h>
+#else
+#include	<QDOffscreen.h>
+#endif
+#if !TARGET_API_MAC_CARBON
+#include	"Wacom.h"
+#endif
+#include	"Definition.h"
+
+#pragma once
+#ifdef	GLOBAL_DEFINE
+#define	Extern	/* define */
+#else
+#define	Extern	extern
+#endif
+
+
+/* theWindow pointers */
+Extern WindowPtr	gPreviewWindow;
+Extern WindowPtr	gToolPalette;
+Extern WindowPtr	gBlendPalette;
+
+/* gworlds */
+//Extern GWorldPtr	currentPort;
+//Extern GDHandle		currentDevice;
+
+Extern Boolean quit;
+
+/* colors */
+typedef struct MyColorRec {
+	RGBColor	rgb;
+	Boolean		isTransparent;
+} MyColorRec;
+
+Extern MyColorRec	gCurrentColor;
+Extern MyColorRec	gPrevColor;
+Extern MyColorRec	gBackColor;
+Extern RGBColor	rgbBlackColor;
+Extern RGBColor	rgbWhiteColor;
+Extern RGBColor	rgbLBColor;
+
+/* blend mode */
+Extern RGBColor	gBlendRatio;
+Extern short	gBlendMode;
+Extern short	gBSelectedItem;
+
+/* tools */
+Extern short	gSelectedTool;
+Extern Rect		gToolRect;
+
+/* cursor */
+Extern RgnHandle	gCurRgnHand;
+
+/* pen&eraser size */
+Extern short	gPenWidth;
+Extern short	gPenHeight;
+Extern short	gEraserWidth;
+Extern short	gEraserHeight;
+
+/* dot command */
+Extern Str31	gDotCommand;
+
+/* ãƒ‘ã‚¿ãƒ¼ãƒ³ */
+Extern short	gPatternNo;
+
+/* blend palette */
+Extern GWorldPtr	gBlendPalettePtr;
+Extern Boolean		gBlendLocked;
+
+/* ruler */
+Extern Point	gPrevRulerPt;
+Extern RgnHandle	gRulerRgn;
+
+/* ãƒ‘ãƒ¬ãƒƒãƒˆã®ç¨®é¡ */
+Extern short	gPaletteCheck;
+Extern short	gPrevPaletteCheck;
+
+#pragma options align=mac68k
+
+#pragma mark _PNGPrefsRec
+/* PNGè¨­å®š */
+typedef struct PNGPrefsRec
+{
+	short	transColor;		/* é€éè‰² */
+	Boolean	interlaced;		/* ã‚¤ãƒ³ã‚¿ãƒ¬ãƒ¼ã‚¹ */
+	
+	Boolean	useClip2gif;	/* (ä¸ä½¿ç”¨ï¼‰ */
+	
+	short	compLevel;		/* åœ§ç¸®ãƒ¬ãƒ™ãƒ« */
+	
+	Boolean	optimizeImage;	/* ä½¿ç”¨ã•ã‚Œã¦ã„ã‚‹è‰²æ•°ã«ã‚ã‚ã›ã¦æœ€é©åŒ– */
+	struct {
+		Boolean	inSaving;
+		Boolean	inLoading;
+	} useTransColor;
+} PNGPrefsRec;
+
+Extern PNGPrefsRec	gPNGFilePrefs;
+
+#pragma mark _OtherPrefs
+/* ãã®ä»–ã®è¨­å®š */
+typedef struct OtherPrefs
+{
+	Boolean	checkWhenColorChanged;	/* è‰²æ•°å¤‰æ›´æ™‚ã«ã‚«ãƒ©ãƒ¼ãƒ‘ãƒ¬ãƒƒãƒˆã«å° */
+	Boolean	activateDroppedWindow;	/* ãƒ‰ãƒ­ãƒƒãƒ—ã•ã‚ŒãŸã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚’ã‚¢ã‚¯ãƒ†ã‚£ãƒ–ã« */
+	Boolean maskAutoConvert;		/* ãƒã‚¹ã‚¯ä¿å­˜æ™‚ã«å›²ã¾ã‚ŒãŸéƒ¨åˆ†ã‚’ãƒã‚¹ã‚¯åŒ– */
+	Boolean	continuousIDs;			/* è¤‡æ•°ã‚¢ã‚¤ã‚³ãƒ³è¿½åŠ æ™‚ã«é€£ç¶šã™ã‚‹IDã‚’ä»˜åŠ  */
+	Boolean	addForeground;			/* ãƒ¬ã‚¤ãƒ¤ãƒ¼ã§ã€å‰æ™¯ã‚’è¿½åŠ  */
+	Boolean	copyIconWithPicture;	/* ãƒšã‚¤ãƒ³ãƒˆã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã§ã‚³ãƒ”ãƒ¼æ™‚ã«ã‚¢ã‚¤ã‚³ãƒ³æƒ…å ±ã‚‚ã‚³ãƒ”ãƒ¼ */
+	Boolean	useHyperCardPalette;	/* ãƒ‘ã‚¿ãƒ¼ãƒ³ãƒ‘ãƒ¬ãƒƒãƒˆã§HyperCardäº’æ›ãƒ‘ãƒ¬ãƒƒãƒˆã‚’ä½¿ç”¨ */
+	
+	Boolean	importAsFamilyIcon;		/* 'icns'ã¨ã—ã¦å–ã‚Šè¾¼ã‚€ */
+} OtherPrefs;
+
+Extern OtherPrefs	gOtherPrefs;
+
+typedef struct KeyThreshRec
+{
+	short	keyThresh;		/* ç¹°ã‚Šè¿”ã™ã¾ã§ã®é…ã‚Œ */
+	short	keyRepThresh;	/* ç¹°ã‚Šè¿”ã—ã®é€Ÿåº¦ */
+} KeyThreshRec;
+
+#pragma mark _ToolPrefsRec
+/* paint prefs */
+typedef struct ToolPrefsRec
+{
+	Boolean			eraseSameColor;			/* åŒã˜è‰²ã®å ´åˆæ¶ˆã™ */
+	Boolean 		eraseSize11;			/* 1*1ã®å ´åˆã®ã¿ */
+	Boolean 		selectionMasking;		/* é¸æŠç¯„å›²ã§ãƒã‚¹ã‚­ãƒ³ã‚° */
+	
+	KeyThreshRec	dotDrawPrefs;			/* æç”»ç‚¹ãƒ„ãƒ¼ãƒ«ã®è¨­å®š */
+	
+	Boolean			changeSpoitCursor;		/* ã‚¹ãƒã‚¤ãƒˆãƒ„ãƒ¼ãƒ«ã®ã‚«ãƒ¼ã‚½ãƒ«ã‚’å¤‰æ›´ */
+	Boolean			changePencilCursor;		/* é‰›ç­†ãƒ„ãƒ¼ãƒ«ã®ã‚«ãƒ¼ã‚½ãƒ«ã‚’å¤‰æ›´ */
+	
+	Boolean 		useColorCursor;			/* ã‚«ãƒ¼ã‚½ãƒ«ã«è‰²ã‚’ä½¿ç”¨ */
+	Boolean			eraserByCmdKey;			/* ã‚³ãƒãƒ³ãƒ‰ã‚­ãƒ¼ã§æ¶ˆã—ã‚´ãƒ ãƒ„ãƒ¼ãƒ« */
+	
+	short			gridMode;				/* ã‚°ãƒªãƒƒãƒ‰ */
+	Boolean			showRuler;				/* ãƒ«ãƒ¼ãƒ©ãƒ¼ */
+	RGBColor		gridColor;				/* ã‚°ãƒªãƒƒãƒ‰ã®è‰² */
+	RGBColor		gridColor2;				/* 32*32 or 16*16 ã®ã‚°ãƒªãƒƒãƒ‰ã®è‰² */
+} ToolPrefsRec;
+
+Extern KeyThreshRec	gKeyThreshStore;
+Extern ToolPrefsRec gToolPrefs;
+
+/* ã‚¢ãƒ—ãƒªã‚±ãƒ¼ã‚·ãƒ§ãƒ³ã®ãƒ•ã‚¡ã‚¤ãƒ«å‚ç…§ç•ªå· */
+Extern short	gApplRefNum;
+Extern short	gPrefFileRefNum;
+
+/* æç”»ç‚¹ãƒ„ãƒ¼ãƒ«ç”¨ */
+Extern long		gDotLibFolderID;
+Extern short	gDotLibVRefNum;
+Extern Boolean	isDotLibAvailable;
+Extern Str31	gDotLibName;
+Extern short	gDotLibRefNum;
+
+/* ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆã®ã‚¯ãƒªã‚¨ãƒ¼ã‚¿ */
+Extern OSType	gPICTCreator;
+Extern OSType	gGIFCreator;
+Extern OSType	gIconCreator;
+Extern OSType	gPNGCreator;
+
+/* èµ·å‹•æ™‚ã®å‡¦ç† */
+Extern short	gStartup; /* ï¼ï¼šãªã«ã‚‚ã—ãªã„ã€ï¼‘ï¼šæ–°è¦ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã€ï¼’ï¼šã‚ªãƒ¼ãƒ—ãƒ³ãƒ€ã‚¤ã‚¢ãƒ­ã‚° */
+
+/* ãƒ—ãƒ¬ãƒ“ãƒ¥ãƒ¼ã‚¢ã‚¤ã‚³ãƒ³ãƒ•ãƒ©ã‚° */
+Extern short	gPreviewIconFlag;	/* ï¼ï¼šè¿½åŠ ã—ãªã„ã€ï¼‘ï¼šè¿½åŠ ã™ã‚‹ */
+
+/* ã‚¿ãƒ–ãƒ¬ãƒƒãƒˆå‡¦ç†é–¢é€£ */
+Extern Boolean	isTabletAvailable;
+
+#pragma mark _TabletPrefsRec
+/* ã‚¿ãƒ–ãƒ¬ãƒƒãƒˆè¨­å®š */
+typedef struct TabletPrefsRec
+{
+	Boolean	usePressure;			/* ç­†åœ§ã‚’ä½¿ç”¨ */
+	Boolean	overrideTransparency;	/* ç­†åœ§ä½¿ç”¨æ™‚ã«ãƒšãƒ³ã®é€æ˜åº¦ã‚’ç„¡è¦– */
+	Boolean	useEraser;				/* æ¶ˆã—ã‚´ãƒ ã‚’ä½¿ç”¨ */
+	Boolean useEraserPressure;		/* æ¶ˆã—ã‚´ãƒ ã®ç­†åœ§ã‚’ä½¿ç”¨ */
+} TabletPrefsRec;
+
+Extern TabletPrefsRec	gTabletPrefs;
+
+Extern RGBColor	rgbGrayColor;
+
+#pragma mark _PaintWinPrefsRec
+/* ç”»åƒã‚µã‚¤ã‚º */
+typedef struct {
+	Rect	iconSize;	/* ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆã®å¤§ãã• */
+	short	ratio;	/* ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆã®å€ç‡ */
+	Boolean	askSize;		/* ä½œæˆæ™‚ã«ã‚µã‚¤ã‚ºã‚’æŒ‡å®š */
+	Boolean	referClip;		/* ã‚µã‚¤ã‚ºæŒ‡å®šæ™‚ã«ã‚¯ãƒªãƒƒãƒ—ãƒœãƒ¼ãƒ‰ã‚’å‚ç…§ */
+	short	background;		/* ä½œæˆæ™‚ã®èƒŒæ™¯ */
+	short	colorMode;	/* è‰²ãƒ¢ãƒ¼ãƒ‰ */
+} PaintWinPrefsRec;
+
+Extern PaintWinPrefsRec	gPaintWinPrefs;
+
+/* ãƒ—ãƒ¬ãƒ“ãƒ¥ãƒ¼ã®èƒŒæ™¯ */
+Extern short	gListBackground;
+
+Extern CTabHandle	gFavoriteColors;
+
+/* èµ·å‹•å›æ•°ãªã© */
+typedef struct UsedCountRec
+{
+	unsigned long	usedCount;	/* ä½¿ç”¨å›æ•° */
+	unsigned long	usedTime;	/* ä½¿ç”¨æ™‚é–“ï¼ˆç§’å˜ä½ï¼‰ */
+	
+	unsigned long	newNum;
+	unsigned long	openNum;
+	unsigned long	saveNum;
+	
+	unsigned long	fillNum;
+	unsigned long	lightenNum;
+	unsigned long	darkenNum;
+	unsigned long	antialiasNum;
+	unsigned long	dotPictureNum;
+	unsigned long	windNum;
+	unsigned long	edgeNum;
+	unsigned long	colorChangeNum;
+	unsigned long	rotateNum;
+	unsigned long	flipNum;
+	unsigned long	replaceNum;
+	
+	unsigned long	undoNum;
+	
+	unsigned long	importNum;
+	unsigned long	exportNum;
+	
+	unsigned long	showCountNum;
+} UsedCountRec;
+
+#pragma options align=reset
+
+Extern UsedCountRec	gUsedCount;
+
+Extern Boolean		gIsDialog;
+Extern WindowPtr	gFrontWindow;
+
+/* ãƒ†ãƒ³ãƒãƒ©ãƒªãƒ•ã‚¡ã‚¤ãƒ«ã®ç•ªå· */
+Extern short	gTempFileNum;
+
+/* ã‚·ã‚¹ãƒ†ãƒ é–¢é€£ */
+Extern Boolean	isDragMgrPresent;
+Extern Boolean	isAppearanceAvailable;
+Extern Boolean	isContextualMenuAvailable;
+Extern Boolean	isTSMTEAvailable;
+Extern Boolean	isTSMgrAvailable;
+Extern Boolean	isNavServicesAvailable;
+Extern Boolean	isHelpMgrAvailable;
+
+Extern long		gQTVersion;
+Extern long		gSystemVersion;
+Extern UInt32	gNavLibraryVersion;
+#if TARGET_API_MAC_CARBON
+Extern SInt32	gCarbonLibVersion;
+#endif
+Extern Boolean	isOSX;
+
+Extern Boolean	useNavigationServices;
+
+Extern Boolean	isClip2gifAvailable;
+Extern Boolean	isResEditAvailable;
+Extern Boolean	isExternalEditorAvailable;
+Extern FSSpec	gExternalEditor;
+Extern Boolean	gUseExternalEditor;
+
+Extern Boolean	isIconServicesAvailable;
+Extern Boolean	is32BitIconsAvailable;
+Extern Boolean	isThumbnailIconsAvailable;

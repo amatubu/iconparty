@@ -1,6 +1,6 @@
 /* ------------------------------------------------------------ */
 /*  Useful Routines.h                                           */
-/*     g‚¦‚éƒ‹[ƒ`ƒ“‚Ìƒwƒbƒ_ƒtƒ@ƒCƒ‹                           */
+/*     ä½¿ãˆã‚‹ãƒ«ãƒ¼ãƒãƒ³ã®ãƒ˜ãƒƒãƒ€ãƒ•ã‚¡ã‚¤ãƒ«                           */
 /*                                                              */
 /*                 1997.9.21 - 2001.1.27  naoki iimura		    */
 /* ------------------------------------------------------------ */
@@ -27,17 +27,17 @@ void	HiliteButton(DialogPtr dp,short item);
 pascal Boolean	MyModalDialogFilter(DialogPtr theDialog,EventRecord *theEvent,short *theItemHit);
 extern pascal void	MyActivate(DialogPtr theDialog,short item,Boolean activating,void *userData);
 
-/* ƒGƒCƒŠƒAƒX‰ğŒˆ */
+/* ã‚¨ã‚¤ãƒªã‚¢ã‚¹è§£æ±º */
 OSErr	ResolveAliasFileWithNoUI(FSSpec *fromFile,Boolean resolveAliasChains,Boolean *wasAliased);
 OSErr	ResolveAliasFileWithNoUIMain(FSSpec *fromFile,Boolean resolveAliasChains);
 OSErr	MyIsAliasFile(const FSSpec *fileFSSpec,Boolean *aliasFileFlag,Boolean *folderFlag);
 OSErr	ResolveAliasWithNoUI(AliasHandle theAlias,FSSpec *theFile,Boolean resolveAliasChains);
 
-/* ƒEƒBƒ“ƒhƒE‚ÌƒRƒ“ƒgƒ[ƒ‹‚ÌƒAƒNƒeƒBƒx[ƒg^ƒfƒBƒAƒNƒeƒBƒx[ƒg */
+/* ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ«ã®ã‚¢ã‚¯ãƒ†ã‚£ãƒ™ãƒ¼ãƒˆï¼ãƒ‡ã‚£ã‚¢ã‚¯ãƒ†ã‚£ãƒ™ãƒ¼ãƒˆ */
 void	DeactivateWindowControl(WindowPtr theWindow);
 void	ActivateWindowControl(WindowPtr theWindow);
 
-/* ƒ_ƒCƒAƒƒO‚ÌƒAƒCƒeƒ€‘€ì•â• */
+/* ãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã®ã‚¢ã‚¤ãƒ†ãƒ æ“ä½œè£œåŠ© */
 Handle	GetDialogItemHandle(DialogPtr theDialog,short itemNo);
 void	GetDialogItemRect(DialogPtr theDialog,short itemNo,Rect *r);
 short	GetDialogControlValue(DialogPtr theDialog,short itemNo);
@@ -49,61 +49,61 @@ void	GetDialogItemText2(DialogPtr theDialog,short itemNo,Str255 string);
 void	SetDialogItemText2(DialogPtr theDialog,short itemNo,Str255 string);
 void	SetDialogItemToStaticText(DialogPtr theDialog,short itemNo);
 
-/* •¶š—ñ‚Ì’u‚«Š·‚¦ */
+/* æ–‡å­—åˆ—ã®ç½®ãæ›ãˆ */
 void	ReplaceString(Str255 base,Str255 subs,Str15 key);
 
-/* RGBColorŠÖŒW */
+/* RGBColoré–¢ä¿‚ */
 Boolean	EqualColor(RGBColor *color1,RGBColor *color2);
 short	RGBColorToIndex(RGBColor *color);
 void	IndexToRGBColor(short index,RGBColor *color);
 void	Set256RGBColor(RGBColor *color,short r,short g,short b);
 void	SetRGBColor(RGBColor *color,unsigned short red,unsigned short green,unsigned short blue);
 
-/* C•¶š—ñ‚©‚çPascal•¶š—ñ‚Ö•ÏŠ· */
+/* Cæ–‡å­—åˆ—ã‹ã‚‰Pascalæ–‡å­—åˆ—ã¸å¤‰æ› */
 void	MyCToPStr(const char *src,Str255 dst);
 
-/* left‚ª8‚Ì”{”‚Å‚È‚­‚Ä‚à‘åä•v‚ÈCopyDeepMask */
+/* leftãŒ8ã®å€æ•°ã§ãªãã¦ã‚‚å¤§ä¸ˆå¤«ãªCopyDeepMask */
 void	SafeCopyDeepMask(const BitMap *srcBits,const BitMap *maskBits,const BitMap *dstBits,
 						const Rect *srcRect,const Rect *maskRect,const Rect *dstRect,
 						short mode,RgnHandle maskRgn);
 
-/* ƒeƒ“ƒ|ƒ‰ƒŠƒƒ‚ƒŠ‚ğg‚Á‚½PICTì¬ */
+/* ãƒ†ãƒ³ãƒãƒ©ãƒªãƒ¡ãƒ¢ãƒªã‚’ä½¿ã£ãŸPICTä½œæˆ */
 OSErr	TempOpenCPicture(OpenCPicParams *params);
 OSErr	TempClosePicture(PicHandle *resultPict);
 pascal void	PutPicToTempMem(const void *p,SInt16 bytes);
 OSErr	CheckPictureByte(void);
 
-/* PICT‚ÌF”‚ğ’²‚×‚é */
+/* PICTã®è‰²æ•°ã‚’èª¿ã¹ã‚‹ */
 OSErr	GetPictureUniqueColors(PicHandle picture,long *uniqueColors);
 OSErr	GetPictureMaxDepth(PicHandle picture,short *depth);
 
-/* ƒOƒŒ[ƒXƒP[ƒ‹‚ÌƒJƒ‰[ƒe[ƒuƒ‹‚ğì¬ */
+/* ã‚°ãƒ¬ãƒ¼ã‚¹ã‚±ãƒ¼ãƒ«ã®ã‚«ãƒ©ãƒ¼ãƒ†ãƒ¼ãƒ–ãƒ«ã‚’ä½œæˆ */
 CTabHandle	GetGrayscaleCTable(short depth,Boolean order);
 OSErr	GetPixMapColors(PixMapHandle pmh,CTabHandle *ctab,short *colorNum);
 
-/* ƒNƒŠƒG[ƒ^‚Æƒ^ƒCƒv‚©‚çƒvƒƒZƒX‚ğŒŸõ */
+/* ã‚¯ãƒªã‚¨ãƒ¼ã‚¿ã¨ã‚¿ã‚¤ãƒ—ã‹ã‚‰ãƒ—ãƒ­ã‚»ã‚¹ã‚’æ¤œç´¢ */
 Boolean	FindProcessFromCreatorAndType(OSType creator,OSType type,ProcessSerialNumber *psn);
 
-/* ƒ_ƒCƒAƒƒO‚ÌƒRƒ“ƒgƒ[ƒ‹‚ÌƒAƒNƒeƒBƒx[ƒg^ƒfƒBƒAƒNƒeƒBƒx[ƒg */
+/* ãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã®ã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ«ã®ã‚¢ã‚¯ãƒ†ã‚£ãƒ™ãƒ¼ãƒˆï¼ãƒ‡ã‚£ã‚¢ã‚¯ãƒ†ã‚£ãƒ™ãƒ¼ãƒˆ */
 void	DeactivateDialogControl(DialogPtr theDialog);
 void	ActivateDialogControl(DialogPtr theDialog);
 
-/* C³“ú‚ğ“¾‚é */
+/* ä¿®æ­£æ—¥ã‚’å¾—ã‚‹ */
 OSErr	FSpGetModDate(FSSpec *spec,unsigned long *modDate);
 
-/* Šg’£qŠÖŒW */
+/* æ‹¡å¼µå­é–¢ä¿‚ */
 short	GetBodyLength(Str255 filename);
 short	ChangeSuffix(Str255 filename,Str255 suffix);
 short	GetBodyLength2(Str255 filename);
 void	GetSuffix(Str255 filename,Str255 suffix);
 OSErr	GetFileTypeFromSuffix(Str255 filename,OSType *fileType);
 
-/* FinderŠÖŒWH */
+/* Finderé–¢ä¿‚ï¼Ÿ */
 OSErr	MakeOpenDocumentEvent(ProcessSerialNumber *targetPSN,FSSpec *theIconFile,AppleEvent *odocEvent);
 OSErr	MakeUpdateEvent(const FSSpec *theFile,AppleEvent *result);
 void	AEOpenFileWithApplication(FSSpec *theFile,FSSpec *theApplication);
 
-/* FindFolder‚Åw’è‚·‚éƒ{ƒŠƒ…[ƒ€‚ğ“¾‚é */
+/* FindFolderã§æŒ‡å®šã™ã‚‹ãƒœãƒªãƒ¥ãƒ¼ãƒ ã‚’å¾—ã‚‹ */
 SInt16  GetFindFolderVRefNum(void);
 
 /* drag & drop */

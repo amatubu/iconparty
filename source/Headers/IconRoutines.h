@@ -1,1 +1,145 @@
-/* ------------------------------------------------------------ *//*  IconRoutines.h                                              *//*     ÉAÉCÉRÉìèàóùópÉwÉbÉ_ÉtÉ@ÉCÉã                             *//*                                                              *//*                 1998.12.2 - 2001.1.21  naoki iimura		    *//* ------------------------------------------------------------ */#pragma once/* includes */#ifdef __APPLE_CC__#include	<Carbon/Carbon.h>#else#include	<Navigation.h>#endif#include	"IPIconSupport.h"/* definitions */#define		kIconListWidth	56#define		kIconListHeight	64		#define		TEBitSet	1#define		kIconFamilyPictureResID		140#define		sFamilyWinTitle	139#define		kSelectorMyData	kSelectorLarge1Bit | kSelectorLarge4Bit | kSelectorLarge8Bit | \							kSelectorSmall1Bit | kSelectorSmall4Bit | kSelectorSmall8Bit#define		kSelectorMy32Data	kSelectorMyData | \							kSelectorLarge32Bit | kSelectorLarge8BitMask | \							kSelectorSmall32Bit | kSelectorSmall8BitMaskenum {	kL8Data=0,kL4Data,kL1Data,kL1Mask,kS8Data,kS4Data,kS1Data,kS1Mask,	kL32Data,kL8Mask,kS32Data,kS8Mask,kT32Data,kT8Mask,};enum {	kCommandNone=0,	kSelectIconCommand,	kDeleteIconCommand,};enum {	kForceNone=0,	kForceInternalEditor,	kForceExternalEditor,};enum {	kDeleteIconFamilyMode = 1,	kAddResourceForkMode = 2,	kDeleteIconMode = 3,};enum {	kFamilyWindowSmallWidth = 195,	kFamilyWindowSmallHeight = 134,		kFamilyWindowLargeWidth = 295,	kFamilyWindowLargeHeight = 134,		kFamilyWindowThumbnailHeight = 292,};#define	GetFamilyWindowHeight()	(isThumbnailIconsAvailable ? kFamilyWindowThumbnailHeight : \									kFamilyWindowLargeHeight)/* ç\ë¢ëÃ */typedef struct IconListRec {	short	gApplRefNum;	/* ÉAÉvÉäÉPÅ[ÉVÉáÉìÇÃéQè∆î‘çÜ */	short	refNum;			/* ÉAÉCÉRÉìÉtÉ@ÉCÉãÇÃéQè∆î‘çÜ */	short	tempRefNum;		/* ÉeÉìÉ|ÉâÉäÉtÉ@ÉCÉãÇÃéQè∆î‘çÜ */	short	iconNum;		/* ÉAÉCÉRÉìÇÃêî */	short	*background;	/* îwåiÇÃéÌóﬁ */		Boolean	isIconServicesAvailable;} IconListRec;typedef struct MyIconResRec{	short	resID;	Str255	resName;	short	attrs;} MyIconResRec;#pragma options align=mac68ktypedef struct MyIconListDragRec {	IconSuiteRef	iconSuite;	Str255			iconName;} MyIconListDragRec;#pragma options align=reset/* prototypes *//* ÉAÉCÉRÉìÉäÉXÉgÉEÉBÉìÉhÉE */OSErr	MakeFolderWithIcon(FSSpec *theFolder,IconSuiteRef iconSuite);OSErr	MakeFileWithIcon(const FSSpec *theFile,IconSuiteRef iconSuite);/* ÉAÉCÉRÉìï€ë∂ */pascal OSErr	AddIconToFile(ResType theType,Handle *theIcon,void *yourDataPtr);void	SaveDataToResource(void *dataPtr,long dataSize,ResType type,short id,	Str255 resName,short attrs);void	DeleteIconFamilyResource(void);void	RedrawIconPreview(void);void	UpdateIconPreview(WindowPtr frontWin);OSErr	MyGetIPIcon(IconListWinRec *iWinRec,IPIconRec *ipIcon,IconListDataRec *data,	Str255 iconName,Boolean *isEditableIconFamily);void	CopyIcons(short srcRefNum,short dstRefNum);pascal OSErr	CopyIconData(ResType theType,Handle *theIcon,void *yourDataPtr);pascal OSErr	DetachIcon(ResType theType,Handle *iconData,void *yourDataPtr);pascal OSErr	DeleteIcon(ResType theType,Handle *theIcon,void *yourDataPtr);pascal OSErr	ChangeIconInfo(ResType theType,Handle *theIcon,void *yourDataPtr);void	CreateDeleteInfo(short resID);void	CreateUpdateInfo(short resID);void	RemoveDeleteInfo(short resID);Boolean	IsIconChanged(short resID);Boolean	Is32Exist(IconSuiteRef iconSuite);Boolean	IsEditableIconFamily(IconFamilyHandle iconFamily);IconSuiteRef	GetFileIconSuite(FSSpec *theFile);OSErr	XIconToIconSuite(FSSpec *theFile,IconSuiteRef *iconSuite);OSErr	Get1IconSuite(IconSuiteRef *theIconSuite,short theResID,IconSelectorValue selector);Boolean	IsValidIconSuite(IconSuiteRef theIconSuite);OSErr	IconSuiteToClip(IconSuiteRef iconSuite);OSErr	NewIconDialog(MyIconResRec *newIcon,IPIconSelector *selector,short *iconTemplate,	ListHandle iconList);OSErr	GetIPIconFromTemplate(IPIconRec *ipIcon,const IPIconSelector *selector,short iconTemplate);OSErr	SaveAsIconDialog(Str255 filename,FSSpec *theFile,OSType *iconType,NavReplyRecord *theReply);#define	GetMySelector()	(gSystemVersion >= 0x0850 ? kSelectorMy32Data : kSelectorMyData)#define	GetIconListRec(w)	(*(IconListWinRec **)GetExtWRefCon(w))#define	GetIconFamilyRec(w)	(*(IconFamilyWinRec **)GetExtWRefCon(w))
+/* ------------------------------------------------------------ */
+/*  IconRoutines.h                                              */
+/*     „Ç¢„Ç§„Ç≥„É≥Âá¶ÁêÜÁî®„Éò„ÉÉ„ÉÄ„Éï„Ç°„Ç§„É´                             */
+/*                                                              */
+/*                 1998.12.2 - 2001.1.21  naoki iimura		    */
+/* ------------------------------------------------------------ */
+
+
+#pragma once
+
+/* includes */
+#ifdef __APPLE_CC__
+#include	<Carbon/Carbon.h>
+#else
+#include	<Navigation.h>
+#endif
+#include	"IPIconSupport.h"
+
+/* definitions */
+#define		kIconListWidth	56
+#define		kIconListHeight	64		
+
+#define		TEBitSet	1
+
+#define		kIconFamilyPictureResID		140
+#define		sFamilyWinTitle	139
+#define		kSelectorMyData	kSelectorLarge1Bit | kSelectorLarge4Bit | kSelectorLarge8Bit | \
+							kSelectorSmall1Bit | kSelectorSmall4Bit | kSelectorSmall8Bit
+#define		kSelectorMy32Data	kSelectorMyData | \
+							kSelectorLarge32Bit | kSelectorLarge8BitMask | \
+							kSelectorSmall32Bit | kSelectorSmall8BitMask
+
+enum {
+	kL8Data=0,kL4Data,kL1Data,kL1Mask,kS8Data,kS4Data,kS1Data,kS1Mask,
+	kL32Data,kL8Mask,kS32Data,kS8Mask,kT32Data,kT8Mask,
+};
+
+enum {
+	kCommandNone=0,
+	kSelectIconCommand,
+	kDeleteIconCommand,
+};
+
+enum {
+	kForceNone=0,
+	kForceInternalEditor,
+	kForceExternalEditor,
+};
+
+enum {
+	kDeleteIconFamilyMode = 1,
+	kAddResourceForkMode = 2,
+	kDeleteIconMode = 3,
+};
+
+enum {
+	kFamilyWindowSmallWidth = 195,
+	kFamilyWindowSmallHeight = 134,
+	
+	kFamilyWindowLargeWidth = 295,
+	kFamilyWindowLargeHeight = 134,
+	
+	kFamilyWindowThumbnailHeight = 292,
+};
+
+#define	GetFamilyWindowHeight()	(isThumbnailIconsAvailable ? kFamilyWindowThumbnailHeight : \
+									kFamilyWindowLargeHeight)
+
+
+/* ÊßãÈÄ†‰Ωì */
+typedef struct IconListRec {
+	short	gApplRefNum;	/* „Ç¢„Éó„É™„Ç±„Éº„Ç∑„Éß„É≥„ÅÆÂèÇÁÖßÁï™Âè∑ */
+	short	refNum;			/* „Ç¢„Ç§„Ç≥„É≥„Éï„Ç°„Ç§„É´„ÅÆÂèÇÁÖßÁï™Âè∑ */
+	short	tempRefNum;		/* „ÉÜ„É≥„Éù„É©„É™„Éï„Ç°„Ç§„É´„ÅÆÂèÇÁÖßÁï™Âè∑ */
+	short	iconNum;		/* „Ç¢„Ç§„Ç≥„É≥„ÅÆÊï∞ */
+	short	*background;	/* ËÉåÊôØ„ÅÆÁ®ÆÈ°û */
+	
+	Boolean	isIconServicesAvailable;
+} IconListRec;
+
+typedef struct MyIconResRec
+{
+	short	resID;
+	Str255	resName;
+	short	attrs;
+} MyIconResRec;
+
+#pragma options align=mac68k
+
+typedef struct MyIconListDragRec {
+	IconSuiteRef	iconSuite;
+	Str255			iconName;
+} MyIconListDragRec;
+
+#pragma options align=reset
+
+
+/* prototypes */
+/* „Ç¢„Ç§„Ç≥„É≥„É™„Çπ„Éà„Ç¶„Ç£„É≥„Éâ„Ç¶ */
+OSErr	MakeFolderWithIcon(FSSpec *theFolder,IconSuiteRef iconSuite);
+OSErr	MakeFileWithIcon(const FSSpec *theFile,IconSuiteRef iconSuite);
+
+/* „Ç¢„Ç§„Ç≥„É≥‰øùÂ≠ò */
+pascal OSErr	AddIconToFile(ResType theType,Handle *theIcon,void *yourDataPtr);
+void	SaveDataToResource(void *dataPtr,long dataSize,ResType type,short id,
+	Str255 resName,short attrs);
+void	DeleteIconFamilyResource(void);
+
+void	RedrawIconPreview(void);
+void	UpdateIconPreview(WindowPtr frontWin);
+
+OSErr	MyGetIPIcon(IconListWinRec *iWinRec,IPIconRec *ipIcon,IconListDataRec *data,
+	Str255 iconName,Boolean *isEditableIconFamily);
+void	CopyIcons(short srcRefNum,short dstRefNum);
+
+pascal OSErr	CopyIconData(ResType theType,Handle *theIcon,void *yourDataPtr);
+pascal OSErr	DetachIcon(ResType theType,Handle *iconData,void *yourDataPtr);
+pascal OSErr	DeleteIcon(ResType theType,Handle *theIcon,void *yourDataPtr);
+pascal OSErr	ChangeIconInfo(ResType theType,Handle *theIcon,void *yourDataPtr);
+
+void	CreateDeleteInfo(short resID);
+void	CreateUpdateInfo(short resID);
+void	RemoveDeleteInfo(short resID);
+
+Boolean	IsIconChanged(short resID);
+
+Boolean	Is32Exist(IconSuiteRef iconSuite);
+Boolean	IsEditableIconFamily(IconFamilyHandle iconFamily);
+
+IconSuiteRef	GetFileIconSuite(FSSpec *theFile);
+OSErr	XIconToIconSuite(FSSpec *theFile,IconSuiteRef *iconSuite);
+OSErr	Get1IconSuite(IconSuiteRef *theIconSuite,short theResID,IconSelectorValue selector);
+Boolean	IsValidIconSuite(IconSuiteRef theIconSuite);
+OSErr	IconSuiteToClip(IconSuiteRef iconSuite);
+
+OSErr	NewIconDialog(MyIconResRec *newIcon,IPIconSelector *selector,short *iconTemplate,
+	ListHandle iconList);
+OSErr	GetIPIconFromTemplate(IPIconRec *ipIcon,const IPIconSelector *selector,short iconTemplate);
+OSErr	SaveAsIconDialog(Str255 filename,FSSpec *theFile,OSType *iconType,NavReplyRecord *theReply);
+
+
+#define	GetMySelector()	(gSystemVersion >= 0x0850 ? kSelectorMy32Data : kSelectorMyData)
+
+#define	GetIconListRec(w)	(*(IconListWinRec **)GetExtWRefCon(w))
+#define	GetIconFamilyRec(w)	(*(IconFamilyWinRec **)GetExtWRefCon(w))

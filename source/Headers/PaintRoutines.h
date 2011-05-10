@@ -1,1 +1,62 @@
-/* ------------------------------------------------------------ *//*  PaintRoutines.h                                             *//*     ÉyÉCÉìÉgèàóùÇÃÉwÉbÉ_ÉtÉ@ÉCÉã                             *//*                                                              *//*                 2001.1.21 - 2001.1.21  naoki iimura        	*//* ------------------------------------------------------------ *//* ÉcÅ[Éã */void	DoPaint(WindowPtr theWindow,Point pt,Boolean shiftDown);void	DoDotPaint(WindowPtr theWindow,Point pt);void	DoDotPaintMain(WindowPtr theWindow,Point pt);void	DoErase(WindowPtr theWindow,Point pt,Boolean shiftDown);void	DoSelect(WindowPtr theWindow,Point pt,Boolean shiftDown,Boolean optDown,Boolean cmdDown);void	DoAutoSelect(WindowPtr theWindow);void	DoSpoit(WindowPtr theWindow,Point pt);void	DoBucket(WindowPtr theWindow,Point pt,Boolean cmdDown);void	DoReplaceColor(WindowPtr theWindow,RGBColor *srcColor,Boolean srcIsTransparent,											RGBColor *dstColor,Boolean dstIsTransparent);/* ëIëîÕàÕ */void	DoSelectMain(WindowPtr theWindow,RgnHandle selectRgn);void	MoveSelection(WindowPtr theWindow,short dx,short dy,Boolean redrawFlag);void	FixSelection(WindowPtr theWindow);void	ExchangeSelection(WindowPtr theWindow);void	UpdatePSRgn(PaintWinRec *eWinRec);void	DispSelection(WindowPtr theWindow);void	DispSelectionMain(WindowPtr theWindow,Boolean dispPaint,Boolean dispPreview);void	DoSelectColorArea(WindowPtr theWindow,RGBColor *color,Boolean isTransparent);/* âÊëúÉTÉCÉY */void	ChangeIconSize(WindowPtr theWindow);/* ÉoÉbÉNÉOÉâÉEÉìÉh */void	GoBackgroundMode(WindowPtr theWindow);void	UnionBackground(WindowPtr theWindow);void	DeleteBackground(WindowPtr theWindow);void	DeleteForeground(WindowPtr theWindow);void	ShowHideBackground(WindowPtr theWindow);short	SetForeBlend(PaintWinRec *eWinRec);/* ÉAÉCÉRÉìï‚èï */Handle	GetSelectionIconHandle(WindowPtr theWindow,short size,short depth,Boolean rectMask);/* É}ÉXÉNçÏê¨ */OSErr	CreateMask(GWorldPtr gWorld,Rect *srcRect,Rect *dstRect,MyBitMapRec *bmpRec);OSErr	CreateMask2(GWorldPtr gWorld,GWorldPtr *maskGWorld);/* ëº */OSErr	GoOffPort(WindowPtr theWindow);void	DispOffPort(WindowPtr theWindow);void	ToRealPos(Point *pt,short ratio);void	ToGridPos(Point *pt,short ratio);Boolean	RealPtInMask(Point pt,GWorldPtr maskGWorld);void	ChangeMask(WindowPtr theWindow,short mode);OSErr	DisposeBitMap(MyBitMapRec *bmpRec);#define	GetPaintWinRec(w)	(*(PaintWinRec **)GetExtWRefCon(w))
+/* ------------------------------------------------------------ */
+/*  PaintRoutines.h                                             */
+/*     „Éö„Ç§„É≥„ÉàÂá¶ÁêÜ„ÅÆ„Éò„ÉÉ„ÉÄ„Éï„Ç°„Ç§„É´                             */
+/*                                                              */
+/*                 2001.1.21 - 2001.1.21  naoki iimura        	*/
+/* ------------------------------------------------------------ */
+
+/* „ÉÑ„Éº„É´ */
+void	DoPaint(WindowPtr theWindow,Point pt,Boolean shiftDown);
+void	DoDotPaint(WindowPtr theWindow,Point pt);
+void	DoDotPaintMain(WindowPtr theWindow,Point pt);
+void	DoErase(WindowPtr theWindow,Point pt,Boolean shiftDown);
+void	DoSelect(WindowPtr theWindow,Point pt,Boolean shiftDown,Boolean optDown,Boolean cmdDown);
+void	DoAutoSelect(WindowPtr theWindow);
+void	DoSpoit(WindowPtr theWindow,Point pt);
+void	DoBucket(WindowPtr theWindow,Point pt,Boolean cmdDown);
+
+void	DoReplaceColor(WindowPtr theWindow,RGBColor *srcColor,Boolean srcIsTransparent,
+											RGBColor *dstColor,Boolean dstIsTransparent);
+
+/* ÈÅ∏ÊäûÁØÑÂõ≤ */
+void	DoSelectMain(WindowPtr theWindow,RgnHandle selectRgn);
+void	MoveSelection(WindowPtr theWindow,short dx,short dy,Boolean redrawFlag);
+void	FixSelection(WindowPtr theWindow);
+void	ExchangeSelection(WindowPtr theWindow);
+void	UpdatePSRgn(PaintWinRec *eWinRec);
+void	DispSelection(WindowPtr theWindow);
+void	DispSelectionMain(WindowPtr theWindow,Boolean dispPaint,Boolean dispPreview);
+
+void	DoSelectColorArea(WindowPtr theWindow,RGBColor *color,Boolean isTransparent);
+
+/* ÁîªÂÉè„Çµ„Ç§„Ç∫ */
+void	ChangeIconSize(WindowPtr theWindow);
+
+/* „Éê„ÉÉ„ÇØ„Ç∞„É©„Ç¶„É≥„Éâ */
+void	GoBackgroundMode(WindowPtr theWindow);
+void	UnionBackground(WindowPtr theWindow);
+void	DeleteBackground(WindowPtr theWindow);
+void	DeleteForeground(WindowPtr theWindow);
+void	ShowHideBackground(WindowPtr theWindow);
+short	SetForeBlend(PaintWinRec *eWinRec);
+
+/* „Ç¢„Ç§„Ç≥„É≥Ë£úÂä© */
+Handle	GetSelectionIconHandle(WindowPtr theWindow,short size,short depth,Boolean rectMask);
+
+/* „Éû„Çπ„ÇØ‰ΩúÊàê */
+OSErr	CreateMask(GWorldPtr gWorld,Rect *srcRect,Rect *dstRect,MyBitMapRec *bmpRec);
+OSErr	CreateMask2(GWorldPtr gWorld,GWorldPtr *maskGWorld);
+
+/* ‰ªñ */
+OSErr	GoOffPort(WindowPtr theWindow);
+void	DispOffPort(WindowPtr theWindow);
+
+void	ToRealPos(Point *pt,short ratio);
+void	ToGridPos(Point *pt,short ratio);
+
+Boolean	RealPtInMask(Point pt,GWorldPtr maskGWorld);
+void	ChangeMask(WindowPtr theWindow,short mode);
+
+OSErr	DisposeBitMap(MyBitMapRec *bmpRec);
+
+#define	GetPaintWinRec(w)	(*(PaintWinRec **)GetExtWRefCon(w))

@@ -1,6 +1,6 @@
 /* ------------------------------------------------------------ */
 /*  FileRoutines.h                                              */
-/*     ƒtƒ@ƒCƒ‹ˆ—ƒ‹[ƒ`ƒ“‚Ìƒvƒƒgƒ^ƒCƒv                       */
+/*     ãƒ•ã‚¡ã‚¤ãƒ«å‡¦ç†ãƒ«ãƒ¼ãƒãƒ³ã®ãƒ—ãƒ­ãƒˆã‚¿ã‚¤ãƒ—                       */
 /*                                                              */
 /*                 97.9.21 - 99.5.24  naoki iimura              */
 /* ------------------------------------------------------------ */
@@ -28,8 +28,8 @@ OSErr	SaveAsPictMain(PicHandle picture,const FSSpec *theFile);
 void	OpenClipboard(void);
 
 
-/* ƒeƒ“ƒ|ƒ‰ƒŠƒtƒ@ƒCƒ‹ */
+/* ãƒ†ãƒ³ãƒãƒ©ãƒªãƒ•ã‚¡ã‚¤ãƒ« */
 OSErr	MakeTempFile(FSSpec *theTempFile,Boolean resourceFork);
 
-/* ‚»‚Ì‘¼ */
+/* ãã®ä»– */
 Boolean EqualFile(FSSpec *spec1,FSSpec *spec2);

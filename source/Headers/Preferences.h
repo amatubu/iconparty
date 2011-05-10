@@ -1,1 +1,102 @@
-/* ------------------------------------------------------------ *//*  Preferences.h                                               *//*     èâä˙ê›íËÇÃÉwÉbÉ_ÉtÉ@ÉCÉã                                 *//*                                                              *//*                 99.2.16 - 99.5.24  naoki iimura              *//* ------------------------------------------------------------ *//* definitions */#define		itemActive		0#define		itemInactive	255/* prototypes */void	LoadPrefFile(void);void	SavePrefFile(void);OSErr	AddDataToPrefs(void *dataPtr,long dataSize,ResType type,short id,Str255 resName);OSErr	LoadDataFromPrefs(void *dataPtr,long dataSize,ResType type,short id);void	OpenPrefsDialog(void);void	ConfigureGrid(void);/* enumerations *//* É^Éu */enum {	kFilePrefsTab=1,	kPaintPrefsTab,	kToolPrefsTab,	kPNGPrefsTab,	kTabletPrefsTab,	kOtherPrefsTab};/* ÉtÉ@ÉCÉã */enum {	diStartupPrefs=1,	diSetPICTCreator,	diSetGIFCreator,	diSetPNGCreator,	diSetIconCreator,	diPICTCreatorName,	diGIFCreatorName,	diPNGCreatorName,	diIconCreatorName,	diUseNavServices,	diPreviewIconFlag,};/* ÉyÉCÉìÉg */enum {	diImageWidth=1,	diImageHeight,	diImageColorMode,	diImageRatio,	diAskSize,	diBackground,	diExternalEditor,	diUseExternalEditor,};/* ÉcÅ[Éã */enum {	diEraseSameColor=1,	diErase11,	diSelectionMaskingOn,	diKeyThreshControl,	diChangeSpoitCursor,	diChangePencilCursor,	diUseColorCursor,	diEraserByCmdKey,};/* PNG */enum {	diPNGInteraced=1,	diPNGTransColor,	diPNGCompLevel,	diPNGUseTransSaving,	diPNGUseTransLoading,	diPNGOptimizeImage,};/* É^ÉuÉåÉbÉg */enum {	diTabletUsePressure=1,	diTabletOverrideTransparency,	diTabletUseEraser,	diTabletUseEraserPressure,};/* ÇªÇÃëº */enum {	diCheckWhenColorChanged=1,	diActivateDroppedWindow,	diMaskAutoConvert,	diContinuousID,	diAddForeground,	diCopyIconWithPicture,	diUseHyperCardPalette,	diImportAsFamilyIcon,};
+/* ------------------------------------------------------------ */
+/*  Preferences.h                                               */
+/*     ÂàùÊúüË®≠ÂÆö„ÅÆ„Éò„ÉÉ„ÉÄ„Éï„Ç°„Ç§„É´                                 */
+/*                                                              */
+/*                 99.2.16 - 99.5.24  naoki iimura              */
+/* ------------------------------------------------------------ */
+
+/* definitions */
+#define		itemActive		0
+#define		itemInactive	255
+
+/* prototypes */
+void	LoadPrefFile(void);
+void	SavePrefFile(void);
+
+OSErr	AddDataToPrefs(void *dataPtr,long dataSize,ResType type,short id,Str255 resName);
+OSErr	LoadDataFromPrefs(void *dataPtr,long dataSize,ResType type,short id);
+
+void	OpenPrefsDialog(void);
+
+void	ConfigureGrid(void);
+
+/* enumerations */
+/* „Çø„Éñ */
+enum {
+	kFilePrefsTab=1,
+	kPaintPrefsTab,
+	kToolPrefsTab,
+	kPNGPrefsTab,
+	kTabletPrefsTab,
+	kOtherPrefsTab
+};
+
+/* „Éï„Ç°„Ç§„É´ */
+enum {
+	diStartupPrefs=1,
+	diSetPICTCreator,
+	diSetGIFCreator,
+	diSetPNGCreator,
+	diSetIconCreator,
+	diPICTCreatorName,
+	diGIFCreatorName,
+	diPNGCreatorName,
+	diIconCreatorName,
+	diUseNavServices,
+	diPreviewIconFlag,
+};
+
+/* „Éö„Ç§„É≥„Éà */
+enum {
+	diImageWidth=1,
+	diImageHeight,
+	diImageColorMode,
+	diImageRatio,
+	diAskSize,
+	diBackground,
+	diExternalEditor,
+	diUseExternalEditor,
+};
+
+/* „ÉÑ„Éº„É´ */
+enum {
+	diEraseSameColor=1,
+	diErase11,
+	diSelectionMaskingOn,
+	diKeyThreshControl,
+	diChangeSpoitCursor,
+	diChangePencilCursor,
+	diUseColorCursor,
+	diEraserByCmdKey,
+};
+
+/* PNG */
+enum {
+	diPNGInteraced=1,
+	diPNGTransColor,
+	diPNGCompLevel,
+	diPNGUseTransSaving,
+	diPNGUseTransLoading,
+	diPNGOptimizeImage,
+};
+
+/* „Çø„Éñ„É¨„ÉÉ„Éà */
+enum {
+	diTabletUsePressure=1,
+	diTabletOverrideTransparency,
+	diTabletUseEraser,
+	diTabletUseEraserPressure,
+};
+
+/* „Åù„ÅÆ‰ªñ */
+enum {
+	diCheckWhenColorChanged=1,
+	diActivateDroppedWindow,
+	diMaskAutoConvert,
+	diContinuousID,
+	diAddForeground,
+	diCopyIconWithPicture,
+	diUseHyperCardPalette,
+	diImportAsFamilyIcon,
+};
+

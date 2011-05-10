@@ -1,1 +1,61 @@
-/* WinƒAƒCƒRƒ“ŠÖ˜A‚Ìƒtƒ@ƒCƒ‹ƒwƒbƒ_ */typedef struct WinIconHeaderRec {	short	reserved1;		/* 00 00 */	short	reserved2;		/* 01 00 */	short	iconDataNum;	} WinIconHeaderRec;typedef struct WinIconDataTypeRec {	char	iconWidth;		/* 20 or 10 */	char	iconHeight;		/* 20 or 10 */	short	colorFlag;		/* 10 00:16F or 00 00:256F */	long	reserved1;		/* 00 00 00 00 */	long	dataSize;		long	dataOffset;	} WinIconDataTypeRec;typedef struct WinIconDataHeaderRec {	long	headerLength;	/* 28 00 00 00 */	long	iconSize;		/* 20 00 00 00 or 10 00 00 00 */	long	iconSize2;		/* 40 00 00 00 or 20 00 00 00 */	short	reserved1;		/* 01 00 */	short	iconDepth;		/* 04:16F or 08:256F */	long	reserved2;		/* 00 00 00 00 */	long	dataSize;		/* ƒJƒ‰[ƒpƒŒƒbƒg‚ğœ‚¢‚½ƒf[ƒ^ƒTƒCƒYiƒf[ƒ^{ƒ}ƒXƒNj */	long	reserved3;		/* 00 00 00 00 */	long	reserved4;		/* 00 00 00 00 */	long	colorNum;		/* 10 00 00 00:16F or 00 01 00 00:256F */	long	reserved5;		/* 00 00 00 00 */} WinIconDataHeaderRec;typedef struct WinIconColorRec {	char	b;	char	g;	char	r;	char	reserved;} WinIconColorRec;typedef struct BMPHeaderRec {	char	bmpCode[2];		/* 'BM' */	long	fileSize;	short	reserved1;		/* 00 00 */	short	reserved2;		/* 00 00 */	long	dataOffset;	long	headerLength;	/* 28 00 00 00 */	long	imageWidth;		/* 20 00 00 00:32 */	long	imageHeight;	/* 20 00 00 00:32 */	short	reserved3;		/* 01 00 */	short	imageDepth;		/* 08 00:256F */	long	compression;	/* 00 00 00 00:ˆ³k‚È‚µ */	long	dataSize;		/* 00 04 00 00 */	long	hRes;			/* …•½‰ğ‘œ“xipixels/meterj */	long	vRes;			/* ‚’¼‰ğ‘œ“xipixels/meterj */	long	reserved4;		/* 00 00 00 00 */	long	reserved5;		/* 00 00 00 00 */} BMPHeaderRec;/* ƒvƒƒgƒ^ƒCƒv */OSErr	WinIconToIconSuite(FSSpec *theIconFile,IconSuiteRef *theIconSuite);OSErr	MakeWinIconFromSuite(FSSpec *theWinIcon,IconSuiteRef iconSuite);
+/* Winã‚¢ã‚¤ã‚³ãƒ³é–¢é€£ã®ãƒ•ã‚¡ã‚¤ãƒ«ãƒ˜ãƒƒãƒ€ */
+typedef struct WinIconHeaderRec {
+	short	reserved1;		/* 00 00 */
+	short	reserved2;		/* 01 00 */
+	short	iconDataNum;	
+} WinIconHeaderRec;
+
+typedef struct WinIconDataTypeRec {
+	char	iconWidth;		/* 20 or 10 */
+	char	iconHeight;		/* 20 or 10 */
+	short	colorFlag;		/* 10 00:16è‰² or 00 00:256è‰² */
+	long	reserved1;		/* 00 00 00 00 */
+	long	dataSize;	
+	long	dataOffset;	
+} WinIconDataTypeRec;
+
+typedef struct WinIconDataHeaderRec {
+	long	headerLength;	/* 28 00 00 00 */
+	long	iconSize;		/* 20 00 00 00 or 10 00 00 00 */
+	long	iconSize2;		/* 40 00 00 00 or 20 00 00 00 */
+	short	reserved1;		/* 01 00 */
+	short	iconDepth;		/* 04:16è‰² or 08:256è‰² */
+	long	reserved2;		/* 00 00 00 00 */
+	long	dataSize;		/* ã‚«ãƒ©ãƒ¼ãƒ‘ãƒ¬ãƒƒãƒˆã‚’é™¤ã„ãŸãƒ‡ãƒ¼ã‚¿ã‚µã‚¤ã‚ºï¼ˆãƒ‡ãƒ¼ã‚¿ï¼‹ãƒã‚¹ã‚¯ï¼‰ */
+	long	reserved3;		/* 00 00 00 00 */
+	long	reserved4;		/* 00 00 00 00 */
+	long	colorNum;		/* 10 00 00 00:16è‰² or 00 01 00 00:256è‰² */
+	long	reserved5;		/* 00 00 00 00 */
+} WinIconDataHeaderRec;
+
+typedef struct WinIconColorRec {
+	char	b;
+	char	g;
+	char	r;
+	char	reserved;
+} WinIconColorRec;
+
+typedef struct BMPHeaderRec {
+	char	bmpCode[2];		/* 'BM' */
+	long	fileSize;
+	short	reserved1;		/* 00 00 */
+	short	reserved2;		/* 00 00 */
+	long	dataOffset;
+	long	headerLength;	/* 28 00 00 00 */
+	long	imageWidth;		/* 20 00 00 00:32 */
+	long	imageHeight;	/* 20 00 00 00:32 */
+	short	reserved3;		/* 01 00 */
+	short	imageDepth;		/* 08 00:256è‰² */
+	long	compression;	/* 00 00 00 00:åœ§ç¸®ãªã— */
+	long	dataSize;		/* 00 04 00 00 */
+	long	hRes;			/* æ°´å¹³è§£åƒåº¦ï¼ˆpixels/meterï¼‰ */
+	long	vRes;			/* å‚ç›´è§£åƒåº¦ï¼ˆpixels/meterï¼‰ */
+	long	reserved4;		/* 00 00 00 00 */
+	long	reserved5;		/* 00 00 00 00 */
+} BMPHeaderRec;
+
+
+/* ãƒ—ãƒ­ãƒˆã‚¿ã‚¤ãƒ— */
+OSErr	WinIconToIconSuite(FSSpec *theIconFile,IconSuiteRef *theIconSuite);
+OSErr	MakeWinIconFromSuite(FSSpec *theWinIcon,IconSuiteRef iconSuite);
+
