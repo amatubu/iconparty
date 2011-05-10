@@ -1,1 +1,2253 @@
-/* ------------------------------------------------------------ *//*  IconParty.c                                                 *//*     ‰Šú‰»AƒCƒxƒ“ƒgˆ—‚È‚ÇiƒƒCƒ“ƒ‹[ƒ`ƒ“j               *//*                                                              *//*                 1997.1.11 - 2001.1.27  naoki iimura        	*//* ------------------------------------------------------------ *//* includes */#ifdef __APPLE_CC__#include	<Carbon/Carbon.h>#else#include	<QDOffscreen.h>#include	<sound.h>#include	<Drag.h>#include	<Appearance.h>#include	<TSMTE.h>#include	<Navigation.h>#include	<Balloons.h>#include	<Resources.h>#include	<Gestalt.h>#include	<LowMem.h>#include	<TextUtils.h>#include	<Script.h>#include	<ToolUtils.h>#endif#ifdef __APPLE_CC__#include	<MoreFilesX.h>#else#include	<MoreFilesExtras.h>#endif#include	"WindowExtensions.h"#include	"Globals.h"#include	"AESupport.h"#include	"IconParty.h"#include	"MenuRoutines.h"#include	"FileRoutines.h"#include	"UsefulRoutines.h"#include	"TabletUtils.h"#include	"DebugMode.h"#include	"PreCarbonSupport.h"#include	"IconRoutines.h"#include	"IconListWindow.h"#include	"IconFamilyWindow.h"#include	"WindowRoutines.h"#include	"Preferences.h"#include	"ExternalEditorSupport.h"#include	"EditRoutines.h"#include	"PaintRoutines.h"#include	"ToolRoutines.h"#include	"UpdateCursor.h"/* prototypes */static void	CurRgnInit(void);static void	InitConstants(void);static void	InitGlobals(void);static void	GWorldInit(void);static void	DotLibInit(void);static void	MainLoop(void);static void	DoIdleEvent(EventRecord *theEvent);static void	HandleMouseDown(EventRecord *theEvent);static void	HandleKeyDown(EventRecord *theEvent);static void	ResetSysSettings(void);static void	TitlePopup(WindowPtr theWindow,Point popPos);static void	FSpAERevealFile(FSSpec *spec);static void	InvertDot(WindowPtr theWindow);static void	InvertDotMain(PaintWinRec *eWinRec);static void	MoveDot(WindowPtr theWindow,short dx,short dy);static void	PutCommand(Str255 command,char newCommand);static void	CatChar2(char c,Str255 string);static void	MoveDotMain(Point *pt,short dx,short dy,Rect *r);#if !TARGET_API_MAC_CARBONstatic void	UpdateBalloonHelp(Point globPt);static void	MyShowBalloon(const Rect *r,short id,short index);#endif/* Window.c‚Å‚Ì•Ï”‚¾‚Á‚½‚©‚È */extern WindowPtr	DotModePalette;#define	IPERR_RESID	4009#define	IPERR1	1#define	IPERR2	2#define	IPERR3	3/* main */#ifdef __APPLE_CC__int main(void)#elsevoid main(void)#endif{	Boolean	needToUnload=false;	OSErr	err=noErr;		#if !TARGET_API_MAC_CARBON	SetApplLimit(GetApplLimit()-16384);		MaxApplZone();	#endif	ToolBoxInit();	{		#if TARGET_API_MAC_CARBON		MoreMasterPointers(10);		#else		short	i;				for (i=0; i<10; i++)			MoreMasters();		#endif	}		CreateDebugFile();		gApplRefNum=CurResFile();		/* ƒAƒvƒŠƒP[ƒVƒ‡ƒ“‚ÌƒŠƒtƒ@ƒŒƒ“ƒX */	#if TARGET_API_MAC_CARBON && 0	{		Str255	temp;		Handle	h;		short	c;				h=Get1Resource('WIND',128);		if (h==nil) ErrorAlert("\pGet1Resource() failed.");				h=GetResource('WIND',128);		if (h==nil) ErrorAlert("\pGetResource() failed.");				NumToString(gApplRefNum,temp);		ErrorAlert(temp);				UseResFile(gApplRefNum);		c=CountResources('WIND');		NumToString(c,temp);		ErrorAlert(temp);				h=Get1Resource('WIND',128);		if (h==nil) ErrorAlert("\pGet1Resource() failed.");				h=GetResource('WIND',128);		if (h==nil) ErrorAlert("\pGetResource() failed.");	}	#endif	InitConstants(); WriteStrToDebugFile("\pInitConstants.\r");	InitGlobals(); WriteStrToDebugFile("\pInitGlobals.\r");		#if TARGET_API_MAC_CARBON	if (gSystemVersion >= 0x0810 && gCarbonLibVersion >= 0x0102) /* 1.0.2ˆÈ~‚Ì’Ç‰ÁAPI‚ª‘½‚¢‚½‚ß */	#else	if (gSystemVersion >= 0x0700)	#endif	{		LoadPrefFile(); WriteStrToDebugFile("\pLoadPrefFile.\r");				if (isAppearanceAvailable) err=RegisterAppearanceClient();		if (isContextualMenuAvailable) InitContextualMenus();				MenuBarInit(); WriteStrToDebugFile("\pMenuBarInit.\r");		ToolWindowInit(); WriteStrToDebugFile("\pToolWindowInit.\r");		DotLibInit(); WriteStrToDebugFile("\pDotLibInit.\r");		AEInit(); WriteStrToDebugFile("\pAEInit.\r");		CurRgnInit(); WriteStrToDebugFile("\pCurRgnInit.\r");				GWorldInit(); WriteStrToDebugFile("\pGWorldInit.\r");				ChangeSysSettings(); WriteStrToDebugFile("\pChangeSysSettings.\r");				#if !TARGET_API_MAC_CARBON		if (isTSMTEAvailable) InitTSMAwareApplication();		#endif		#if TARGET_API_MAC_CARBON			needToUnload = (NavLoad() == noErr);		#else		if (isNavServicesAvailable && useNavigationServices) needToUnload = (NavLoad() == noErr);		#endif				/* —”‚Ì‰Šú‰» */		#if TARGET_API_MAC_CARBON		{			UInt32	time;						GetDateTime(&time);			SetQDGlobalsRandomSeed((SInt32)time);		}		#else		GetDateTime((unsigned long*)(&qd.randSeed));		#endif		MainLoop();				ResetSysSettings();				#if !TARGET_API_MAC_CARBON		if (isTSMTEAvailable) CloseTSMAwareApplication();		#endif		if (isNavServicesAvailable && needToUnload) NavUnload();				/* Šm•Û‚µ‚½ƒƒ‚ƒŠ‚ğ‰ğ•ú */		DisposeGWorld(gBlendPalettePtr);		DisposeRgn(gRulerRgn);		DisposeRgn(gCurRgnHand);				/* I—¹‘O‚É‰Šúİ’è‚ğ•Û‘¶ */		if (gPrefFileRefNum>0)			SavePrefFile();		if (gDotLibRefNum>0)			CloseResFile(gDotLibRefNum);	}	else	#if TARGET_API_MAC_CARBON		ErrorAlertFromResource(IPERR_RESID,IPERR3);	#else		ErrorAlertFromResource(IPERR_RESID,IPERR1);	#endif		CloseDebugFile();		#ifdef __APPLE_CC__	return 0;	#endif}/* ƒ}ƒEƒXƒJ[ƒ\ƒ‹XV‚Ì‚½‚ß‚ÌƒŠ[ƒWƒ‡ƒ“‚Ì‰Šú‰» */void CurRgnInit(void){	gCurRgnHand=NewRgn();}/* ’è”‚Ì‰Šú‰» */void InitConstants(void){	SetRGBColor(&rgbBlackColor,0x0000U,0x0000U,0x0000U);	SetRGBColor(&rgbWhiteColor,0xffffU,0xffffU,0xffffU);	SetRGBColor(&rgbLBColor,0x2222U,0x2222U,0x2222U);	SetRect(&gToolRect,0x03,0x03,0x20,0x19);	#if ENGLISH_VER	InsetRect(&gToolRect,-1,-1);	#endif}/* ƒOƒ[ƒoƒ‹•Ï”‚Ì‰Šú‰» */void InitGlobals(void){	OSErr	err;	long	response;	FSSpec	theFile;		gIsDialog=false;	gFrontWindow=nil;		gBlendRatio=rgbBlackColor;	gBlendMode=srcCopy;	gBSelectedItem=i0percent;			/* 0%:•s“§–¾ */	gCurrentColor.rgb=rgbBlackColor;	/* • */	gCurrentColor.isTransparent=false;	/* “§–¾F‚Å‚Í‚È‚¢ */	gPrevColor.rgb=rgbBlackColor;		/* • */	gPrevColor.isTransparent=false;		/* “§–¾F‚Å‚Í‚È‚¢ */	gBackColor.rgb=rgbWhiteColor;		/* ”’ */	gBackColor.isTransparent=false;		/* “§–¾F‚Å‚Í‚È‚¢ */	gSelectedTool=kPencilTool;				/* ‰”•Mƒc[ƒ‹ */	gPatternNo=1;						/* ‚P”Ô–Ú‚Ìƒpƒ^[ƒ“i•j */	gPenWidth=1;						/* ƒyƒ“‚Ì•‚P */	gPenHeight=1;						/* ƒyƒ“‚Ì‚‚³‚P */	gEraserWidth=2;						/* Á‚µƒSƒ€‚Ì•‚Q */	gEraserHeight=2;					/* Á‚µƒSƒ€‚Ì‚‚³‚Q */	SetPt(&gPrevRulerPt,-1,-1);			/* ƒ‹[ƒ‰[‚Ì•\¦‚³‚ê‚Ä‚¢‚éêŠi•\¦‚³‚ê‚Ä‚¢‚È‚¢j */	gBlendLocked=false;					/* ƒuƒŒƒ“ƒhƒpƒŒƒbƒg‚ÍƒƒbƒN‚³‚ê‚Ä‚¢‚È‚¢ */		/* ƒ^ƒuƒŒƒbƒg‚ªg—p‰Â”\‚©‚Ç‚¤‚©‚ğƒ`ƒFƒbƒN */	isTabletAvailable=GetTablet();		SetRGBColor(&rgbGrayColor,0x8000U,0x8000U,0x8000U);		/* ƒeƒ“ƒ|ƒ‰ƒŠƒtƒ@ƒCƒ‹‚Ì”Ô†‚Í1‚©‚ç */	gTempFileNum=1;		/* ƒhƒ‰ƒbƒOƒ}ƒl[ƒWƒƒ‚ªg—p‰Â”\‚©‚Ç‚¤‚© */	isDragMgrPresent= ( (Gestalt(gestaltDragMgrAttr, &response) == noErr) &&			 ((response & (1L << gestaltDragMgrPresent)) != 0) );		/* ƒAƒsƒAƒ‰ƒ“ƒXƒ}ƒl[ƒWƒƒ‚ªg—p‰Â”\‚©‚Ç‚¤‚© */	err=Gestalt(gestaltAppearanceAttr,&response);	isAppearanceAvailable=(err==noErr && (response & (kGestaltMask << gestaltAppearanceExists)));	#if powerc		if (RegisterAppearanceClient == nil) isAppearanceAvailable=false;	#endif		/* ƒRƒ“ƒeƒNƒXƒgƒƒjƒ…[‚ªg—p‰Â”\‚©‚Ç‚¤‚© */	#if powerc		isContextualMenuAvailable=(InitContextualMenus != nil);	#else		err=Gestalt(gestaltContextualMenuAttr,&response);		isContextualMenuAvailable=(err==noErr &&				(response & (kGestaltMask << gestaltContextualMenuTrapAvailable)));	#endif		/* Text Services Manager‚ªg—p‰Â”\‚©‚Ç‚¤‚© */	err=Gestalt(gestaltTSMgrVersion,&response);	isTSMgrAvailable=(err==noErr);		/* ƒCƒ“ƒ‰ƒCƒ““ü—Í‚ª‚Å‚«‚é‚©‚Ç‚¤‚© */	err=Gestalt(kTSMTESignature,&response);	isTSMTEAvailable=(err==noErr && (response &(kGestaltMask << gestaltTSMTE)));		/* NavigationServices‚ªg—p‰Â”\‚©‚Ç‚¤‚© */	isNavServicesAvailable=NavServicesAvailable();	if (isNavServicesAvailable) gNavLibraryVersion=NavLibraryVersion();		/* ƒwƒ‹ƒvƒ}ƒl[ƒWƒƒ‚ªg—p‰Â”\‚©‚Ç‚¤‚© */	err=Gestalt(gestaltHelpMgrAttr,&response);	isHelpMgrAvailable=(err==noErr && (response & (kGestaltMask << gestaltHelpMgrPresent)));		/* QuickTime‚Ìƒo[ƒWƒ‡ƒ“ */	err=Gestalt(gestaltQuickTimeVersion,&response);	gQTVersion=(err==noErr ? response : 0L);		/* ƒVƒXƒeƒ€‚Ìƒo[ƒWƒ‡ƒ“ */	err=Gestalt(gestaltSystemVersion,&gSystemVersion);	if (err!=noErr) gSystemVersion=0;		#if TARGET_API_MAC_CARBON	err=Gestalt(gestaltCarbonVersion,&gCarbonLibVersion);	if (err!=noErr) gCarbonLibVersion=0;	#endif		/* OS X‚©‚Ç‚¤‚© */	err=Gestalt(gestaltMenuMgrAttr,&response);	if (err==noErr) isOSX=((response & gestaltMenuMgrAquaLayoutMask) != 0);	else isOSX=false;		/* IconServices‚ğƒ`ƒFƒbƒN */	err=Gestalt(gestaltIconUtilitiesAttr,&response);	if (err==noErr)	{		isIconServicesAvailable=((response & (kGestaltMask << gestaltIconUtilitiesHasIconServices)) != 0);		is32BitIconsAvailable=((response & (kGestaltMask << gestaltIconUtilitiesHas32BitIcons)) != 0);		isThumbnailIconsAvailable=(gSystemVersion >= 0x0910);	}	else	{		isIconServicesAvailable=false;		is32BitIconsAvailable=false;		isThumbnailIconsAvailable=false;	}		/* ƒL[‚ÌŒJ‚è•Ô‚µó‘Ô‚ğæ“¾‚µ‚Ä‚¨‚­ */	gKeyThreshStore.keyThresh=LMGetKeyThresh();	gKeyThreshStore.keyRepThresh=LMGetKeyRepThresh();		/* clip2gifAResEdit‚ğ’T‚· */	err=GetApplSpec(kResEditCreator,&theFile);	isResEditAvailable=(err==noErr);		err=GetApplSpec(kClip2gifCreator,&theFile);	isClip2gifAvailable=(err==noErr);		/* ƒ‹[ƒ‰ */	gRulerRgn=NewRgn();}/* •`‰æ“_ƒ‰ƒCƒuƒ‰ƒŠ‚Ì‰Šú‰» */void DotLibInit(void){	OSErr	err;	ProcessSerialNumber	psn;	ProcessInfoRec		processInfo;	FSSpec	applSpec,folderSpec,theFile;	Boolean	isDirectory;		/* •`‰æ“_ƒ‰ƒCƒuƒ‰ƒŠƒtƒHƒ‹ƒ_‚ğ’T‚· */	/* ‚Ü‚¸ƒAƒvƒŠƒP[ƒVƒ‡ƒ“‚ÌˆÊ’u‚ğ“¾‚é */	err=GetCurrentProcess(&psn);	processInfo.processInfoLength=sizeof(ProcessInfoRec);	processInfo.processName=nil;	processInfo.processAppSpec=&applSpec;	err=GetProcessInformation(&psn,&processInfo);		GetIndString(applSpec.name,150,2);	err=FSMakeFSSpec(applSpec.vRefNum,applSpec.parID,applSpec.name,&folderSpec);	if (err==fnfErr)		isDotLibAvailable=false;	else if (err==noErr)	{		#ifdef __MOREFILESX__		FSRef	fsRef;				err = FSpMakeFSRef(&folderSpec,&fsRef);		err = FSGetNodeID(&fsRef,&gDotLibFolderID,&isDirectory);		#else		err=FSpGetDirectoryID(&folderSpec,&gDotLibFolderID,&isDirectory);		#endif		if (err==noErr)		{			isDotLibAvailable=true;			gDotLibVRefNum=folderSpec.vRefNum;		}		else isDotLibAvailable=false;	}		/* ÅŒã‚ÉŠJ‚¢‚Ä‚¢‚½ƒ‰ƒCƒuƒ‰ƒŠ‚ª‚ ‚ê‚Î‚»‚ê‚ğŠJ‚­ */	if (gDotLibName[0]>0 && isDotLibAvailable)	{		err=FSMakeFSSpec(gDotLibVRefNum,gDotLibFolderID,gDotLibName,&theFile);		if (err==noErr)			gDotLibRefNum=FSpOpenResFile(&theFile,fsRdWrPerm);		else			gDotLibName[0]=0;	}	if (gDotLibName[0]==0)	{		gDotLibRefNum=-1;		GetIndString(gDotLibName,150,3);	}}/* ƒIƒtƒ|[ƒg‚Ì‰Šú‰» */void GWorldInit(void){	OSErr	err;	Rect	r;		/* ƒIƒtƒ|[ƒg‚Ìì¬ */	err=NewGWorld(&gBlendPalettePtr,8,GetWindowPortBounds(gBlendPalette,&r),0,0,useTempMem);		if (err!=noErr) /* if failed then quit */	{		ErrorAlertFromResource(IPERR_RESID,IPERR2);		ExitToShell();		quit=true;		return;	}		DrawBlend();}/* ƒIƒtƒ|[ƒg‚Ì‰æ‘œ‚ğÁ‹ */void EraseOffPort(PaintWinRec *eWinRec){	GWorldPtr	cPort;	GDHandle	cDevice;		GetGWorld(&cPort,&cDevice);		SetGWorld(eWinRec->editDataPtr,0);	LockPixels(GetGWorldPixMap(eWinRec->editDataPtr));	EraseRect(&eWinRec->iconSize);	UnlockPixels(GetGWorldPixMap(eWinRec->editDataPtr));		SetGWorld(eWinRec->tempDataPtr,0);	LockPixels(GetGWorldPixMap(eWinRec->tempDataPtr));	EraseRect(&eWinRec->iconSize);	UnlockPixels(GetGWorldPixMap(eWinRec->tempDataPtr));		SetGWorld(eWinRec->selectedDataPtr,0);	LockPixels(GetGWorldPixMap(eWinRec->selectedDataPtr));	EraseRect(&eWinRec->iconSize);	UnlockPixels(GetGWorldPixMap(eWinRec->selectedDataPtr));		SetGWorld(eWinRec->dispTempPtr,0);	LockPixels(GetGWorldPixMap(eWinRec->dispTempPtr));	EraseRect(&eWinRec->iconSize);	UnlockPixels(GetGWorldPixMap(eWinRec->dispTempPtr));		/* ƒ}ƒXƒN */	MySetGWorld(currentMask);	MyLockPixels(currentMask);	EraseRect(&eWinRec->iconSize);	MyUnlockPixels(currentMask);		MySetGWorld(pCurrentMask);	MyLockPixels(pCurrentMask);	EraseRect(&eWinRec->iconSize);	MyUnlockPixels(pCurrentMask);		MySetGWorld(selectionMask);	MyLockPixels(selectionMask);	EraseRect(&eWinRec->iconSize);	MyUnlockPixels(selectionMask);		SetGWorld(cPort,cDevice);}/* ƒVƒXƒeƒ€‚Ìİ’è‚ğ•ÏX‚·‚é */void ChangeSysSettings(void){	LMSetKeyThresh(gToolPrefs.dotDrawPrefs.keyThresh);	LMSetKeyRepThresh(gToolPrefs.dotDrawPrefs.keyRepThresh);}/* ƒVƒXƒeƒ€‚Ìİ’è‚ğŒ³‚É–ß‚· */void ResetSysSettings(void){	LMSetKeyThresh(gKeyThreshStore.keyThresh);	LMSetKeyRepThresh(gKeyThreshStore.keyRepThresh);}/* ƒƒCƒ“ƒCƒxƒ“ƒgƒ‹[ƒv */void MainLoop(void){	EventRecord	event;		quit=false;		while(!quit)	{		if (WaitNextEvent(everyEvent,&event,kSleep,gCurRgnHand))			DoEvent(&event);		else			DoIdleEvent(&event);	}}/* ƒCƒxƒ“ƒgˆ— */void DoEvent(EventRecord *theEvent){	char	theChar;	WindowPtr	theWindow;	long	menuChoice;		#if !TARGET_API_MAC_CARBON	if (!gIsDialog)	{		theWindow=MyFrontNonFloatingWindow();		if (theWindow != nil)		{			if (GetExtWindowKind(theWindow) == kWindowTypeIconFamilyWindow)				if (isTSMTEAvailable && TSMEvent(theEvent))				{					SetTSMCursor(theEvent->where);					return;				}		}	}	#endif		switch (theEvent->what)	{		case mouseDown:			HandleMouseDown(theEvent);			break;				case mouseUp:			break;				case keyDown:		case autoKey:			if (gSystemVersion >= 0x0800)			{				KeyMap	theKey;								GetKeys(theKey);				long temp;#if TARGET_RT_LITTLE_ENDIAN				temp = EndianS32_BtoN (theKey[1].bigEndianValue);#else				temp = theKey[1];#endif					if (temp&0x00000004) theEvent->modifiers |= optionKey;								menuChoice=MenuEvent(theEvent);			}			else			{				Ptr		kCHRPtr;				UInt32	state = 0;								kCHRPtr = ( Ptr )GetScriptManagerVariable( smKCHRCache );				theChar = (char)KeyTranslate( kCHRPtr, (UInt16)(theEvent->message & keyCodeMask)>>8,											 &state )&charCodeMask;								if ((theEvent->modifiers &cmdKey)!=0)				{					menuChoice=MenuKey(theChar);				}				else menuChoice=0;			}			if (menuChoice != 0)			{				UseResFile(gApplRefNum);				HandleMenuChoice(menuChoice);				break;			}			else //if (!(theEvent->modifiers & cmdKey))			{				/* ƒL[ƒ_ƒEƒ“‚É‘Î‚·‚éˆ— */				HandleKeyDown(theEvent);			}			break;				case updateEvt:			DoUpdate(theEvent);			break;				case osEvt:			switch((unsigned long)(theEvent->message &osEvtMessageMask) >> 24)			{				/* ‘¼‚ÌƒAƒvƒŠƒP[ƒVƒ‡ƒ“‚©‚ç–ß‚Á‚Ä‚«‚½‚Æ‚«‚ÉƒNƒŠƒbƒvƒ{[ƒh‚Ìó‘Ô‚ğƒ`ƒFƒbƒN */				/* ƒy[ƒXƒgƒƒjƒ…[‚É”½‰f‚·‚é */				case suspendResumeMessage:					if (theEvent->message & resumeFlag) /* resume */					{						ResumeFloatingWindows();						//if (theEvent->message & convertClipboardFlag) /* –{“–‚Í‚±‚¤‚·‚é‚×‚«‚¾‚ª */							UpdatePasteMenu();						ChangeSysSettings();						ResetRuler();					}					else /* suspend */					{						SuspendFloatingWindows();						ResetSysSettings();												theWindow = MyFrontNonFloatingWindow();						if (GetExtWindowKind(theWindow) == kWindowTypePaintWindow)						{							ResetDot(theWindow);						}					}					break;								/* ƒ}ƒEƒX‚ÌˆÊ’u‚É‚æ‚Á‚Äƒ}ƒEƒXƒJ[ƒ\ƒ‹‚ÌŒ`‚ğ•Ï‚¦‚é */				case mouseMovedMessage:					UpdateMouseCursor(theEvent->where);					break;			}			break;				case kHighLevelEvent:			AEProcessAppleEvent(theEvent);			break;				default:			break;	}}/* ƒAƒCƒhƒ‹ƒCƒxƒ“ƒgiƒCƒxƒ“ƒg‚ª‚È‚¢‚Æ‚«j‚Ìˆ— */void DoIdleEvent(EventRecord *theEvent){	WindowPtr	theWindow=MyFrontNonFloatingWindow();	IconFamilyWinRec	*fWinRec;		/* ƒ}ƒEƒXƒJ[ƒ\ƒ‹‚ÌŒ`‚ğ•Ï‚¦‚é */	UpdateMouseCursor(theEvent->where);	#if !TARGET_API_MAC_CARBON	UpdateBalloonHelp(theEvent->where);	#endif		if (theWindow==nil) return;		switch (GetExtWindowKind(theWindow))	{		case kWindowTypeIconFamilyWindow:			/* ƒJ[ƒ\ƒ‹‚Ì“_–Å */			fWinRec=GetIconFamilyRec(theWindow);						if ((**fWinRec->iconNameTE).active)				TEIdle(fWinRec->iconNameTE);						break;				case kWindowTypePaintWindow:			InvertDot(theWindow);			break;	}		/* ŠO•”ƒGƒfƒBƒ^‚Å•ÒW’†‚ÌƒAƒCƒRƒ“‚ğXV */	UpdateXIconList();}/* ƒhƒbƒg“_–Åˆ— */void InvertDot(WindowPtr theWindow){	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);		if (eWinRec->isDotMode)	{		if (TickCount() - eWinRec->lastInvertedTime > GetCaretTime())		{			GrafPtr	port;						GetPort(&port);			SetPortWindowPort(theWindow);			InvertDotMain(eWinRec);			SetPort(port);		}	}}/* ƒhƒbƒg“_–ÅƒƒCƒ“ */void InvertDotMain(PaintWinRec *eWinRec){	Rect	r;		SetRect(&r,eWinRec->dotPos.h << eWinRec->ratio,eWinRec->dotPos.v << eWinRec->ratio,			(eWinRec->dotPos.h+gPenWidth) << eWinRec->ratio,(eWinRec->dotPos.v+gPenHeight)<< eWinRec->ratio);		InvertRect(&r);		eWinRec->isInverted=(UInt8)!eWinRec->isInverted;	eWinRec->lastInvertedTime=TickCount();}/* ƒhƒbƒgÁ‹ˆ— */void ResetDot(WindowPtr theWindow){	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);		if (eWinRec->isDotMode && eWinRec->isInverted)	{		GrafPtr	port;				GetPort(&port);		SetPortWindowPort(theWindow);		InvertDotMain(eWinRec);		SetPort(port);	}}/* •`‰æ“_ƒ‚[ƒh‚ÌƒL[ˆ— */Boolean HandleDotKey(short eventKind,char theChar,WindowPtr theWindow){	Boolean	result=false;	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);		switch (theChar)	{		case '5':		case 'k':		case 'K':			/* •`‰æ */			if (eventKind == keyDown)			{				ResetDot(theWindow);								DoDotPaintMain(theWindow,eWinRec->dotPos);				PutCommand(eWinRec->dotCommand,'5');			}			result=true;			break;				case '1':			MoveDot(theWindow,-1,1);			PutCommand(eWinRec->dotCommand,'1');			result=true;			break;				case '2':		case ',':			MoveDot(theWindow,0,1);			PutCommand(eWinRec->dotCommand,'2');			result=true;			break;				case '3':			MoveDot(theWindow,1,1);			PutCommand(eWinRec->dotCommand,'3');			result=true;			break;				case '4':		case 'j':		case 'J':			MoveDot(theWindow,-1,0);			PutCommand(eWinRec->dotCommand,'4');			result=true;			break;				case '6':		case 'l':		case 'L':			MoveDot(theWindow,1,0);			PutCommand(eWinRec->dotCommand,'6');			result=true;			break;				case '7':			MoveDot(theWindow,-1,-1);			PutCommand(eWinRec->dotCommand,'7');			result=true;			break;				case '8':		case 'i':		case 'I':			MoveDot(theWindow,0,-1);			PutCommand(eWinRec->dotCommand,'8');			result=true;			break;				case '9':			MoveDot(theWindow,1,-1);			PutCommand(eWinRec->dotCommand,'9');			result=true;			break;				case '.':			/* •`‰æ“_ƒ‚[ƒh‚©‚ç”²‚¯‚é */			ResetDot(theWindow);			eWinRec->isDotMode=false;			HideReferencedWindow(DotModePalette);			UpdateEffectMenu();			result=true;			break;				case '0':			/* ‹L˜^ */			if (eWinRec->dotCommand[0]!=0) /* “ü—Í‚³‚ê‚Ä‚¢‚é */			{				GrafPtr	port;								PStrCpy(eWinRec->dotCommand,gDotCommand);				eWinRec->dotCommand[0]=0;								GetPort(&port);				SetPortWindowPort(DotModePalette);				UpdateRecordedCommand(gDotCommand);				UpdateInputCommand(eWinRec->dotCommand);				SetPort(port);			}			break;				case 0x1b:			/* clear -- “ü—Í’†ƒRƒ}ƒ“ƒh‚ğÁ‹‚·‚é */			if (eWinRec->dotCommand[0]!=0)			{				GrafPtr	port;								eWinRec->dotCommand[0]=0;								GetPort(&port);				SetPortWindowPort(DotModePalette);				UpdateInputCommand(eWinRec->dotCommand);				SetPort(port);			}			break;				case 0x0d:			/* return -- ‹L˜^‚³‚ê‚Ä‚¢‚éƒRƒ}ƒ“ƒh‚ğÄ¶‚·‚é */			if (gDotCommand[0]!=0)			{				ExecuteCommand(theWindow,gDotCommand);			}			break;	}		return result;}/* ƒhƒbƒg‚ğ“®‚©‚· */void MoveDot(WindowPtr theWindow,short dx,short dy){	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);		/* ‚Ü‚¸ƒhƒbƒg‚ğÁ‚· */	ResetDot(theWindow);		/* V‚µ‚¢ˆÊ’u‚ğŒvZ */	MoveDotMain(&eWinRec->dotPos,dx,dy,&eWinRec->iconSize);}/* ƒRƒ}ƒ“ƒh‚ğ‹L˜^ */void PutCommand(Str255 command,char newCommand){	short	commandLength=command[0];	char	lastCommand;	short	twoCommands;	GrafPtr	port;		/* ‚È‚É‚à‹L˜^‚³‚ê‚Ä‚¢‚È‚¢‚Í‚Â‚È‚°‚é‚¾‚¯ */	if (commandLength==0)	{		command[0]=1;		command[1]=newCommand;	}	else	{		lastCommand=command[commandLength];		twoCommands=(((short)lastCommand)<<8)+newCommand;				switch (twoCommands)		{			case '19': case '91': case '37': case '73': case '46': case '64': case '28': case '82':				command[0]--;				break;						case '26': case '62':				command[commandLength]='3';				break;						case '24': case '42':				command[commandLength]='1';				break;						case '48': case '84':				command[commandLength]='7';				break;						case '68': case '86':				command[commandLength]='9';				break;						case '16': case '61': case '34': case '43':				command[commandLength]='2';				break;						case '38': case '83': case '29': case '92':				command[commandLength]='6';				break;						case '67': case '76': case '49': case '94':				command[commandLength]='8';				break;						case '18': case '81': case '27': case '72':				command[commandLength]='4';				break;						case '51':				command[commandLength]='z';				break;						case '52':				command[commandLength]='x';				break;						case '53':				command[commandLength]='c';				break;						case '54':				command[commandLength]='a';				break;						case '56':				command[commandLength]='d';				break;						case '57':				command[commandLength]='q';				break;						case '58':				command[commandLength]='w';				break;						case '59':				command[commandLength]='e';				break;						case 'z9': case 'e1': case 'c7': case 'q3': case 'a6': case 'd4': case 'x8': case 'w2':				command[commandLength]='5';				break;						case 'x6': case 'd2':				command[commandLength]='c';				break;						case 'x4': case 'a2':				command[commandLength]='z';				break;						case 'a8': case 'w4':				command[commandLength]='q';				break;						case 'd8': case 'w6':				command[commandLength]='e';				break;						case 'z6': case 'd1': case 'c4': case 'a3':				command[commandLength]='x';				break;						case 'c8': case 'w3': case 'x9': case 'e2':				command[commandLength]='d';				break;						case 'd7': case 'q6': case 'a9': case 'e4':				command[commandLength]='w';				break;						case 'z8': case 'w1': case 'x7': case 'q2':				command[commandLength]='a';				break;						default:				CatChar2(newCommand,command);		}	}		GetPort(&port);	SetPortWindowPort(DotModePalette);	UpdateInputCommand(command);	SetPort(port);}/* •¶š‚ğ•¶š—ñ‚É‚Â‚È‚°‚é */void CatChar2(char c,Str255 string){	if (string[0]==kDotCommandMaxLength)	{		BlockMove(&string[2],&string[1],kDotCommandMaxLength-1);		string[kDotCommandMaxLength]=c;	}	else	{		string[0]++;		string[string[0]]=c;	}}/* ƒRƒ}ƒ“ƒh‚ÌÀs */void ExecuteCommand(WindowPtr theWindow,Str31 command){	short	i;	char	c;	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);	Point	pt=eWinRec->dotPos;		ResetDot(theWindow);		for (i=1; i<=command[0]; i++)	{		c=command[i];		switch (c)		{			case '5':				/* •`‰æ */				DoDotPaintMain(theWindow,pt);				break;						case 'z':				DoDotPaintMain(theWindow,pt);			case '1':				MoveDotMain(&pt,-1,1,&eWinRec->iconSize);				break;						case 'x':				DoDotPaintMain(theWindow,pt);			case '2':				MoveDotMain(&pt,0,1,&eWinRec->iconSize);				break;						case 'c':				DoDotPaintMain(theWindow,pt);			case '3':				MoveDotMain(&pt,1,1,&eWinRec->iconSize);				break;						case 'a':				DoDotPaintMain(theWindow,pt);			case '4':				MoveDotMain(&pt,-1,0,&eWinRec->iconSize);				break;						case 'd':				DoDotPaintMain(theWindow,pt);			case '6':				MoveDotMain(&pt,1,0,&eWinRec->iconSize);				break;						case 'q':				DoDotPaintMain(theWindow,pt);			case '7':				MoveDotMain(&pt,-1,-1,&eWinRec->iconSize);				break;						case 'w':				DoDotPaintMain(theWindow,pt);			case '8':				MoveDotMain(&pt,0,-1,&eWinRec->iconSize);				break;						case 'e':				DoDotPaintMain(theWindow,pt);			case '9':				MoveDotMain(&pt,1,-1,&eWinRec->iconSize);				break;		}	}		eWinRec->dotPos=pt;}/* V‚µ‚¢ˆÊ’u‚Éƒhƒbƒg‚ğˆÚ“®‚³‚¹‚é */void MoveDotMain(Point *pt,short dx,short dy,Rect *r){	Point	newPt=*pt;	Rect	newRect=*r;		newRect.left-=gPenWidth-1;	newRect.top-=gPenHeight-1;		newPt.h+=dx*gPenWidth;	newPt.v+=dy*gPenHeight;	if (PtInRect(newPt,&newRect))		*pt=newPt;}#if !TARGET_API_MAC_CARBON/* ƒoƒ‹[ƒ“ƒwƒ‹ƒvˆ— */void UpdateBalloonHelp(Point globPt){	GrafPtr		port;	WindowPtr	theWindow;	short		part;	Rect		r;	Point		localPt;	ControlHandle	theControl;	short		index;		enum {		kPaintWindowHelpID=3000,		kPreviewWindowHelpID,		kIconListWindowHelpID,		kIconFamilyWindowHelpID,		kColorPaletteHelpID,		kToolPaletteHelpID,		kBlendPaletteHelpID,		kTitleWindowHelpID,		kInfoWindowHelpID,		kPatternPaletteHelpID,		kScrollBarHelpID,		kSizeBoxHelpID,		kDotModePaletteHelpID,		kFavoritePaletteHelpID,	};		enum {		kPaintContentIndex=1,		kPaintRatioIndex,		kPaintBGIndex,	};		enum {		kContentIndex=1,	};		enum {		kPencilToolIndex=1,		kEraserToolIndex,		kMarqueeToolIndex,		kSpoitToolIndex,		kBucketToolIndex,	};		enum {		kBlendCurrentIndex=1,		kBlendBackIndex,		kBlendExchangeIndex,		kBlendLockIndex,		kBlendLightDarkIndex,		kBlendPreviousIndex,	};		enum {		kScrollBarEnableIndex=1,		kScrollBarDisableIndex,	};		enum {		kSizeBoxIndex=1,	};		enum {		kDotLibNameIndex=1,		kRecordedCmdIndex,		kInputCmdIndex,		kDotLibPopupIndex,		kDotCmdPopupIndex,	};		/* ƒwƒ‹ƒvƒ}ƒl[ƒWƒƒ‚ªg—p‰Â”\‚Å‚È‚¢A‚ ‚é‚¢‚Íƒoƒ‹[ƒ“ƒwƒ‹ƒv‚ªƒIƒt‚Ìê‡‚Í‚È‚É‚à‚µ‚È‚¢ */	if (!isHelpMgrAvailable) return;	if (!HMGetBalloons()) return;		part=FindWindow(globPt,&theWindow);	if (theWindow==nil) /* ƒEƒBƒ“ƒhƒE“à‚Å‚È‚¯‚ê‚Î‚È‚É‚à‚µ‚È‚¢ */	{		MyShowBalloon(nil,-1,0);		return;	}		if (part != inContent && part != inGrow)	{		MyShowBalloon(nil,-1,0);		return;	}		GetPort(&port);	SetPort(theWindow);		localPt=globPt;	GlobalToLocal(&localPt);		if (part==inGrow)	{		r=theWindow->portRect;		r.left=r.right-kScrollBarWidth;		r.top=r.bottom-kScrollBarHeight;		MyShowBalloon(&r,kSizeBoxHelpID,kContentIndex);	}	else	{			switch (GetExtWindowKind(theWindow))		{			case kWindowTypePaintWindow:				r=theWindow->portRect;				r.right-=kScrollBarWidth;				r.bottom-=kScrollBarHeight;				if (PtInRect(localPt,&r)) /* ƒyƒCƒ“ƒg—Ìˆæ“à */					MyShowBalloon(&r,kPaintWindowHelpID,kPaintContentIndex);				else				{					r=theWindow->portRect;					r.right=r.left+kRatioWidth;					r.top=r.bottom-kScrollBarHeight;					if (PtInRect(localPt,&r)) /* ”{—¦—Ìˆæ“à */						MyShowBalloon(&r,kPaintWindowHelpID,kPaintRatioIndex);					else					{						r.right+=kBackWidth;						r.left+=kRatioWidth;						if (PtInRect(localPt,&r)) /* ”wŒiî•ñ“à */							MyShowBalloon(&r,kPaintWindowHelpID,kPaintBGIndex);						else /* ƒXƒNƒ[ƒ‹ƒo[ */						{							part=FindControl(localPt,theWindow,&theControl);														r.left+=kBackWidth;							r.right=theWindow->portRect.right-kScrollBarWidth;							if (PtInRect(localPt,&r)) /* …•½ƒXƒNƒ[ƒ‹ƒo[ */								MyShowBalloon(&r,kScrollBarHelpID,(part && theControl) ? 												kScrollBarEnableIndex : kScrollBarDisableIndex);							else							{								r=theWindow->portRect;								r.left=r.right-kScrollBarWidth;								r.bottom-=kScrollBarHeight;								MyShowBalloon(&r,kScrollBarHelpID,(part && theControl) ?												kScrollBarEnableIndex : kScrollBarDisableIndex);							}						}					}				}				break;						case kWindowTypePreviewWindow:				MyShowBalloon(&theWindow->portRect,kPreviewWindowHelpID,kContentIndex);				break;						case kWindowTypeIconListWindow:				r=theWindow->portRect;				r.right-=kScrollBarWidth;				if (PtInRect(localPt,&r))					MyShowBalloon(&r,kIconListWindowHelpID,kContentIndex);				else				{					part=FindControl(localPt,theWindow,&theControl);					r.left=r.right;					r.right+=kScrollBarWidth;					MyShowBalloon(&r,kScrollBarHelpID,(part && theControl) ? 									kScrollBarEnableIndex : kScrollBarDisableIndex);				}				break;						case kWindowTypeIconFamilyWindow:				MyShowBalloon(&theWindow->portRect,kIconFamilyWindowHelpID,kContentIndex);				break;						case kWindowTypeColorPalette1:			case kWindowTypeColorPalette2:				MyShowBalloon(&theWindow->portRect,kColorPaletteHelpID,kContentIndex);				break;						case kWindowTypeToolPalette:				index=(localPt.v-2)/25;				r=theWindow->portRect;				r.top=index*25+2;				r.bottom=index*25+25+2;				MyShowBalloon(&r,kToolPaletteHelpID,index+1);				break;						case kWindowTypeBlendPalette:				SetRect(&r,13,13,22,17);				if (PtInRect(localPt,&r))				{					MyShowBalloon(&r,kBlendPaletteHelpID,kBlendExchangeIndex);					break;				}				SetRect(&r,2,2,16,16);				if (PtInRect(localPt,&r))				{					MyShowBalloon(&r,kBlendPaletteHelpID,kBlendCurrentIndex);					break;				}				SetRect(&r,19,2,33,16);				if (PtInRect(localPt,&r))				{					MyShowBalloon(&r,kBlendPaletteHelpID,kBlendBackIndex);					break;				}				SetRect(&r,1,18,34,26);				if (PtInRect(localPt,&r))				{					MyShowBalloon(&r,kBlendPaletteHelpID,kBlendLockIndex);					break;				}				r=theWindow->portRect;				if (localPt.v > 16)				{					if (localPt.h < 16)					{						r.top=0x16;						r.right=0x11;						MyShowBalloon(&r,kBlendPaletteHelpID,kBlendLightDarkIndex);					}					else if (localPt.h >=19)					{						r.top=0x16;						r.left=0x13;						MyShowBalloon(&r,kBlendPaletteHelpID,kBlendPreviousIndex);					}				}				else					MyShowBalloon(nil,-1,0);				break;						case kWindowTypeTitleWindow:				MyShowBalloon(&theWindow->portRect,kTitleWindowHelpID,kContentIndex);				break;						case kWindowTypeInfoWindow:				MyShowBalloon(&theWindow->portRect,kInfoWindowHelpID,kContentIndex);				break;						case kWindowTypePatternPalette:				MyShowBalloon(&theWindow->portRect,kPatternPaletteHelpID,kContentIndex);				break;						case kWindowTypeDotModePalette:				SetRect(&r,0x05,0x03,0x4f,0x0e);				if (PtInRect(localPt,&r))				{					MyShowBalloon(&r,kDotModePaletteHelpID,kDotLibNameIndex);					break;				}				SetRect(&r,0x05,0x13,0x4f,0x1b);				if (PtInRect(localPt,&r))				{					MyShowBalloon(&r,kDotModePaletteHelpID,kRecordedCmdIndex);					break;				}				SetRect(&r,0x05,0x22,0x60,0x3f);				if (PtInRect(localPt,&r))				{					MyShowBalloon(&r,kDotModePaletteHelpID,kInputCmdIndex);					break;				}				SetRect(&r,0x55,0x03,0x60,0x0e);				if (PtInRect(localPt,&r))				{					MyShowBalloon(&r,kDotModePaletteHelpID,kDotLibPopupIndex);					break;				}				SetRect(&r,0x55,0x12,0x60,0x1d);				if (PtInRect(localPt,&r))				{					MyShowBalloon(&r,kDotModePaletteHelpID,kDotCmdPopupIndex);					break;				}				break;						case kWindowTypeFavoritePalette:				MyShowBalloon(&theWindow->portRect,kFavoritePaletteHelpID,kContentIndex);				break;						default:				MyShowBalloon(nil,-1,0);		}	}	SetPort(port);}static short	gBalloonID=-1,gBalloonIndex;	/* ƒoƒ‹[ƒ“ƒwƒ‹ƒv‚Ì•\¦ */void MyShowBalloon(const Rect *r,short id,short index){	HMMessageRecord	aHelpMsg;	Point			tip;	OSErr			err;	Rect			rr;		typedef struct {		Point	topLeft;		Point	botRight;	} Rect2;		if (gBalloonID==id && gBalloonIndex==index) return;		if (id < 0)	{		gBalloonID=-1;	}	else	{		rr=*r;				aHelpMsg.hmmHelpType=khmmStringRes;		aHelpMsg.u.hmmStringRes.hmmResID=id;		aHelpMsg.u.hmmStringRes.hmmIndex=index;				LocalToGlobal(&((Rect2 *)&rr)->topLeft);		LocalToGlobal(&((Rect2 *)&rr)->botRight);				SetPt(&tip,(rr.right + rr.left) / 2, (rr.bottom + rr.top) / 2);				err=HMShowBalloon(&aHelpMsg,tip,&rr,nil,0,0,kHMRegularWindow);		if (err==noErr)		{			gBalloonID=id;			gBalloonIndex=index;		}		else			gBalloonID=-1;	}}#endif/* ƒ}ƒEƒXƒ_ƒEƒ“ƒCƒxƒ“ƒg‚Ìˆ— */void HandleMouseDown(EventRecord *theEvent){	WindowPtr	theWindow;	short		thePart;	long		menuChoice;	Boolean		isFront;	short		windowKind;		theWindow=MyFrontNonFloatingWindow();	if (GetExtWindowKind(theWindow) == kWindowTypePaintWindow)	{		ResetDot(theWindow);	}		thePart=FindWindow(theEvent->where,&theWindow);		switch (thePart)	{		case inMenuBar:			MySetCursor(0);			menuChoice=MenuSelect(theEvent->where);			HandleMenuChoice(menuChoice);			break;				#if !TARGET_API_MAC_CARBON		case inSysWindow:			SystemClick(theEvent,theWindow);			break;		#endif				case inContent:			ContentClick(theEvent);			break;				#if powerc		case inProxyIcon:			if (gSystemVersion >= 0x0850)			{				OSErr	err;								err=TrackWindowProxyDrag(theWindow,theEvent->where);				if (err==errUserWantsToDragWindow)				{				}			}			break;		#endif				case inDrag:			isFront=(MyFrontNonFloatingWindow()==theWindow || GetWindowKind(theWindow) == kApplicationFloaterKind);			windowKind=GetExtWindowKind(theWindow);						#if powerc			if (gSystemVersion >= 0x0850)			{				OSErr	err;				SInt32	menuResult;				Boolean	found=false;								if (IsWindowPathSelectClick(theWindow,theEvent))				{					err=WindowPathSelect(theWindow,NULL,&menuResult);					if (LoWord(menuResult) > 1)					{						ProcessSerialNumber	psn;						/* Finder‚ğ’T‚· */						found=FindProcessFromCreatorAndType(kFinderCreator,kFinderType,&psn);						if (found)							err=SetFrontProcess(&psn);					}				}			}			else			#endif			{				if (isFront && (theEvent->modifiers &cmdKey)!=0 && 						(windowKind == kWindowTypePaintWindow || windowKind == kWindowTypeIconListWindow))				{					/* ƒ|ƒbƒvƒAƒbƒvƒƒjƒ…[‚©‚à‚µ‚ñ‚È‚¢ */					Point	mousePt=theEvent->where;					short	fontID=GetPortTextFont(GetWindowPort(theWindow));					short	titleWidth;					Str255	title;					Rect	r;					short	windowWidth=GetWindowPortBounds(theWindow,&r)->right;										SetPortWindowPort(theWindow);					GlobalToLocal(&mousePt);					TextFont(0);					GetWTitle(theWindow,title);					titleWidth=StringWidth(title);					TextFont(fontID);										if (mousePt.v<0 && ( mousePt.h > (windowWidth-titleWidth)/2 &&										 mousePt.h < (windowWidth+titleWidth)/2 ))					{						Point	popPos;												SetPt(&popPos,(windowWidth-titleWidth)/2-20,-17);						LocalToGlobal(&popPos);												MySetCursor(0);						TitlePopup(theWindow,popPos);												break;					}				}			}			if (windowKind == kWindowTypePaintWindow)			{				if ((theEvent->modifiers & controlKey)!=0)				{					GrafPtr	port;										/* ”{—¦ƒ|ƒbƒvƒAƒbƒvƒƒjƒ…[ */					GetPort(&port);					SetPortWindowPort(theWindow);										MySetCursor(0);					ChangeRatio(theWindow,theEvent->where);										SetPort(port);					break;				}			}			{				Rect	myScreenRect;								GetRegionBounds(GetGrayRgn(),&myScreenRect);				DragReferencedWindow(theWindow,theEvent->where,&myScreenRect);			}						/* ƒEƒBƒ“ƒhƒE‚ğ“®‚©‚µ‚½‚ ‚Æ‚É‚ÍAˆê”Ô‘O‚ÌƒEƒBƒ“ƒhƒE‚ª•Ï‰»‚µ‚½‚è‚·‚é‚©‚çAƒƒjƒ…[‚ÌXV‚ª•K—v */			if (!isFront)				UpdateMenus();			break;				case inGoAway:			if (TrackGoAway(theWindow,theEvent->where))			{				switch (GetExtWindowKind(theWindow))				{					case kWindowTypePaintWindow:						ClosePaintWindow(theWindow,false);						UpdateMenus(); /* ƒEƒBƒ“ƒhƒE‚ğ•Â‚¶‚é‚Æ‚¢‚¿‚Î‚ñ‘O‚ÌƒEƒBƒ“ƒhƒE‚ª•Ï‰»‚·‚é‚©‚çƒƒjƒ…[‚ğXV */						break;										case kWindowTypeIconListWindow:						CloseIconFile(theWindow,false);						UpdateMenus();						break;										case kWindowTypeIconFamilyWindow:						CloseFamilyWindow(theWindow,true,false);						UpdateMenus();						break;										case kWindowTypeDotModePalette:						HideReferencedWindow(theWindow);						{							PaintWinRec	*eWinRec;														theWindow=MyFrontNonFloatingWindow();							if (theWindow==nil || GetExtWindowKind(theWindow)!=kWindowTypePaintWindow) break;														eWinRec=GetPaintWinRec(theWindow);							ResetDot(theWindow);							eWinRec->isDotMode=false;							UpdateEffectMenu();						}						break;										default:						ShowHidePalette(theWindow,false);						break;				}			}			break;				case inGrow:			switch (GetExtWindowKind(theWindow))			{				case kWindowTypeIconListWindow:					ResizeIconWindow(theWindow,theEvent->where);					break;								case kWindowTypePaintWindow:					ResetRuler();					ResizePaintWindow(theWindow,theEvent->where);					break;			}			break;				case inZoomIn:		case inZoomOut:			MyZoomWindow(theWindow,thePart,theEvent);			break;	}}/* ƒL[ƒ_ƒEƒ“ƒCƒxƒ“ƒg‚Ìˆ— */void HandleKeyDown(EventRecord *theEvent){	short	dx[4]={-1,1,0,0},dy[4]={0,0,1,-1};	WindowPtr	theWindow;	SInt16	keyCode,theChar;	PaintWinRec	*eWinRec;	short	moveRatio;	IconListWinRec	*iWinRec;	IconFamilyWinRec	*fWinRec;	Boolean	optDown=(Boolean)((theEvent->modifiers & optionKey) !=0);	Boolean shiftDown=(Boolean)((theEvent->modifiers & shiftKey) !=0);		keyCode = (SInt16)( theEvent->message & keyCodeMask ) >> 8;	theChar = (SInt16)( theEvent->message & charCodeMask );		theWindow=MyFrontNonFloatingWindow();		if (theWindow!=nil)	{		switch (GetExtWindowKind(theWindow))		{			case kWindowTypeIconFamilyWindow:				/* ƒAƒCƒRƒ“ƒtƒ@ƒ~ƒŠƒEƒBƒ“ƒhƒE */				fWinRec=GetIconFamilyRec(theWindow);				if (theChar == 0x09)				{					/* ƒ^ƒu */					SelectNextIcon(fWinRec,shiftDown);					return;					break;				}				else if ((**fWinRec->iconNameTE).active)				{					if (theChar != kReturnCharCode && theChar != kEnterCharCode)					{						switch (theChar)						{							case kLeftArrowCharCode:							case kRightArrowCharCode:							case kUpArrowCharCode:							case kDownArrowCharCode:								TEKey(theChar,fWinRec->iconNameTE);								break;														default:								TEKey(theChar,fWinRec->iconNameTE);								fWinRec->wasChanged=true;								UpdateSaveMenu();								break;						}						UpdateClipMenu();						return;					}					return;				}				else				{					switch (theChar)					{						case kReturnCharCode:						case kEnterCharCode:							/* ƒŠƒ^[ƒ“ or ƒGƒ“ƒ^[ */							EditFamilyIcon(theWindow,kForceNone);							return;							break;												case kLeftArrowCharCode:						case kRightArrowCharCode:						case kUpArrowCharCode:						case kDownArrowCharCode:							/* ƒJ[ƒ\ƒ‹ƒL[ */							SelectNextIcon2(fWinRec,dx[keyCode-0x7b],dy[keyCode-0x7b]);							return;							break;												case 0x08:							/* ƒfƒŠ[ƒgƒL[ */							DeleteSelectedIconPicture(theWindow);							break;					}				}				break;						case kWindowTypeIconListWindow:				/* ƒAƒCƒRƒ“ƒŠƒXƒgƒEƒBƒ“ƒhƒE */				iWinRec=GetIconListRec(theWindow);				if (IsIconSelected(iWinRec))				{					switch (theChar)					{						case kBackspaceCharCode:							/* ƒfƒŠ[ƒgƒL[ */							DoDelete(false);							return;							break;												case kReturnCharCode:						case kEnterCharCode:							/* ƒŠƒ^[ƒ“ or ƒGƒ“ƒ^[ƒL[ */							OpenSelectedIcon(theWindow);							return;							break;					}				}				switch (theChar)				{						case kLeftArrowCharCode:						case kRightArrowCharCode:						case kUpArrowCharCode:						case kDownArrowCharCode:							/* ƒJ[ƒ\ƒ‹ƒL[ */							MoveSelectedIcon(theWindow,dx[keyCode-0x7b],dy[keyCode-0x7b]);							return;							break;				}				break;						case kWindowTypePaintWindow:				/* ƒyƒCƒ“ƒgƒEƒBƒ“ƒhƒE */				eWinRec=GetPaintWinRec(theWindow);								if (optDown && (keyCode==0x1f || theChar=='o'))	/* opt+o */				{					DispPaintMask(theWindow);					return;				}				if (eWinRec->isDotMode)				{					if (HandleDotKey(theEvent->what,theChar,theWindow)) return;				}				if (eWinRec->isSelected) /* if anywhere is selected */				{					switch (theChar)					{						case kBackspaceCharCode: /* delete key */							DoDelete(optDown);							return;							break;												case kLeftArrowCharCode: /* cursor keys */						case kRightArrowCharCode:						case kUpArrowCharCode:						case kDownArrowCharCode:							/* ‚Ü‚¸A‘I‘ğ‚Ìˆó‚ğÁ‚· */							if (eWinRec->showSelection)								DispSelection(theWindow);														moveRatio=(optDown ? (shiftDown ? 4 : 3) : 0);							/* “®‚©‚·B“®‚©‚µ‚½‚ ‚Æ‚ÍÄ•`‰æ */							MoveSelection(theWindow,dx[keyCode-0x7b]<<moveRatio,dy[keyCode-0x7b]<<moveRatio,true);							return;							break;												case kEnterCharCode: /* enter key */							FixSelection(theWindow);							return;							break;												case 't':						case 'T':							HandleEffectChoice(iTransparent);							return;							break;												case 'o':						case 'O':							HandleEffectChoice(iOpaque);							return;							break;												case 'b':						case 'B':							HandleEffectChoice(iBlend);							return;							break;					}				}				else /* not selected */				{					switch (theChar)					{						case kLeftArrowCharCode: /* cursor keys */						case kRightArrowCharCode:						case kUpArrowCharCode:						case kDownArrowCharCode:							/* ƒXƒNƒ[ƒ‹B“®‚©‚µ‚½‚ ‚Æ‚ÍÄ•`‰æ */							DoScrollPaintWindowByKeys(theWindow,theChar,theEvent->modifiers);							return;							break;					}				}				switch (theChar)				{					case kHomeCharCode:					case kEndCharCode:					case kPageUpCharCode:					case kPageDownCharCode:						DoScrollPaintWindowByKeys(theWindow,theChar,theEvent->modifiers);						return;						break;				}				switch (theChar)				{					case 'A':					case 'a':						HandleEffectChoice(iAntialias);						return;						break;										case 'f':					case 'F':						HandleEffectChoice(iFill);						return;						break;										case 'h':					case 'H':						HandleEffectChoice(iFlipHorizontal);						return;						break;										case 'v':					case 'V':						HandleEffectChoice(iFlipVertical);						return;						break;										case 'd':					case 'D':						HandlePenColorChoice(iPenDarken);						return;						break;										case 'l':					case 'L':						HandlePenColorChoice(iPenLighten);						return;						break;										case 's':					case 'S':						DoAutoSelect(theWindow);						break;										case 'z':					case 'Z':						DoUndo();						return;						break;				}				switch (theChar)				{					case '1':						if (shiftDown)							HandleColorModeChoice(iMonoD);						else							HandleColorModeChoice(iMonochrome);						return;						break;										case '3':						if (shiftDown)							HandleColorModeChoice(iAppleIconColorD);						else							HandleColorModeChoice(iAppleIconColor);						return;						break;										case '4':						if (optDown)							if (shiftDown)								HandleColorModeChoice(i16GrayD);							else								HandleColorModeChoice(i16Gray);						else							if (shiftDown)								HandleColorModeChoice(i16ColorD);							else								HandleColorModeChoice(i16Color);						return;						break;										case '6':						if (shiftDown)							HandleColorModeChoice(i216ColorD);						else							HandleColorModeChoice(i216Color);						return;						break;				}				break;		}	}		/* ƒc[ƒ‹‘I‘ğ‚È‚ÇAƒEƒBƒ“ƒhƒE‚ÉˆË‘¶‚µ‚È‚¢‚à‚Ì */	switch(theChar)	{		/* ƒc[ƒ‹ */		case 'p':		case 'P':			if (gSelectedTool == kPencilTool)				ToolSelect(kEraserTool);			else				ToolSelect(kPencilTool);			return;			break;				case 'm':		case 'M':			ToolSelect(kMarqueeTool);			return;			break;				case 'e':		case 'E':			if (gSelectedTool == kEraserTool)				ToolSelect(kPencilTool);			else				ToolSelect(kEraserTool);			return;			break;				case 'k':		case 'K':			ToolSelect(kBucketTool);			return;			break;				case 'i':		case 'I':			ToolSelect(kSpoitTool);			return;			break;				/* ƒyƒ“‚ÌFŠÖ˜A */		case 0x1e: /* ã */			HandlePenColorChoice(iPenLighten);			return;			break;				case 0x1f: /* ‰º */			HandlePenColorChoice(iPenDarken);			return;			break;				case 0x09: /* tab key */			if (optDown)				HandlePenColorChoice(iPrevBlend);			else				HandlePenColorChoice(iPrevColor);			return;			break;	}}/* •ÒWƒEƒBƒ“ƒhƒE‚Ìƒf[ƒ^‚©‚çó‘Ô‚ğæ‚èo‚· */void UpdateEditWinData(void){	WindowPtr	theWindow=MyFrontNonFloatingWindow();	PaintWinRec	*eWinRec;	Rect	r;		/* ƒAƒNƒeƒBƒuƒEƒBƒ“ƒhƒE‚È‚¯‚ê‚ÎƒvƒŒƒrƒ…[‚ğ‰B‚· */	if (theWindow==nil)	{		HideReferencedWindow(gPreviewWindow);		HideReferencedWindow(DotModePalette);				if (gPaletteCheck == kPaletteCheckUsed) /* ƒpƒŒƒbƒg‚Ìƒ`ƒFƒbƒN‚ğƒAƒbƒvƒf[ƒg */			UpdatePaletteCheck();		return;	}		if (GetExtWindowKind(theWindow)!=kWindowTypePaintWindow)	{		SetPortWindowPort(gPreviewWindow);		SizeWindow(gPreviewWindow,kIconPreviewWidth,kIconPreviewHeight,true);		GetWindowPortBounds(gPreviewWindow,&r);		ClipRect(&r);		MyInvalWindowPortBounds(gPreviewWindow);		ShowReferencedWindow(gPreviewWindow);		SetPortWindowPort(theWindow);				HideReferencedWindow(DotModePalette);				if (gPaletteCheck == kPaletteCheckUsed) /* ƒpƒŒƒbƒg‚Ìƒ`ƒFƒbƒN‚ğƒAƒbƒvƒf[ƒg */			UpdatePaletteCheck();		return;	}		ShowReferencedWindow(gPreviewWindow);		/* ƒ‹[ƒ‰ */	ResetRuler();		eWinRec=GetPaintWinRec(theWindow);		/* ƒvƒŒƒrƒ…[‚àXV */	SetPortWindowPort(gPreviewWindow);	SizeWindow(gPreviewWindow,eWinRec->iconSize.right,eWinRec->iconSize.bottom,true);	ClipRect(&eWinRec->iconSize);	MyInvalWindowPortBounds(gPreviewWindow);	SetPortWindowPort(theWindow);		/* •`‰æ“_ƒ‚[ƒh‚È‚çƒpƒŒƒbƒg‚ğ•\¦ */	if (eWinRec->isDotMode)		ShowReferencedWindow(DotModePalette);	else		HideReferencedWindow(DotModePalette);		/* ‘I‘ğ—Ìˆæ‚ª‚ ‚é‚È‚ç‘I‘ğƒc[ƒ‹‚É•Ï‚¦‚é */	if (!EmptyRgn(eWinRec->eSelectedRgn) && !gToolPrefs.selectionMasking)		ToolSelect(kMarqueeTool);		if (gPaletteCheck == kPaletteCheckUsed)		UpdatePaletteCheck();	else	{		/* ƒAƒCƒRƒ“‚ğŠJ‚¢‚½‚à‚Ì‚Å‚ ‚ê‚ÎA•K—v‚É‰‚¶‚ÄƒJƒ‰[ƒpƒŒƒbƒg‚Ìˆó‚ğ•ÏX */		if (eWinRec->iconType.fileType == 'icns')		{			short	newPaletteCheck=gPaletteCheck;						if (eWinRec->iconKind == kL8Data || eWinRec->iconKind == kS8Data)				newPaletteCheck=kPaletteCheckAIC;			else if (eWinRec->iconKind == kL4Data || eWinRec->iconKind == kS4Data)				newPaletteCheck=kPaletteCheck16;						if (gPaletteCheck != newPaletteCheck)			{				HandlePaletteChoice(newPaletteCheck+1);			}		}	}}/* ƒ^ƒCƒgƒ‹ƒo[‚Ìƒ|ƒbƒvƒAƒbƒv */void TitlePopup(WindowPtr theWindow,Point popPos){	FSSpec		spec,tempSpec;	MenuHandle	popMenu;	OSErr		err=noErr;	short		item=1;	long		selItem;	Boolean		savedFlag;	short		windowKind;		if ((windowKind=GetExtWindowKind(theWindow))==kWindowTypePaintWindow)	{		PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);				if (eWinRec->iconType.fileType == 'icns') return;				spec=eWinRec->saveFileSpec;		savedFlag=eWinRec->iconHasSaved;	}	else if (windowKind==kWindowTypeIconListWindow)	{		IconListWinRec	*iWinRec=GetIconListRec(theWindow);				spec=iWinRec->iconFileSpec;		savedFlag=iWinRec->wasSaved;	}	else		return;		tempSpec=spec;		popMenu=GetMenu(mTitlePopup);		if (savedFlag)	{		while (spec.parID!=fsRtParID && err==noErr)		{			AppendMenu(popMenu,"\p ");			SetMenuItemText(popMenu,item++,spec.name);			err=FSMakeFSSpec(spec.vRefNum,spec.parID,0,&spec);		}		if (err==noErr)		{			AppendMenu(popMenu,"\p ");			SetMenuItemText(popMenu,item++,spec.name);		}	}	else		AppendMenu(popMenu,"\pNot Saved Yet");		InsertMenu(popMenu,-1);		selItem=PopUpMenuSelect(popMenu,popPos.v,popPos.h,1);		item=LoWord(selItem);		if (item>1)	{		spec=tempSpec;		while (item-->2)		{			err=FSMakeFSSpec(spec.vRefNum,spec.parID,0,&spec);		}				FSpAERevealFile(&spec);	}					DeleteMenu(mTitlePopup);	DisposeMenu(popMenu);}/* w’èƒtƒ@ƒCƒ‹‚ğFinderã‚Å•\¦ */void FSpAERevealFile(FSSpec *spec){	AliasHandle	fileAlias,parentAlias;	FSSpec		parentSpec;		ProcessSerialNumber	psn;	Boolean		found;	OSErr		err;		AEDesc		target={typeNull,NULL};	AppleEvent	aeEvent={typeNull,NULL};	AEDesc		parentDesc={typeNull,NULL};	AEDescList	fileList={typeNull,NULL};		/* Finder‚ğ’T‚· */	found=FindProcessFromCreatorAndType(kFinderCreator,kFinderType,&psn);	if (!found) return;		/* Finder‚ğƒ^[ƒQƒbƒg‚Éw’è */	err=AECreateDesc(typeProcessSerialNumber,&psn,sizeof(ProcessSerialNumber),&target);		/* ‘—•t‚·‚éAppleƒCƒxƒ“ƒg‚ğì¬ */	err=AECreateAppleEvent(kAEFinderEvents,kAERevealSelection,&target,kAutoGenerateReturnID,							kAnyTransactionID,&aeEvent);		/* Finderã‚Å•\¦‚·‚éƒtƒ@ƒCƒ‹iƒtƒHƒ‹ƒ_j‚ÌƒŠƒXƒg‚ğì¬ */	err=AECreateList(nil,0,false,&fileList);		/* ƒŠƒXƒg‚Éƒtƒ@ƒCƒ‹‚ğ’Ç‰Á */	err=NewAlias(nil,spec,&fileAlias);	if (err==noErr)	{		HLock((Handle)fileAlias);#if __AL_USE_OPAQUE_RECORD__		Size aliasSize = GetAliasSize( fileAlias );#else		unsigned short aliasSize = (*fileAlias)->aliasSize;#endif		err=AEPutPtr(&fileList,1,typeAlias,(Ptr)*fileAlias,aliasSize);		HUnlock((Handle)fileAlias);		DisposeHandle((Handle)fileAlias);	}		/* ƒŠƒXƒg‚ğAppleƒCƒxƒ“ƒg‚ÌkeySelectionƒpƒ‰ƒ[ƒ^‚Éİ’è‚·‚é */	err=AEPutParamDesc(&aeEvent,keySelection,&fileList);		/* ƒtƒ@ƒCƒ‹‚ÌeƒtƒHƒ‹ƒ_‚ÌƒfƒXƒNƒŠƒvƒ^‚ğì¬ */	err=FSMakeFSSpec(spec->vRefNum,spec->parID,0,&parentSpec);	err=NewAlias(nil,&parentSpec,&parentAlias);	if (err==noErr)	{		HLock((Handle)parentAlias);#if __AL_USE_OPAQUE_RECORD__		Size aliasSize = GetAliasSize( parentAlias );#else		unsigned short aliasSize = (*parentAlias)->aliasSize;#endif		err=AECreateDesc(typeAlias,(Ptr)*parentAlias,aliasSize,&parentDesc);		HUnlock((Handle)parentAlias);		DisposeHandle((Handle)parentAlias);	}		/* eƒtƒHƒ‹ƒ_‚ÌƒfƒXƒNƒŠƒvƒ^‚ğkeyDirectObjectƒpƒ‰ƒ[ƒ^‚Éİ’è‚·‚é */	err=AEPutParamDesc(&aeEvent,keyDirectObject,&parentDesc);		/* AppleƒCƒxƒ“ƒg‚ğ‘—•t‚·‚é */	err=AESend(&aeEvent,nil,kAENoReply+kAECanSwitchLayer+kAEAlwaysInteract,				kAENormalPriority,kNoTimeOut,nil,nil);		/* Šm•Û‚µ‚½ƒfƒXƒNƒŠƒvƒ^‚ğ”jŠü‚·‚é */	err=AEDisposeDesc(&target);	err=AEDisposeDesc(&aeEvent);	err=AEDisposeDesc(&fileList);	err=AEDisposeDesc(&parentDesc);		err=SetFrontProcess(&psn);}/* ƒtƒ@ƒCƒ‹‚ğ“¾‚é */OSErr   GetFile(FSSpec *theSpec,long index,Boolean *type){	CInfoPBRec	pb;	DirInfo		*fiPtr = &pb.dirInfo;	OSErr		err;		fiPtr->ioCompletion	= nil;	fiPtr->ioVRefNum	= theSpec->vRefNum;	fiPtr->ioNamePtr	= theSpec->name;	fiPtr->ioDrDirID	= theSpec->parID;	fiPtr->ioFDirIndex	= (short)index;		err = PBGetCatInfoSync(&pb);		if(err == noErr) {		FSMakeFSSpec( pb.hFileInfo.ioVRefNum,pb.hFileInfo.ioFlParID,pb.hFileInfo.ioNamePtr, &(*theSpec) );        if( pb.hFileInfo.ioFlAttrib & 0x10 ){	/* ƒtƒHƒ‹ƒ_‚¾‚Á‚½‚ç */        	*type=true;        }else{									/* ƒtƒ@ƒCƒ‹‚¾‚Á‚½‚ç */        	*type=false;        }	}		return err;}
+/* ------------------------------------------------------------ */
+/*  IconParty.c                                                 */
+/*     åˆæœŸåŒ–ã€ã‚¤ãƒ™ãƒ³ãƒˆå‡¦ç†ãªã©ï¼ˆãƒ¡ã‚¤ãƒ³ãƒ«ãƒ¼ãƒãƒ³ï¼‰               */
+/*                                                              */
+/*                 1997.1.11 - 2001.1.27  naoki iimura        	*/
+/* ------------------------------------------------------------ */
+
+/* includes */
+#ifdef __APPLE_CC__
+#include	<Carbon/Carbon.h>
+#else
+#include	<QDOffscreen.h>
+#include	<sound.h>
+#include	<Drag.h>
+#include	<Appearance.h>
+#include	<TSMTE.h>
+#include	<Navigation.h>
+#include	<Balloons.h>
+#include	<Resources.h>
+#include	<Gestalt.h>
+#include	<LowMem.h>
+#include	<TextUtils.h>
+#include	<Script.h>
+#include	<ToolUtils.h>
+#endif
+
+#ifdef __APPLE_CC__
+#include	<MoreFilesX.h>
+#else
+#include	<MoreFilesExtras.h>
+#endif
+
+#include	"WindowExtensions.h"
+
+#include	"Globals.h"
+#include	"AESupport.h"
+#include	"IconParty.h"
+#include	"MenuRoutines.h"
+#include	"FileRoutines.h"
+#include	"UsefulRoutines.h"
+#include	"TabletUtils.h"
+#include	"DebugMode.h"
+#include	"PreCarbonSupport.h"
+#include	"IconRoutines.h"
+#include	"IconListWindow.h"
+#include	"IconFamilyWindow.h"
+#include	"WindowRoutines.h"
+#include	"Preferences.h"
+#include	"ExternalEditorSupport.h"
+#include	"EditRoutines.h"
+#include	"PaintRoutines.h"
+#include	"ToolRoutines.h"
+#include	"UpdateCursor.h"
+
+/* prototypes */
+static void	CurRgnInit(void);
+static void	InitConstants(void);
+static void	InitGlobals(void);
+static void	GWorldInit(void);
+static void	DotLibInit(void);
+
+static void	MainLoop(void);
+static void	DoIdleEvent(EventRecord *theEvent);
+static void	HandleMouseDown(EventRecord *theEvent);
+static void	HandleKeyDown(EventRecord *theEvent);
+
+static void	ResetSysSettings(void);
+
+static void	TitlePopup(WindowPtr theWindow,Point popPos);
+static void	FSpAERevealFile(FSSpec *spec);
+
+static void	InvertDot(WindowPtr theWindow);
+static void	InvertDotMain(PaintWinRec *eWinRec);
+static void	MoveDot(WindowPtr theWindow,short dx,short dy);
+
+static void	PutCommand(Str255 command,char newCommand);
+static void	CatChar2(char c,Str255 string);
+static void	MoveDotMain(Point *pt,short dx,short dy,Rect *r);
+
+#if !TARGET_API_MAC_CARBON
+static void	UpdateBalloonHelp(Point globPt);
+static void	MyShowBalloon(const Rect *r,short id,short index);
+#endif
+
+/* Window.cã§ã®å¤‰æ•°ã ã£ãŸã‹ãª */
+extern WindowPtr	DotModePalette;
+
+
+#define	IPERR_RESID	4009
+#define	IPERR1	1
+#define	IPERR2	2
+#define	IPERR3	3
+
+
+/* main */
+#ifdef __APPLE_CC__
+int main(void)
+#else
+void main(void)
+#endif
+{
+	Boolean	needToUnload=false;
+	OSErr	err=noErr;
+	
+	#if !TARGET_API_MAC_CARBON
+	SetApplLimit(GetApplLimit()-16384);
+	
+	MaxApplZone();
+	#endif
+	ToolBoxInit();
+	{
+		#if TARGET_API_MAC_CARBON
+		MoreMasterPointers(10);
+		#else
+		short	i;
+		
+		for (i=0; i<10; i++)
+			MoreMasters();
+		#endif
+	}
+	
+	CreateDebugFile();
+	
+	gApplRefNum=CurResFile();		/* ã‚¢ãƒ—ãƒªã‚±ãƒ¼ã‚·ãƒ§ãƒ³ã®ãƒªãƒ•ã‚¡ãƒ¬ãƒ³ã‚¹ */
+	#if TARGET_API_MAC_CARBON && 0
+	{
+		Str255	temp;
+		Handle	h;
+		short	c;
+		
+		h=Get1Resource('WIND',128);
+		if (h==nil) ErrorAlert("\pGet1Resource() failed.");
+		
+		h=GetResource('WIND',128);
+		if (h==nil) ErrorAlert("\pGetResource() failed.");
+		
+		NumToString(gApplRefNum,temp);
+		ErrorAlert(temp);
+		
+		UseResFile(gApplRefNum);
+		c=CountResources('WIND');
+		NumToString(c,temp);
+		ErrorAlert(temp);
+		
+		h=Get1Resource('WIND',128);
+		if (h==nil) ErrorAlert("\pGet1Resource() failed.");
+		
+		h=GetResource('WIND',128);
+		if (h==nil) ErrorAlert("\pGetResource() failed.");
+	}
+	#endif
+	InitConstants(); WriteStrToDebugFile("\pInitConstants.\r");
+	InitGlobals(); WriteStrToDebugFile("\pInitGlobals.\r");
+	
+	#if TARGET_API_MAC_CARBON
+	if (gSystemVersion >= 0x0810 && gCarbonLibVersion >= 0x0102) /* 1.0.2ä»¥é™ã®è¿½åŠ APIãŒå¤šã„ãŸã‚ */
+	#else
+	if (gSystemVersion >= 0x0700)
+	#endif
+	{
+		LoadPrefFile(); WriteStrToDebugFile("\pLoadPrefFile.\r");
+		
+		if (isAppearanceAvailable) err=RegisterAppearanceClient();
+		if (isContextualMenuAvailable) InitContextualMenus();
+		
+		MenuBarInit(); WriteStrToDebugFile("\pMenuBarInit.\r");
+		ToolWindowInit(); WriteStrToDebugFile("\pToolWindowInit.\r");
+		DotLibInit(); WriteStrToDebugFile("\pDotLibInit.\r");
+		AEInit(); WriteStrToDebugFile("\pAEInit.\r");
+		CurRgnInit(); WriteStrToDebugFile("\pCurRgnInit.\r");
+		
+		GWorldInit(); WriteStrToDebugFile("\pGWorldInit.\r");
+		
+		ChangeSysSettings(); WriteStrToDebugFile("\pChangeSysSettings.\r");
+		
+		#if !TARGET_API_MAC_CARBON
+		if (isTSMTEAvailable) InitTSMAwareApplication();
+		#endif
+		#if TARGET_API_MAC_CARBON
+			needToUnload = (NavLoad() == noErr);
+		#else
+		if (isNavServicesAvailable && useNavigationServices) needToUnload = (NavLoad() == noErr);
+		#endif
+		
+		/* ä¹±æ•°ã®åˆæœŸåŒ– */
+		#if TARGET_API_MAC_CARBON
+		{
+			UInt32	time;
+			
+			GetDateTime(&time);
+			SetQDGlobalsRandomSeed((SInt32)time);
+		}
+		#else
+		GetDateTime((unsigned long*)(&qd.randSeed));
+		#endif
+		MainLoop();
+		
+		ResetSysSettings();
+		
+		#if !TARGET_API_MAC_CARBON
+		if (isTSMTEAvailable) CloseTSMAwareApplication();
+		#endif
+		if (isNavServicesAvailable && needToUnload) NavUnload();
+		
+		/* ç¢ºä¿ã—ãŸãƒ¡ãƒ¢ãƒªã‚’è§£æ”¾ */
+		DisposeGWorld(gBlendPalettePtr);
+		DisposeRgn(gRulerRgn);
+		DisposeRgn(gCurRgnHand);
+		
+		/* çµ‚äº†å‰ã«åˆæœŸè¨­å®šã‚’ä¿å­˜ */
+		if (gPrefFileRefNum>0)
+			SavePrefFile();
+		if (gDotLibRefNum>0)
+			CloseResFile(gDotLibRefNum);
+	}
+	else
+	#if TARGET_API_MAC_CARBON
+		ErrorAlertFromResource(IPERR_RESID,IPERR3);
+	#else
+		ErrorAlertFromResource(IPERR_RESID,IPERR1);
+	#endif
+	
+	CloseDebugFile();
+	
+	#ifdef __APPLE_CC__
+	return 0;
+	#endif
+}
+
+/* ãƒã‚¦ã‚¹ã‚«ãƒ¼ã‚½ãƒ«æ›´æ–°ã®ãŸã‚ã®ãƒªãƒ¼ã‚¸ãƒ§ãƒ³ã®åˆæœŸåŒ– */
+void CurRgnInit(void)
+{
+	gCurRgnHand=NewRgn();
+}
+
+/* å®šæ•°ã®åˆæœŸåŒ– */
+void InitConstants(void)
+{
+	SetRGBColor(&rgbBlackColor,0x0000U,0x0000U,0x0000U);
+	SetRGBColor(&rgbWhiteColor,0xffffU,0xffffU,0xffffU);
+	SetRGBColor(&rgbLBColor,0x2222U,0x2222U,0x2222U);
+	SetRect(&gToolRect,0x03,0x03,0x20,0x19);
+	#if ENGLISH_VER
+	InsetRect(&gToolRect,-1,-1);
+	#endif
+}
+
+/* ã‚°ãƒ­ãƒ¼ãƒãƒ«å¤‰æ•°ã®åˆæœŸåŒ– */
+void InitGlobals(void)
+{
+	OSErr	err;
+	long	response;
+	FSSpec	theFile;
+	
+	gIsDialog=false;
+	gFrontWindow=nil;
+	
+	gBlendRatio=rgbBlackColor;
+	gBlendMode=srcCopy;
+	gBSelectedItem=i0percent;			/* 0%:ä¸é€æ˜ */
+	gCurrentColor.rgb=rgbBlackColor;	/* é»’ */
+	gCurrentColor.isTransparent=false;	/* é€æ˜è‰²ã§ã¯ãªã„ */
+	gPrevColor.rgb=rgbBlackColor;		/* é»’ */
+	gPrevColor.isTransparent=false;		/* é€æ˜è‰²ã§ã¯ãªã„ */
+	gBackColor.rgb=rgbWhiteColor;		/* ç™½ */
+	gBackColor.isTransparent=false;		/* é€æ˜è‰²ã§ã¯ãªã„ */
+	gSelectedTool=kPencilTool;				/* é‰›ç­†ãƒ„ãƒ¼ãƒ« */
+	gPatternNo=1;						/* ï¼‘ç•ªç›®ã®ãƒ‘ã‚¿ãƒ¼ãƒ³ï¼ˆé»’ï¼‰ */
+	gPenWidth=1;						/* ãƒšãƒ³ã®å¹…ï¼ï¼‘ */
+	gPenHeight=1;						/* ãƒšãƒ³ã®é«˜ã•ï¼ï¼‘ */
+	gEraserWidth=2;						/* æ¶ˆã—ã‚´ãƒ ã®å¹…ï¼ï¼’ */
+	gEraserHeight=2;					/* æ¶ˆã—ã‚´ãƒ ã®é«˜ã•ï¼ï¼’ */
+	SetPt(&gPrevRulerPt,-1,-1);			/* ãƒ«ãƒ¼ãƒ©ãƒ¼ã®è¡¨ç¤ºã•ã‚Œã¦ã„ã‚‹å ´æ‰€ï¼ˆè¡¨ç¤ºã•ã‚Œã¦ã„ãªã„ï¼‰ */
+	gBlendLocked=false;					/* ãƒ–ãƒ¬ãƒ³ãƒ‰ãƒ‘ãƒ¬ãƒƒãƒˆã¯ãƒ­ãƒƒã‚¯ã•ã‚Œã¦ã„ãªã„ */
+	
+	/* ã‚¿ãƒ–ãƒ¬ãƒƒãƒˆãŒä½¿ç”¨å¯èƒ½ã‹ã©ã†ã‹ã‚’ãƒã‚§ãƒƒã‚¯ */
+	isTabletAvailable=GetTablet();
+	
+	SetRGBColor(&rgbGrayColor,0x8000U,0x8000U,0x8000U);
+	
+	/* ãƒ†ãƒ³ãƒãƒ©ãƒªãƒ•ã‚¡ã‚¤ãƒ«ã®ç•ªå·ã¯1ã‹ã‚‰ */
+	gTempFileNum=1;
+	
+	/* ãƒ‰ãƒ©ãƒƒã‚°ãƒãƒãƒ¼ã‚¸ãƒ£ãŒä½¿ç”¨å¯èƒ½ã‹ã©ã†ã‹ */
+	isDragMgrPresent= ( (Gestalt(gestaltDragMgrAttr, &response) == noErr) &&
+			 ((response & (1L << gestaltDragMgrPresent)) != 0) );
+	
+	/* ã‚¢ãƒ”ã‚¢ãƒ©ãƒ³ã‚¹ãƒãƒãƒ¼ã‚¸ãƒ£ãŒä½¿ç”¨å¯èƒ½ã‹ã©ã†ã‹ */
+	err=Gestalt(gestaltAppearanceAttr,&response);
+	isAppearanceAvailable=(err==noErr && (response & (kGestaltMask << gestaltAppearanceExists)));
+	#if powerc
+		if (RegisterAppearanceClient == nil) isAppearanceAvailable=false;
+	#endif
+	
+	/* ã‚³ãƒ³ãƒ†ã‚¯ã‚¹ãƒˆãƒ¡ãƒ‹ãƒ¥ãƒ¼ãŒä½¿ç”¨å¯èƒ½ã‹ã©ã†ã‹ */
+	#if powerc
+		isContextualMenuAvailable=(InitContextualMenus != nil);
+	#else
+		err=Gestalt(gestaltContextualMenuAttr,&response);
+		isContextualMenuAvailable=(err==noErr &&
+				(response & (kGestaltMask << gestaltContextualMenuTrapAvailable)));
+	#endif
+	
+	/* Text Services ManagerãŒä½¿ç”¨å¯èƒ½ã‹ã©ã†ã‹ */
+	err=Gestalt(gestaltTSMgrVersion,&response);
+	isTSMgrAvailable=(err==noErr);
+	
+	/* ã‚¤ãƒ³ãƒ©ã‚¤ãƒ³å…¥åŠ›ãŒã§ãã‚‹ã‹ã©ã†ã‹ */
+	err=Gestalt(kTSMTESignature,&response);
+	isTSMTEAvailable=(err==noErr && (response &(kGestaltMask << gestaltTSMTE)));
+	
+	/* NavigationServicesãŒä½¿ç”¨å¯èƒ½ã‹ã©ã†ã‹ */
+	isNavServicesAvailable=NavServicesAvailable();
+	if (isNavServicesAvailable) gNavLibraryVersion=NavLibraryVersion();
+	
+	/* ãƒ˜ãƒ«ãƒ—ãƒãƒãƒ¼ã‚¸ãƒ£ãŒä½¿ç”¨å¯èƒ½ã‹ã©ã†ã‹ */
+	err=Gestalt(gestaltHelpMgrAttr,&response);
+	isHelpMgrAvailable=(err==noErr && (response & (kGestaltMask << gestaltHelpMgrPresent)));
+	
+	/* QuickTimeã®ãƒãƒ¼ã‚¸ãƒ§ãƒ³ */
+	err=Gestalt(gestaltQuickTimeVersion,&response);
+	gQTVersion=(err==noErr ? response : 0L);
+	
+	/* ã‚·ã‚¹ãƒ†ãƒ ã®ãƒãƒ¼ã‚¸ãƒ§ãƒ³ */
+	err=Gestalt(gestaltSystemVersion,&gSystemVersion);
+	if (err!=noErr) gSystemVersion=0;
+	
+	#if TARGET_API_MAC_CARBON
+	err=Gestalt(gestaltCarbonVersion,&gCarbonLibVersion);
+	if (err!=noErr) gCarbonLibVersion=0;
+	#endif
+	
+	/* OS Xã‹ã©ã†ã‹ */
+	err=Gestalt(gestaltMenuMgrAttr,&response);
+	if (err==noErr) isOSX=((response & gestaltMenuMgrAquaLayoutMask) != 0);
+	else isOSX=false;
+	
+	/* IconServicesã‚’ãƒã‚§ãƒƒã‚¯ */
+	err=Gestalt(gestaltIconUtilitiesAttr,&response);
+	if (err==noErr)
+	{
+		isIconServicesAvailable=((response & (kGestaltMask << gestaltIconUtilitiesHasIconServices)) != 0);
+		is32BitIconsAvailable=((response & (kGestaltMask << gestaltIconUtilitiesHas32BitIcons)) != 0);
+		isThumbnailIconsAvailable=(gSystemVersion >= 0x0910);
+	}
+	else
+	{
+		isIconServicesAvailable=false;
+		is32BitIconsAvailable=false;
+		isThumbnailIconsAvailable=false;
+	}
+	
+	/* ã‚­ãƒ¼ã®ç¹°ã‚Šè¿”ã—çŠ¶æ…‹ã‚’å–å¾—ã—ã¦ãŠã */
+	gKeyThreshStore.keyThresh=LMGetKeyThresh();
+	gKeyThreshStore.keyRepThresh=LMGetKeyRepThresh();
+	
+	/* clip2gifã€ResEditã‚’æ¢ã™ */
+	err=GetApplSpec(kResEditCreator,&theFile);
+	isResEditAvailable=(err==noErr);
+	
+	err=GetApplSpec(kClip2gifCreator,&theFile);
+	isClip2gifAvailable=(err==noErr);
+	
+	/* ãƒ«ãƒ¼ãƒ© */
+	gRulerRgn=NewRgn();
+}
+
+/* æç”»ç‚¹ãƒ©ã‚¤ãƒ–ãƒ©ãƒªã®åˆæœŸåŒ– */
+void DotLibInit(void)
+{
+	OSErr	err;
+	ProcessSerialNumber	psn;
+	ProcessInfoRec		processInfo;
+	FSSpec	applSpec,folderSpec,theFile;
+	Boolean	isDirectory;
+	
+	/* æç”»ç‚¹ãƒ©ã‚¤ãƒ–ãƒ©ãƒªãƒ•ã‚©ãƒ«ãƒ€ã‚’æ¢ã™ */
+	/* ã¾ãšã‚¢ãƒ—ãƒªã‚±ãƒ¼ã‚·ãƒ§ãƒ³ã®ä½ç½®ã‚’å¾—ã‚‹ */
+	err=GetCurrentProcess(&psn);
+	processInfo.processInfoLength=sizeof(ProcessInfoRec);
+	processInfo.processName=nil;
+	processInfo.processAppSpec=&applSpec;
+	err=GetProcessInformation(&psn,&processInfo);
+	
+	GetIndString(applSpec.name,150,2);
+	err=FSMakeFSSpec(applSpec.vRefNum,applSpec.parID,applSpec.name,&folderSpec);
+	if (err==fnfErr)
+		isDotLibAvailable=false;
+	else if (err==noErr)
+	{
+		#ifdef __MOREFILESX__
+		FSRef	fsRef;
+		
+		err = FSpMakeFSRef(&folderSpec,&fsRef);
+		err = FSGetNodeID(&fsRef,&gDotLibFolderID,&isDirectory);
+		#else
+		err=FSpGetDirectoryID(&folderSpec,&gDotLibFolderID,&isDirectory);
+		#endif
+		if (err==noErr)
+		{
+			isDotLibAvailable=true;
+			gDotLibVRefNum=folderSpec.vRefNum;
+		}
+		else isDotLibAvailable=false;
+	}
+	
+	/* æœ€å¾Œã«é–‹ã„ã¦ã„ãŸãƒ©ã‚¤ãƒ–ãƒ©ãƒªãŒã‚ã‚Œã°ãã‚Œã‚’é–‹ã */
+	if (gDotLibName[0]>0 && isDotLibAvailable)
+	{
+		err=FSMakeFSSpec(gDotLibVRefNum,gDotLibFolderID,gDotLibName,&theFile);
+		if (err==noErr)
+			gDotLibRefNum=FSpOpenResFile(&theFile,fsRdWrPerm);
+		else
+			gDotLibName[0]=0;
+	}
+	if (gDotLibName[0]==0)
+	{
+		gDotLibRefNum=-1;
+		GetIndString(gDotLibName,150,3);
+	}
+}
+
+/* ã‚ªãƒ•ãƒãƒ¼ãƒˆã®åˆæœŸåŒ– */
+void GWorldInit(void)
+{
+	OSErr	err;
+	Rect	r;
+	
+	/* ã‚ªãƒ•ãƒãƒ¼ãƒˆã®ä½œæˆ */
+	err=NewGWorld(&gBlendPalettePtr,8,GetWindowPortBounds(gBlendPalette,&r),0,0,useTempMem);
+	
+	if (err!=noErr) /* if failed then quit */
+	{
+		ErrorAlertFromResource(IPERR_RESID,IPERR2);
+		ExitToShell();
+		quit=true;
+		return;
+	}
+	
+	DrawBlend();
+}
+
+/* ã‚ªãƒ•ãƒãƒ¼ãƒˆã®ç”»åƒã‚’æ¶ˆå» */
+void EraseOffPort(PaintWinRec *eWinRec)
+{
+	GWorldPtr	cPort;
+	GDHandle	cDevice;
+	
+	GetGWorld(&cPort,&cDevice);
+	
+	SetGWorld(eWinRec->editDataPtr,0);
+	LockPixels(GetGWorldPixMap(eWinRec->editDataPtr));
+	EraseRect(&eWinRec->iconSize);
+	UnlockPixels(GetGWorldPixMap(eWinRec->editDataPtr));
+	
+	SetGWorld(eWinRec->tempDataPtr,0);
+	LockPixels(GetGWorldPixMap(eWinRec->tempDataPtr));
+	EraseRect(&eWinRec->iconSize);
+	UnlockPixels(GetGWorldPixMap(eWinRec->tempDataPtr));
+	
+	SetGWorld(eWinRec->selectedDataPtr,0);
+	LockPixels(GetGWorldPixMap(eWinRec->selectedDataPtr));
+	EraseRect(&eWinRec->iconSize);
+	UnlockPixels(GetGWorldPixMap(eWinRec->selectedDataPtr));
+	
+	SetGWorld(eWinRec->dispTempPtr,0);
+	LockPixels(GetGWorldPixMap(eWinRec->dispTempPtr));
+	EraseRect(&eWinRec->iconSize);
+	UnlockPixels(GetGWorldPixMap(eWinRec->dispTempPtr));
+	
+	/* ãƒã‚¹ã‚¯ */
+	MySetGWorld(currentMask);
+	MyLockPixels(currentMask);
+	EraseRect(&eWinRec->iconSize);
+	MyUnlockPixels(currentMask);
+	
+	MySetGWorld(pCurrentMask);
+	MyLockPixels(pCurrentMask);
+	EraseRect(&eWinRec->iconSize);
+	MyUnlockPixels(pCurrentMask);
+	
+	MySetGWorld(selectionMask);
+	MyLockPixels(selectionMask);
+	EraseRect(&eWinRec->iconSize);
+	MyUnlockPixels(selectionMask);
+	
+	SetGWorld(cPort,cDevice);
+}
+
+/* ã‚·ã‚¹ãƒ†ãƒ ã®è¨­å®šã‚’å¤‰æ›´ã™ã‚‹ */
+void ChangeSysSettings(void)
+{
+	LMSetKeyThresh(gToolPrefs.dotDrawPrefs.keyThresh);
+	LMSetKeyRepThresh(gToolPrefs.dotDrawPrefs.keyRepThresh);
+}
+
+/* ã‚·ã‚¹ãƒ†ãƒ ã®è¨­å®šã‚’å…ƒã«æˆ»ã™ */
+void ResetSysSettings(void)
+{
+	LMSetKeyThresh(gKeyThreshStore.keyThresh);
+	LMSetKeyRepThresh(gKeyThreshStore.keyRepThresh);
+}
+
+/* ãƒ¡ã‚¤ãƒ³ã‚¤ãƒ™ãƒ³ãƒˆãƒ«ãƒ¼ãƒ— */
+void MainLoop(void)
+{
+	EventRecord	event;
+	
+	quit=false;
+	
+	while(!quit)
+	{
+		if (WaitNextEvent(everyEvent,&event,kSleep,gCurRgnHand))
+			DoEvent(&event);
+		else
+			DoIdleEvent(&event);
+	}
+}
+
+/* ã‚¤ãƒ™ãƒ³ãƒˆå‡¦ç† */
+void DoEvent(EventRecord *theEvent)
+{
+	char	theChar;
+	WindowPtr	theWindow;
+	long	menuChoice;
+	
+	#if !TARGET_API_MAC_CARBON
+	if (!gIsDialog)
+	{
+		theWindow=MyFrontNonFloatingWindow();
+		if (theWindow != nil)
+		{
+			if (GetExtWindowKind(theWindow) == kWindowTypeIconFamilyWindow)
+				if (isTSMTEAvailable && TSMEvent(theEvent))
+				{
+					SetTSMCursor(theEvent->where);
+					return;
+				}
+		}
+	}
+	#endif
+	
+	switch (theEvent->what)
+	{
+		case mouseDown:
+			HandleMouseDown(theEvent);
+			break;
+		
+		case mouseUp:
+			break;
+		
+		case keyDown:
+		case autoKey:
+			if (gSystemVersion >= 0x0800)
+			{
+				KeyMap	theKey;
+				
+				GetKeys(theKey);
+				long temp;
+#if TARGET_RT_LITTLE_ENDIAN
+				temp = EndianS32_BtoN (theKey[1].bigEndianValue);
+#else
+				temp = theKey[1];
+#endif	
+				if (temp&0x00000004) theEvent->modifiers |= optionKey;
+				
+				menuChoice=MenuEvent(theEvent);
+			}
+			else
+			{
+				Ptr		kCHRPtr;
+				UInt32	state = 0;
+				
+				kCHRPtr = ( Ptr )GetScriptManagerVariable( smKCHRCache );
+				theChar = (char)KeyTranslate( kCHRPtr, (UInt16)(theEvent->message & keyCodeMask)>>8,
+											 &state )&charCodeMask;
+				
+				if ((theEvent->modifiers &cmdKey)!=0)
+				{
+					menuChoice=MenuKey(theChar);
+				}
+				else menuChoice=0;
+			}
+			if (menuChoice != 0)
+			{
+				UseResFile(gApplRefNum);
+				HandleMenuChoice(menuChoice);
+				break;
+			}
+			else //if (!(theEvent->modifiers & cmdKey))
+			{
+				/* ã‚­ãƒ¼ãƒ€ã‚¦ãƒ³ã«å¯¾ã™ã‚‹å‡¦ç† */
+				HandleKeyDown(theEvent);
+			}
+			break;
+		
+		case updateEvt:
+			DoUpdate(theEvent);
+			break;
+		
+		case osEvt:
+			switch((unsigned long)(theEvent->message &osEvtMessageMask) >> 24)
+			{
+				/* ä»–ã®ã‚¢ãƒ—ãƒªã‚±ãƒ¼ã‚·ãƒ§ãƒ³ã‹ã‚‰æˆ»ã£ã¦ããŸã¨ãã«ã‚¯ãƒªãƒƒãƒ—ãƒœãƒ¼ãƒ‰ã®çŠ¶æ…‹ã‚’ãƒã‚§ãƒƒã‚¯ */
+				/* ãƒšãƒ¼ã‚¹ãƒˆãƒ¡ãƒ‹ãƒ¥ãƒ¼ã«åæ˜ ã™ã‚‹ */
+				case suspendResumeMessage:
+					if (theEvent->message & resumeFlag) /* resume */
+					{
+						ResumeFloatingWindows();
+						//if (theEvent->message & convertClipboardFlag) /* æœ¬å½“ã¯ã“ã†ã™ã‚‹ã¹ãã ãŒ */
+							UpdatePasteMenu();
+						ChangeSysSettings();
+						ResetRuler();
+					}
+					else /* suspend */
+					{
+						SuspendFloatingWindows();
+						ResetSysSettings();
+						
+						theWindow = MyFrontNonFloatingWindow();
+						if (GetExtWindowKind(theWindow) == kWindowTypePaintWindow)
+						{
+							ResetDot(theWindow);
+						}
+					}
+					break;
+				
+				/* ãƒã‚¦ã‚¹ã®ä½ç½®ã«ã‚ˆã£ã¦ãƒã‚¦ã‚¹ã‚«ãƒ¼ã‚½ãƒ«ã®å½¢ã‚’å¤‰ãˆã‚‹ */
+				case mouseMovedMessage:
+					UpdateMouseCursor(theEvent->where);
+					break;
+			}
+			break;
+		
+		case kHighLevelEvent:
+			AEProcessAppleEvent(theEvent);
+			break;
+		
+		default:
+			break;
+	}
+}
+
+/* ã‚¢ã‚¤ãƒ‰ãƒ«ã‚¤ãƒ™ãƒ³ãƒˆï¼ˆã‚¤ãƒ™ãƒ³ãƒˆãŒãªã„ã¨ãï¼‰ã®å‡¦ç† */
+void DoIdleEvent(EventRecord *theEvent)
+{
+	WindowPtr	theWindow=MyFrontNonFloatingWindow();
+	IconFamilyWinRec	*fWinRec;
+	
+	/* ãƒã‚¦ã‚¹ã‚«ãƒ¼ã‚½ãƒ«ã®å½¢ã‚’å¤‰ãˆã‚‹ */
+	UpdateMouseCursor(theEvent->where);
+	#if !TARGET_API_MAC_CARBON
+	UpdateBalloonHelp(theEvent->where);
+	#endif
+	
+	if (theWindow==nil) return;
+	
+	switch (GetExtWindowKind(theWindow))
+	{
+		case kWindowTypeIconFamilyWindow:
+			/* ã‚«ãƒ¼ã‚½ãƒ«ã®ç‚¹æ»… */
+			fWinRec=GetIconFamilyRec(theWindow);
+			
+			if ((**fWinRec->iconNameTE).active)
+				TEIdle(fWinRec->iconNameTE);
+			
+			break;
+		
+		case kWindowTypePaintWindow:
+			InvertDot(theWindow);
+			break;
+	}
+	
+	/* å¤–éƒ¨ã‚¨ãƒ‡ã‚£ã‚¿ã§ç·¨é›†ä¸­ã®ã‚¢ã‚¤ã‚³ãƒ³ã‚’æ›´æ–° */
+	UpdateXIconList();
+}
+
+/* ãƒ‰ãƒƒãƒˆç‚¹æ»…å‡¦ç† */
+void InvertDot(WindowPtr theWindow)
+{
+	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
+	
+	if (eWinRec->isDotMode)
+	{
+		if (TickCount() - eWinRec->lastInvertedTime > GetCaretTime())
+		{
+			GrafPtr	port;
+			
+			GetPort(&port);
+			SetPortWindowPort(theWindow);
+			InvertDotMain(eWinRec);
+			SetPort(port);
+		}
+	}
+}
+
+/* ãƒ‰ãƒƒãƒˆç‚¹æ»…ãƒ¡ã‚¤ãƒ³ */
+void InvertDotMain(PaintWinRec *eWinRec)
+{
+	Rect	r;
+	
+	SetRect(&r,eWinRec->dotPos.h << eWinRec->ratio,eWinRec->dotPos.v << eWinRec->ratio,
+			(eWinRec->dotPos.h+gPenWidth) << eWinRec->ratio,(eWinRec->dotPos.v+gPenHeight)<< eWinRec->ratio);
+	
+	InvertRect(&r);
+	
+	eWinRec->isInverted=(UInt8)!eWinRec->isInverted;
+	eWinRec->lastInvertedTime=TickCount();
+}
+
+/* ãƒ‰ãƒƒãƒˆæ¶ˆå»å‡¦ç† */
+void ResetDot(WindowPtr theWindow)
+{
+	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
+	
+	if (eWinRec->isDotMode && eWinRec->isInverted)
+	{
+		GrafPtr	port;
+		
+		GetPort(&port);
+		SetPortWindowPort(theWindow);
+		InvertDotMain(eWinRec);
+		SetPort(port);
+	}
+}
+
+/* æç”»ç‚¹ãƒ¢ãƒ¼ãƒ‰ã®ã‚­ãƒ¼å‡¦ç† */
+Boolean HandleDotKey(short eventKind,char theChar,WindowPtr theWindow)
+{
+	Boolean	result=false;
+	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
+	
+	switch (theChar)
+	{
+		case '5':
+		case 'k':
+		case 'K':
+			/* æç”» */
+			if (eventKind == keyDown)
+			{
+				ResetDot(theWindow);
+				
+				DoDotPaintMain(theWindow,eWinRec->dotPos);
+				PutCommand(eWinRec->dotCommand,'5');
+			}
+			result=true;
+			break;
+		
+		case '1':
+			MoveDot(theWindow,-1,1);
+			PutCommand(eWinRec->dotCommand,'1');
+			result=true;
+			break;
+		
+		case '2':
+		case ',':
+			MoveDot(theWindow,0,1);
+			PutCommand(eWinRec->dotCommand,'2');
+			result=true;
+			break;
+		
+		case '3':
+			MoveDot(theWindow,1,1);
+			PutCommand(eWinRec->dotCommand,'3');
+			result=true;
+			break;
+		
+		case '4':
+		case 'j':
+		case 'J':
+			MoveDot(theWindow,-1,0);
+			PutCommand(eWinRec->dotCommand,'4');
+			result=true;
+			break;
+		
+		case '6':
+		case 'l':
+		case 'L':
+			MoveDot(theWindow,1,0);
+			PutCommand(eWinRec->dotCommand,'6');
+			result=true;
+			break;
+		
+		case '7':
+			MoveDot(theWindow,-1,-1);
+			PutCommand(eWinRec->dotCommand,'7');
+			result=true;
+			break;
+		
+		case '8':
+		case 'i':
+		case 'I':
+			MoveDot(theWindow,0,-1);
+			PutCommand(eWinRec->dotCommand,'8');
+			result=true;
+			break;
+		
+		case '9':
+			MoveDot(theWindow,1,-1);
+			PutCommand(eWinRec->dotCommand,'9');
+			result=true;
+			break;
+		
+		case '.':
+			/* æç”»ç‚¹ãƒ¢ãƒ¼ãƒ‰ã‹ã‚‰æŠœã‘ã‚‹ */
+			ResetDot(theWindow);
+			eWinRec->isDotMode=false;
+			HideReferencedWindow(DotModePalette);
+			UpdateEffectMenu();
+			result=true;
+			break;
+		
+		case '0':
+			/* è¨˜éŒ² */
+			if (eWinRec->dotCommand[0]!=0) /* å…¥åŠ›ã•ã‚Œã¦ã„ã‚‹ */
+			{
+				GrafPtr	port;
+				
+				PStrCpy(eWinRec->dotCommand,gDotCommand);
+				eWinRec->dotCommand[0]=0;
+				
+				GetPort(&port);
+				SetPortWindowPort(DotModePalette);
+				UpdateRecordedCommand(gDotCommand);
+				UpdateInputCommand(eWinRec->dotCommand);
+				SetPort(port);
+			}
+			break;
+		
+		case 0x1b:
+			/* clear -- å…¥åŠ›ä¸­ã‚³ãƒãƒ³ãƒ‰ã‚’æ¶ˆå»ã™ã‚‹ */
+			if (eWinRec->dotCommand[0]!=0)
+			{
+				GrafPtr	port;
+				
+				eWinRec->dotCommand[0]=0;
+				
+				GetPort(&port);
+				SetPortWindowPort(DotModePalette);
+				UpdateInputCommand(eWinRec->dotCommand);
+				SetPort(port);
+			}
+			break;
+		
+		case 0x0d:
+			/* return -- è¨˜éŒ²ã•ã‚Œã¦ã„ã‚‹ã‚³ãƒãƒ³ãƒ‰ã‚’å†ç”Ÿã™ã‚‹ */
+			if (gDotCommand[0]!=0)
+			{
+				ExecuteCommand(theWindow,gDotCommand);
+			}
+			break;
+	}
+	
+	return result;
+}
+
+/* ãƒ‰ãƒƒãƒˆã‚’å‹•ã‹ã™ */
+void MoveDot(WindowPtr theWindow,short dx,short dy)
+{
+	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
+	
+	/* ã¾ãšãƒ‰ãƒƒãƒˆã‚’æ¶ˆã™ */
+	ResetDot(theWindow);
+	
+	/* æ–°ã—ã„ä½ç½®ã‚’è¨ˆç®— */
+	MoveDotMain(&eWinRec->dotPos,dx,dy,&eWinRec->iconSize);
+}
+
+/* ã‚³ãƒãƒ³ãƒ‰ã‚’è¨˜éŒ² */
+void PutCommand(Str255 command,char newCommand)
+{
+	short	commandLength=command[0];
+	char	lastCommand;
+	short	twoCommands;
+	GrafPtr	port;
+	
+	/* ãªã«ã‚‚è¨˜éŒ²ã•ã‚Œã¦ã„ãªã„æ™‚ã¯ã¤ãªã’ã‚‹ã ã‘ */
+	if (commandLength==0)
+	{
+		command[0]=1;
+		command[1]=newCommand;
+	}
+	else
+	{
+		lastCommand=command[commandLength];
+		twoCommands=(((short)lastCommand)<<8)+newCommand;
+		
+		switch (twoCommands)
+		{
+			case '19': case '91': case '37': case '73': case '46': case '64': case '28': case '82':
+				command[0]--;
+				break;
+			
+			case '26': case '62':
+				command[commandLength]='3';
+				break;
+			
+			case '24': case '42':
+				command[commandLength]='1';
+				break;
+			
+			case '48': case '84':
+				command[commandLength]='7';
+				break;
+			
+			case '68': case '86':
+				command[commandLength]='9';
+				break;
+			
+			case '16': case '61': case '34': case '43':
+				command[commandLength]='2';
+				break;
+			
+			case '38': case '83': case '29': case '92':
+				command[commandLength]='6';
+				break;
+			
+			case '67': case '76': case '49': case '94':
+				command[commandLength]='8';
+				break;
+			
+			case '18': case '81': case '27': case '72':
+				command[commandLength]='4';
+				break;
+			
+			case '51':
+				command[commandLength]='z';
+				break;
+			
+			case '52':
+				command[commandLength]='x';
+				break;
+			
+			case '53':
+				command[commandLength]='c';
+				break;
+			
+			case '54':
+				command[commandLength]='a';
+				break;
+			
+			case '56':
+				command[commandLength]='d';
+				break;
+			
+			case '57':
+				command[commandLength]='q';
+				break;
+			
+			case '58':
+				command[commandLength]='w';
+				break;
+			
+			case '59':
+				command[commandLength]='e';
+				break;
+			
+			case 'z9': case 'e1': case 'c7': case 'q3': case 'a6': case 'd4': case 'x8': case 'w2':
+				command[commandLength]='5';
+				break;
+			
+			case 'x6': case 'd2':
+				command[commandLength]='c';
+				break;
+			
+			case 'x4': case 'a2':
+				command[commandLength]='z';
+				break;
+			
+			case 'a8': case 'w4':
+				command[commandLength]='q';
+				break;
+			
+			case 'd8': case 'w6':
+				command[commandLength]='e';
+				break;
+			
+			case 'z6': case 'd1': case 'c4': case 'a3':
+				command[commandLength]='x';
+				break;
+			
+			case 'c8': case 'w3': case 'x9': case 'e2':
+				command[commandLength]='d';
+				break;
+			
+			case 'd7': case 'q6': case 'a9': case 'e4':
+				command[commandLength]='w';
+				break;
+			
+			case 'z8': case 'w1': case 'x7': case 'q2':
+				command[commandLength]='a';
+				break;
+			
+			default:
+				CatChar2(newCommand,command);
+		}
+	}
+	
+	GetPort(&port);
+	SetPortWindowPort(DotModePalette);
+	UpdateInputCommand(command);
+	SetPort(port);
+}
+
+/* æ–‡å­—ã‚’æ–‡å­—åˆ—ã«ã¤ãªã’ã‚‹ */
+void CatChar2(char c,Str255 string)
+{
+	if (string[0]==kDotCommandMaxLength)
+	{
+		BlockMove(&string[2],&string[1],kDotCommandMaxLength-1);
+		string[kDotCommandMaxLength]=c;
+	}
+	else
+	{
+		string[0]++;
+		string[string[0]]=c;
+	}
+}
+
+/* ã‚³ãƒãƒ³ãƒ‰ã®å®Ÿè¡Œ */
+void ExecuteCommand(WindowPtr theWindow,Str31 command)
+{
+	short	i;
+	char	c;
+	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
+	Point	pt=eWinRec->dotPos;
+	
+	ResetDot(theWindow);
+	
+	for (i=1; i<=command[0]; i++)
+	{
+		c=command[i];
+		switch (c)
+		{
+			case '5':
+				/* æç”» */
+				DoDotPaintMain(theWindow,pt);
+				break;
+			
+			case 'z':
+				DoDotPaintMain(theWindow,pt);
+			case '1':
+				MoveDotMain(&pt,-1,1,&eWinRec->iconSize);
+				break;
+			
+			case 'x':
+				DoDotPaintMain(theWindow,pt);
+			case '2':
+				MoveDotMain(&pt,0,1,&eWinRec->iconSize);
+				break;
+			
+			case 'c':
+				DoDotPaintMain(theWindow,pt);
+			case '3':
+				MoveDotMain(&pt,1,1,&eWinRec->iconSize);
+				break;
+			
+			case 'a':
+				DoDotPaintMain(theWindow,pt);
+			case '4':
+				MoveDotMain(&pt,-1,0,&eWinRec->iconSize);
+				break;
+			
+			case 'd':
+				DoDotPaintMain(theWindow,pt);
+			case '6':
+				MoveDotMain(&pt,1,0,&eWinRec->iconSize);
+				break;
+			
+			case 'q':
+				DoDotPaintMain(theWindow,pt);
+			case '7':
+				MoveDotMain(&pt,-1,-1,&eWinRec->iconSize);
+				break;
+			
+			case 'w':
+				DoDotPaintMain(theWindow,pt);
+			case '8':
+				MoveDotMain(&pt,0,-1,&eWinRec->iconSize);
+				break;
+			
+			case 'e':
+				DoDotPaintMain(theWindow,pt);
+			case '9':
+				MoveDotMain(&pt,1,-1,&eWinRec->iconSize);
+				break;
+		}
+	}
+	
+	eWinRec->dotPos=pt;
+}
+
+/* æ–°ã—ã„ä½ç½®ã«ãƒ‰ãƒƒãƒˆã‚’ç§»å‹•ã•ã›ã‚‹ */
+void MoveDotMain(Point *pt,short dx,short dy,Rect *r)
+{
+	Point	newPt=*pt;
+	Rect	newRect=*r;
+	
+	newRect.left-=gPenWidth-1;
+	newRect.top-=gPenHeight-1;
+	
+	newPt.h+=dx*gPenWidth;
+	newPt.v+=dy*gPenHeight;
+	if (PtInRect(newPt,&newRect))
+		*pt=newPt;
+}
+
+#if !TARGET_API_MAC_CARBON
+/* ãƒãƒ«ãƒ¼ãƒ³ãƒ˜ãƒ«ãƒ—å‡¦ç† */
+void UpdateBalloonHelp(Point globPt)
+{
+	GrafPtr		port;
+	WindowPtr	theWindow;
+	short		part;
+	Rect		r;
+	Point		localPt;
+	ControlHandle	theControl;
+	short		index;
+	
+	enum {
+		kPaintWindowHelpID=3000,
+		kPreviewWindowHelpID,
+		kIconListWindowHelpID,
+		kIconFamilyWindowHelpID,
+		kColorPaletteHelpID,
+		kToolPaletteHelpID,
+		kBlendPaletteHelpID,
+		kTitleWindowHelpID,
+		kInfoWindowHelpID,
+		kPatternPaletteHelpID,
+		kScrollBarHelpID,
+		kSizeBoxHelpID,
+		kDotModePaletteHelpID,
+		kFavoritePaletteHelpID,
+	};
+	
+	enum {
+		kPaintContentIndex=1,
+		kPaintRatioIndex,
+		kPaintBGIndex,
+	};
+	
+	enum {
+		kContentIndex=1,
+	};
+	
+	enum {
+		kPencilToolIndex=1,
+		kEraserToolIndex,
+		kMarqueeToolIndex,
+		kSpoitToolIndex,
+		kBucketToolIndex,
+	};
+	
+	enum {
+		kBlendCurrentIndex=1,
+		kBlendBackIndex,
+		kBlendExchangeIndex,
+		kBlendLockIndex,
+		kBlendLightDarkIndex,
+		kBlendPreviousIndex,
+	};
+	
+	enum {
+		kScrollBarEnableIndex=1,
+		kScrollBarDisableIndex,
+	};
+	
+	enum {
+		kSizeBoxIndex=1,
+	};
+	
+	enum {
+		kDotLibNameIndex=1,
+		kRecordedCmdIndex,
+		kInputCmdIndex,
+		kDotLibPopupIndex,
+		kDotCmdPopupIndex,
+	};
+	
+	/* ãƒ˜ãƒ«ãƒ—ãƒãƒãƒ¼ã‚¸ãƒ£ãŒä½¿ç”¨å¯èƒ½ã§ãªã„ã€ã‚ã‚‹ã„ã¯ãƒãƒ«ãƒ¼ãƒ³ãƒ˜ãƒ«ãƒ—ãŒã‚ªãƒ•ã®å ´åˆã¯ãªã«ã‚‚ã—ãªã„ */
+	if (!isHelpMgrAvailable) return;
+	if (!HMGetBalloons()) return;
+	
+	part=FindWindow(globPt,&theWindow);
+	if (theWindow==nil) /* ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦å†…ã§ãªã‘ã‚Œã°ãªã«ã‚‚ã—ãªã„ */
+	{
+		MyShowBalloon(nil,-1,0);
+		return;
+	}
+	
+	if (part != inContent && part != inGrow)
+	{
+		MyShowBalloon(nil,-1,0);
+		return;
+	}
+	
+	GetPort(&port);
+	SetPort(theWindow);
+	
+	localPt=globPt;
+	GlobalToLocal(&localPt);
+	
+	if (part==inGrow)
+	{
+		r=theWindow->portRect;
+		r.left=r.right-kScrollBarWidth;
+		r.top=r.bottom-kScrollBarHeight;
+		MyShowBalloon(&r,kSizeBoxHelpID,kContentIndex);
+	}
+	else
+	{	
+		switch (GetExtWindowKind(theWindow))
+		{
+			case kWindowTypePaintWindow:
+				r=theWindow->portRect;
+				r.right-=kScrollBarWidth;
+				r.bottom-=kScrollBarHeight;
+				if (PtInRect(localPt,&r)) /* ãƒšã‚¤ãƒ³ãƒˆé ˜åŸŸå†… */
+					MyShowBalloon(&r,kPaintWindowHelpID,kPaintContentIndex);
+				else
+				{
+					r=theWindow->portRect;
+					r.right=r.left+kRatioWidth;
+					r.top=r.bottom-kScrollBarHeight;
+					if (PtInRect(localPt,&r)) /* å€ç‡é ˜åŸŸå†… */
+						MyShowBalloon(&r,kPaintWindowHelpID,kPaintRatioIndex);
+					else
+					{
+						r.right+=kBackWidth;
+						r.left+=kRatioWidth;
+						if (PtInRect(localPt,&r)) /* èƒŒæ™¯æƒ…å ±å†… */
+							MyShowBalloon(&r,kPaintWindowHelpID,kPaintBGIndex);
+						else /* ã‚¹ã‚¯ãƒ­ãƒ¼ãƒ«ãƒãƒ¼ */
+						{
+							part=FindControl(localPt,theWindow,&theControl);
+							
+							r.left+=kBackWidth;
+							r.right=theWindow->portRect.right-kScrollBarWidth;
+							if (PtInRect(localPt,&r)) /* æ°´å¹³ã‚¹ã‚¯ãƒ­ãƒ¼ãƒ«ãƒãƒ¼ */
+								MyShowBalloon(&r,kScrollBarHelpID,(part && theControl) ? 
+												kScrollBarEnableIndex : kScrollBarDisableIndex);
+							else
+							{
+								r=theWindow->portRect;
+								r.left=r.right-kScrollBarWidth;
+								r.bottom-=kScrollBarHeight;
+								MyShowBalloon(&r,kScrollBarHelpID,(part && theControl) ?
+												kScrollBarEnableIndex : kScrollBarDisableIndex);
+							}
+						}
+					}
+				}
+				break;
+			
+			case kWindowTypePreviewWindow:
+				MyShowBalloon(&theWindow->portRect,kPreviewWindowHelpID,kContentIndex);
+				break;
+			
+			case kWindowTypeIconListWindow:
+				r=theWindow->portRect;
+				r.right-=kScrollBarWidth;
+				if (PtInRect(localPt,&r))
+					MyShowBalloon(&r,kIconListWindowHelpID,kContentIndex);
+				else
+				{
+					part=FindControl(localPt,theWindow,&theControl);
+					r.left=r.right;
+					r.right+=kScrollBarWidth;
+					MyShowBalloon(&r,kScrollBarHelpID,(part && theControl) ? 
+									kScrollBarEnableIndex : kScrollBarDisableIndex);
+				}
+				break;
+			
+			case kWindowTypeIconFamilyWindow:
+				MyShowBalloon(&theWindow->portRect,kIconFamilyWindowHelpID,kContentIndex);
+				break;
+			
+			case kWindowTypeColorPalette1:
+			case kWindowTypeColorPalette2:
+				MyShowBalloon(&theWindow->portRect,kColorPaletteHelpID,kContentIndex);
+				break;
+			
+			case kWindowTypeToolPalette:
+				index=(localPt.v-2)/25;
+				r=theWindow->portRect;
+				r.top=index*25+2;
+				r.bottom=index*25+25+2;
+				MyShowBalloon(&r,kToolPaletteHelpID,index+1);
+				break;
+			
+			case kWindowTypeBlendPalette:
+				SetRect(&r,13,13,22,17);
+				if (PtInRect(localPt,&r))
+				{
+					MyShowBalloon(&r,kBlendPaletteHelpID,kBlendExchangeIndex);
+					break;
+				}
+				SetRect(&r,2,2,16,16);
+				if (PtInRect(localPt,&r))
+				{
+					MyShowBalloon(&r,kBlendPaletteHelpID,kBlendCurrentIndex);
+					break;
+				}
+				SetRect(&r,19,2,33,16);
+				if (PtInRect(localPt,&r))
+				{
+					MyShowBalloon(&r,kBlendPaletteHelpID,kBlendBackIndex);
+					break;
+				}
+				SetRect(&r,1,18,34,26);
+				if (PtInRect(localPt,&r))
+				{
+					MyShowBalloon(&r,kBlendPaletteHelpID,kBlendLockIndex);
+					break;
+				}
+				r=theWindow->portRect;
+				if (localPt.v > 16)
+				{
+					if (localPt.h < 16)
+					{
+						r.top=0x16;
+						r.right=0x11;
+						MyShowBalloon(&r,kBlendPaletteHelpID,kBlendLightDarkIndex);
+					}
+					else if (localPt.h >=19)
+					{
+						r.top=0x16;
+						r.left=0x13;
+						MyShowBalloon(&r,kBlendPaletteHelpID,kBlendPreviousIndex);
+					}
+				}
+				else
+					MyShowBalloon(nil,-1,0);
+				break;
+			
+			case kWindowTypeTitleWindow:
+				MyShowBalloon(&theWindow->portRect,kTitleWindowHelpID,kContentIndex);
+				break;
+			
+			case kWindowTypeInfoWindow:
+				MyShowBalloon(&theWindow->portRect,kInfoWindowHelpID,kContentIndex);
+				break;
+			
+			case kWindowTypePatternPalette:
+				MyShowBalloon(&theWindow->portRect,kPatternPaletteHelpID,kContentIndex);
+				break;
+			
+			case kWindowTypeDotModePalette:
+				SetRect(&r,0x05,0x03,0x4f,0x0e);
+				if (PtInRect(localPt,&r))
+				{
+					MyShowBalloon(&r,kDotModePaletteHelpID,kDotLibNameIndex);
+					break;
+				}
+				SetRect(&r,0x05,0x13,0x4f,0x1b);
+				if (PtInRect(localPt,&r))
+				{
+					MyShowBalloon(&r,kDotModePaletteHelpID,kRecordedCmdIndex);
+					break;
+				}
+				SetRect(&r,0x05,0x22,0x60,0x3f);
+				if (PtInRect(localPt,&r))
+				{
+					MyShowBalloon(&r,kDotModePaletteHelpID,kInputCmdIndex);
+					break;
+				}
+				SetRect(&r,0x55,0x03,0x60,0x0e);
+				if (PtInRect(localPt,&r))
+				{
+					MyShowBalloon(&r,kDotModePaletteHelpID,kDotLibPopupIndex);
+					break;
+				}
+				SetRect(&r,0x55,0x12,0x60,0x1d);
+				if (PtInRect(localPt,&r))
+				{
+					MyShowBalloon(&r,kDotModePaletteHelpID,kDotCmdPopupIndex);
+					break;
+				}
+				break;
+			
+			case kWindowTypeFavoritePalette:
+				MyShowBalloon(&theWindow->portRect,kFavoritePaletteHelpID,kContentIndex);
+				break;
+			
+			default:
+				MyShowBalloon(nil,-1,0);
+		}
+	}
+	SetPort(port);
+}
+
+static short	gBalloonID=-1,gBalloonIndex;	
+
+/* ãƒãƒ«ãƒ¼ãƒ³ãƒ˜ãƒ«ãƒ—ã®è¡¨ç¤º */
+void MyShowBalloon(const Rect *r,short id,short index)
+{
+	HMMessageRecord	aHelpMsg;
+	Point			tip;
+	OSErr			err;
+	Rect			rr;
+	
+	typedef struct {
+		Point	topLeft;
+		Point	botRight;
+	} Rect2;
+	
+	if (gBalloonID==id && gBalloonIndex==index) return;
+	
+	if (id < 0)
+	{
+		gBalloonID=-1;
+	}
+	else
+	{
+		rr=*r;
+		
+		aHelpMsg.hmmHelpType=khmmStringRes;
+		aHelpMsg.u.hmmStringRes.hmmResID=id;
+		aHelpMsg.u.hmmStringRes.hmmIndex=index;
+		
+		LocalToGlobal(&((Rect2 *)&rr)->topLeft);
+		LocalToGlobal(&((Rect2 *)&rr)->botRight);
+		
+		SetPt(&tip,(rr.right + rr.left) / 2, (rr.bottom + rr.top) / 2);
+		
+		err=HMShowBalloon(&aHelpMsg,tip,&rr,nil,0,0,kHMRegularWindow);
+		if (err==noErr)
+		{
+			gBalloonID=id;
+			gBalloonIndex=index;
+		}
+		else
+			gBalloonID=-1;
+	}
+}
+#endif
+
+/* ãƒã‚¦ã‚¹ãƒ€ã‚¦ãƒ³ã‚¤ãƒ™ãƒ³ãƒˆã®å‡¦ç† */
+void HandleMouseDown(EventRecord *theEvent)
+{
+	WindowPtr	theWindow;
+	short		thePart;
+	long		menuChoice;
+	Boolean		isFront;
+	short		windowKind;
+	
+	theWindow=MyFrontNonFloatingWindow();
+	if (GetExtWindowKind(theWindow) == kWindowTypePaintWindow)
+	{
+		ResetDot(theWindow);
+	}
+	
+	thePart=FindWindow(theEvent->where,&theWindow);
+	
+	switch (thePart)
+	{
+		case inMenuBar:
+			MySetCursor(0);
+			menuChoice=MenuSelect(theEvent->where);
+			HandleMenuChoice(menuChoice);
+			break;
+		
+		#if !TARGET_API_MAC_CARBON
+		case inSysWindow:
+			SystemClick(theEvent,theWindow);
+			break;
+		#endif
+		
+		case inContent:
+			ContentClick(theEvent);
+			break;
+		
+		#if powerc
+		case inProxyIcon:
+			if (gSystemVersion >= 0x0850)
+			{
+				OSErr	err;
+				
+				err=TrackWindowProxyDrag(theWindow,theEvent->where);
+				if (err==errUserWantsToDragWindow)
+				{
+				}
+			}
+			break;
+		#endif
+		
+		case inDrag:
+			isFront=(MyFrontNonFloatingWindow()==theWindow || GetWindowKind(theWindow) == kApplicationFloaterKind);
+			windowKind=GetExtWindowKind(theWindow);
+			
+			#if powerc
+			if (gSystemVersion >= 0x0850)
+			{
+				OSErr	err;
+				SInt32	menuResult;
+				Boolean	found=false;
+				
+				if (IsWindowPathSelectClick(theWindow,theEvent))
+				{
+					err=WindowPathSelect(theWindow,NULL,&menuResult);
+					if (LoWord(menuResult) > 1)
+					{
+						ProcessSerialNumber	psn;
+						/* Finderã‚’æ¢ã™ */
+						found=FindProcessFromCreatorAndType(kFinderCreator,kFinderType,&psn);
+						if (found)
+							err=SetFrontProcess(&psn);
+					}
+				}
+			}
+			else
+			#endif
+			{
+				if (isFront && (theEvent->modifiers &cmdKey)!=0 && 
+						(windowKind == kWindowTypePaintWindow || windowKind == kWindowTypeIconListWindow))
+				{
+					/* ãƒãƒƒãƒ—ã‚¢ãƒƒãƒ—ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã‹ã‚‚ã—ã‚“ãªã„ */
+					Point	mousePt=theEvent->where;
+					short	fontID=GetPortTextFont(GetWindowPort(theWindow));
+					short	titleWidth;
+					Str255	title;
+					Rect	r;
+					short	windowWidth=GetWindowPortBounds(theWindow,&r)->right;
+					
+					SetPortWindowPort(theWindow);
+					GlobalToLocal(&mousePt);
+					TextFont(0);
+					GetWTitle(theWindow,title);
+					titleWidth=StringWidth(title);
+					TextFont(fontID);
+					
+					if (mousePt.v<0 && ( mousePt.h > (windowWidth-titleWidth)/2 &&
+										 mousePt.h < (windowWidth+titleWidth)/2 ))
+					{
+						Point	popPos;
+						
+						SetPt(&popPos,(windowWidth-titleWidth)/2-20,-17);
+						LocalToGlobal(&popPos);
+						
+						MySetCursor(0);
+						TitlePopup(theWindow,popPos);
+						
+						break;
+					}
+				}
+			}
+			if (windowKind == kWindowTypePaintWindow)
+			{
+				if ((theEvent->modifiers & controlKey)!=0)
+				{
+					GrafPtr	port;
+					
+					/* å€ç‡ãƒãƒƒãƒ—ã‚¢ãƒƒãƒ—ãƒ¡ãƒ‹ãƒ¥ãƒ¼ */
+					GetPort(&port);
+					SetPortWindowPort(theWindow);
+					
+					MySetCursor(0);
+					ChangeRatio(theWindow,theEvent->where);
+					
+					SetPort(port);
+					break;
+				}
+			}
+			{
+				Rect	myScreenRect;
+				
+				GetRegionBounds(GetGrayRgn(),&myScreenRect);
+				DragReferencedWindow(theWindow,theEvent->where,&myScreenRect);
+			}
+			
+			/* ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚’å‹•ã‹ã—ãŸã‚ã¨ã«ã¯ã€ä¸€ç•ªå‰ã®ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ãŒå¤‰åŒ–ã—ãŸã‚Šã™ã‚‹ã‹ã‚‰ã€ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã®æ›´æ–°ãŒå¿…è¦ */
+			if (!isFront)
+				UpdateMenus();
+			break;
+		
+		case inGoAway:
+			if (TrackGoAway(theWindow,theEvent->where))
+			{
+				switch (GetExtWindowKind(theWindow))
+				{
+					case kWindowTypePaintWindow:
+						ClosePaintWindow(theWindow,false);
+						UpdateMenus(); /* ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚’é–‰ã˜ã‚‹ã¨ã„ã¡ã°ã‚“å‰ã®ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ãŒå¤‰åŒ–ã™ã‚‹ã‹ã‚‰ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã‚’æ›´æ–° */
+						break;
+					
+					case kWindowTypeIconListWindow:
+						CloseIconFile(theWindow,false);
+						UpdateMenus();
+						break;
+					
+					case kWindowTypeIconFamilyWindow:
+						CloseFamilyWindow(theWindow,true,false);
+						UpdateMenus();
+						break;
+					
+					case kWindowTypeDotModePalette:
+						HideReferencedWindow(theWindow);
+						{
+							PaintWinRec	*eWinRec;
+							
+							theWindow=MyFrontNonFloatingWindow();
+							if (theWindow==nil || GetExtWindowKind(theWindow)!=kWindowTypePaintWindow) break;
+							
+							eWinRec=GetPaintWinRec(theWindow);
+							ResetDot(theWindow);
+							eWinRec->isDotMode=false;
+							UpdateEffectMenu();
+						}
+						break;
+					
+					default:
+						ShowHidePalette(theWindow,false);
+						break;
+				}
+			}
+			break;
+		
+		case inGrow:
+			switch (GetExtWindowKind(theWindow))
+			{
+				case kWindowTypeIconListWindow:
+					ResizeIconWindow(theWindow,theEvent->where);
+					break;
+				
+				case kWindowTypePaintWindow:
+					ResetRuler();
+					ResizePaintWindow(theWindow,theEvent->where);
+					break;
+			}
+			break;
+		
+		case inZoomIn:
+		case inZoomOut:
+			MyZoomWindow(theWindow,thePart,theEvent);
+			break;
+	}
+}
+
+/* ã‚­ãƒ¼ãƒ€ã‚¦ãƒ³ã‚¤ãƒ™ãƒ³ãƒˆã®å‡¦ç† */
+void HandleKeyDown(EventRecord *theEvent)
+{
+	short	dx[4]={-1,1,0,0},dy[4]={0,0,1,-1};
+	WindowPtr	theWindow;
+	SInt16	keyCode,theChar;
+	PaintWinRec	*eWinRec;
+	short	moveRatio;
+	IconListWinRec	*iWinRec;
+	IconFamilyWinRec	*fWinRec;
+	Boolean	optDown=(Boolean)((theEvent->modifiers & optionKey) !=0);
+	Boolean shiftDown=(Boolean)((theEvent->modifiers & shiftKey) !=0);
+	
+	keyCode = (SInt16)( theEvent->message & keyCodeMask ) >> 8;
+	theChar = (SInt16)( theEvent->message & charCodeMask );
+	
+	theWindow=MyFrontNonFloatingWindow();
+	
+	if (theWindow!=nil)
+	{
+		switch (GetExtWindowKind(theWindow))
+		{
+			case kWindowTypeIconFamilyWindow:
+				/* ã‚¢ã‚¤ã‚³ãƒ³ãƒ•ã‚¡ãƒŸãƒªã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ */
+				fWinRec=GetIconFamilyRec(theWindow);
+				if (theChar == 0x09)
+				{
+					/* ã‚¿ãƒ– */
+					SelectNextIcon(fWinRec,shiftDown);
+					return;
+					break;
+				}
+				else if ((**fWinRec->iconNameTE).active)
+				{
+					if (theChar != kReturnCharCode && theChar != kEnterCharCode)
+					{
+						switch (theChar)
+						{
+							case kLeftArrowCharCode:
+							case kRightArrowCharCode:
+							case kUpArrowCharCode:
+							case kDownArrowCharCode:
+								TEKey(theChar,fWinRec->iconNameTE);
+								break;
+							
+							default:
+								TEKey(theChar,fWinRec->iconNameTE);
+								fWinRec->wasChanged=true;
+								UpdateSaveMenu();
+								break;
+						}
+						UpdateClipMenu();
+						return;
+					}
+					return;
+				}
+				else
+				{
+					switch (theChar)
+					{
+						case kReturnCharCode:
+						case kEnterCharCode:
+							/* ãƒªã‚¿ãƒ¼ãƒ³ or ã‚¨ãƒ³ã‚¿ãƒ¼ */
+							EditFamilyIcon(theWindow,kForceNone);
+							return;
+							break;
+						
+						case kLeftArrowCharCode:
+						case kRightArrowCharCode:
+						case kUpArrowCharCode:
+						case kDownArrowCharCode:
+							/* ã‚«ãƒ¼ã‚½ãƒ«ã‚­ãƒ¼ */
+							SelectNextIcon2(fWinRec,dx[keyCode-0x7b],dy[keyCode-0x7b]);
+							return;
+							break;
+						
+						case 0x08:
+							/* ãƒ‡ãƒªãƒ¼ãƒˆã‚­ãƒ¼ */
+							DeleteSelectedIconPicture(theWindow);
+							break;
+					}
+				}
+				break;
+			
+			case kWindowTypeIconListWindow:
+				/* ã‚¢ã‚¤ã‚³ãƒ³ãƒªã‚¹ãƒˆã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ */
+				iWinRec=GetIconListRec(theWindow);
+				if (IsIconSelected(iWinRec))
+				{
+					switch (theChar)
+					{
+						case kBackspaceCharCode:
+							/* ãƒ‡ãƒªãƒ¼ãƒˆã‚­ãƒ¼ */
+							DoDelete(false);
+							return;
+							break;
+						
+						case kReturnCharCode:
+						case kEnterCharCode:
+							/* ãƒªã‚¿ãƒ¼ãƒ³ or ã‚¨ãƒ³ã‚¿ãƒ¼ã‚­ãƒ¼ */
+							OpenSelectedIcon(theWindow);
+							return;
+							break;
+					}
+				}
+				switch (theChar)
+				{
+						case kLeftArrowCharCode:
+						case kRightArrowCharCode:
+						case kUpArrowCharCode:
+						case kDownArrowCharCode:
+							/* ã‚«ãƒ¼ã‚½ãƒ«ã‚­ãƒ¼ */
+							MoveSelectedIcon(theWindow,dx[keyCode-0x7b],dy[keyCode-0x7b]);
+							return;
+							break;
+				}
+				break;
+			
+			case kWindowTypePaintWindow:
+				/* ãƒšã‚¤ãƒ³ãƒˆã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ */
+				eWinRec=GetPaintWinRec(theWindow);
+				
+				if (optDown && (keyCode==0x1f || theChar=='o'))	/* opt+o */
+				{
+					DispPaintMask(theWindow);
+					return;
+				}
+				if (eWinRec->isDotMode)
+				{
+					if (HandleDotKey(theEvent->what,theChar,theWindow)) return;
+				}
+				if (eWinRec->isSelected) /* if anywhere is selected */
+				{
+					switch (theChar)
+					{
+						case kBackspaceCharCode: /* delete key */
+							DoDelete(optDown);
+							return;
+							break;
+						
+						case kLeftArrowCharCode: /* cursor keys */
+						case kRightArrowCharCode:
+						case kUpArrowCharCode:
+						case kDownArrowCharCode:
+							/* ã¾ãšã€é¸æŠã®å°ã‚’æ¶ˆã™ */
+							if (eWinRec->showSelection)
+								DispSelection(theWindow);
+							
+							moveRatio=(optDown ? (shiftDown ? 4 : 3) : 0);
+							/* å‹•ã‹ã™ã€‚å‹•ã‹ã—ãŸã‚ã¨ã¯å†æç”» */
+							MoveSelection(theWindow,dx[keyCode-0x7b]<<moveRatio,dy[keyCode-0x7b]<<moveRatio,true);
+							return;
+							break;
+						
+						case kEnterCharCode: /* enter key */
+							FixSelection(theWindow);
+							return;
+							break;
+						
+						case 't':
+						case 'T':
+							HandleEffectChoice(iTransparent);
+							return;
+							break;
+						
+						case 'o':
+						case 'O':
+							HandleEffectChoice(iOpaque);
+							return;
+							break;
+						
+						case 'b':
+						case 'B':
+							HandleEffectChoice(iBlend);
+							return;
+							break;
+					}
+				}
+				else /* not selected */
+				{
+					switch (theChar)
+					{
+						case kLeftArrowCharCode: /* cursor keys */
+						case kRightArrowCharCode:
+						case kUpArrowCharCode:
+						case kDownArrowCharCode:
+							/* ã‚¹ã‚¯ãƒ­ãƒ¼ãƒ«ã€‚å‹•ã‹ã—ãŸã‚ã¨ã¯å†æç”» */
+							DoScrollPaintWindowByKeys(theWindow,theChar,theEvent->modifiers);
+							return;
+							break;
+					}
+				}
+				switch (theChar)
+				{
+					case kHomeCharCode:
+					case kEndCharCode:
+					case kPageUpCharCode:
+					case kPageDownCharCode:
+						DoScrollPaintWindowByKeys(theWindow,theChar,theEvent->modifiers);
+						return;
+						break;
+				}
+				switch (theChar)
+				{
+					case 'A':
+					case 'a':
+						HandleEffectChoice(iAntialias);
+						return;
+						break;
+					
+					case 'f':
+					case 'F':
+						HandleEffectChoice(iFill);
+						return;
+						break;
+					
+					case 'h':
+					case 'H':
+						HandleEffectChoice(iFlipHorizontal);
+						return;
+						break;
+					
+					case 'v':
+					case 'V':
+						HandleEffectChoice(iFlipVertical);
+						return;
+						break;
+					
+					case 'd':
+					case 'D':
+						HandlePenColorChoice(iPenDarken);
+						return;
+						break;
+					
+					case 'l':
+					case 'L':
+						HandlePenColorChoice(iPenLighten);
+						return;
+						break;
+					
+					case 's':
+					case 'S':
+						DoAutoSelect(theWindow);
+						break;
+					
+					case 'z':
+					case 'Z':
+						DoUndo();
+						return;
+						break;
+				}
+				switch (theChar)
+				{
+					case '1':
+						if (shiftDown)
+							HandleColorModeChoice(iMonoD);
+						else
+							HandleColorModeChoice(iMonochrome);
+						return;
+						break;
+					
+					case '3':
+						if (shiftDown)
+							HandleColorModeChoice(iAppleIconColorD);
+						else
+							HandleColorModeChoice(iAppleIconColor);
+						return;
+						break;
+					
+					case '4':
+						if (optDown)
+							if (shiftDown)
+								HandleColorModeChoice(i16GrayD);
+							else
+								HandleColorModeChoice(i16Gray);
+						else
+							if (shiftDown)
+								HandleColorModeChoice(i16ColorD);
+							else
+								HandleColorModeChoice(i16Color);
+						return;
+						break;
+					
+					case '6':
+						if (shiftDown)
+							HandleColorModeChoice(i216ColorD);
+						else
+							HandleColorModeChoice(i216Color);
+						return;
+						break;
+				}
+				break;
+		}
+	}
+	
+	/* ãƒ„ãƒ¼ãƒ«é¸æŠãªã©ã€ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã«ä¾å­˜ã—ãªã„ã‚‚ã® */
+	switch(theChar)
+	{
+		/* ãƒ„ãƒ¼ãƒ« */
+		case 'p':
+		case 'P':
+			if (gSelectedTool == kPencilTool)
+				ToolSelect(kEraserTool);
+			else
+				ToolSelect(kPencilTool);
+			return;
+			break;
+		
+		case 'm':
+		case 'M':
+			ToolSelect(kMarqueeTool);
+			return;
+			break;
+		
+		case 'e':
+		case 'E':
+			if (gSelectedTool == kEraserTool)
+				ToolSelect(kPencilTool);
+			else
+				ToolSelect(kEraserTool);
+			return;
+			break;
+		
+		case 'k':
+		case 'K':
+			ToolSelect(kBucketTool);
+			return;
+			break;
+		
+		case 'i':
+		case 'I':
+			ToolSelect(kSpoitTool);
+			return;
+			break;
+		
+		/* ãƒšãƒ³ã®è‰²é–¢é€£ */
+		case 0x1e: /* ä¸Š */
+			HandlePenColorChoice(iPenLighten);
+			return;
+			break;
+		
+		case 0x1f: /* ä¸‹ */
+			HandlePenColorChoice(iPenDarken);
+			return;
+			break;
+		
+		case 0x09: /* tab key */
+			if (optDown)
+				HandlePenColorChoice(iPrevBlend);
+			else
+				HandlePenColorChoice(iPrevColor);
+			return;
+			break;
+	}
+}
+
+/* ç·¨é›†ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ãƒ‡ãƒ¼ã‚¿ã‹ã‚‰çŠ¶æ…‹ã‚’å–ã‚Šå‡ºã™ */
+void UpdateEditWinData(void)
+{
+	WindowPtr	theWindow=MyFrontNonFloatingWindow();
+	PaintWinRec	*eWinRec;
+	Rect	r;
+	
+	/* ã‚¢ã‚¯ãƒ†ã‚£ãƒ–ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ãªã‘ã‚Œã°ãƒ—ãƒ¬ãƒ“ãƒ¥ãƒ¼ã‚’éš ã™ */
+	if (theWindow==nil)
+	{
+		HideReferencedWindow(gPreviewWindow);
+		HideReferencedWindow(DotModePalette);
+		
+		if (gPaletteCheck == kPaletteCheckUsed) /* ãƒ‘ãƒ¬ãƒƒãƒˆã®ãƒã‚§ãƒƒã‚¯ã‚’ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆ */
+			UpdatePaletteCheck();
+		return;
+	}
+	
+	if (GetExtWindowKind(theWindow)!=kWindowTypePaintWindow)
+	{
+		SetPortWindowPort(gPreviewWindow);
+		SizeWindow(gPreviewWindow,kIconPreviewWidth,kIconPreviewHeight,true);
+		GetWindowPortBounds(gPreviewWindow,&r);
+		ClipRect(&r);
+		MyInvalWindowPortBounds(gPreviewWindow);
+		ShowReferencedWindow(gPreviewWindow);
+		SetPortWindowPort(theWindow);
+		
+		HideReferencedWindow(DotModePalette);
+		
+		if (gPaletteCheck == kPaletteCheckUsed) /* ãƒ‘ãƒ¬ãƒƒãƒˆã®ãƒã‚§ãƒƒã‚¯ã‚’ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆ */
+			UpdatePaletteCheck();
+		return;
+	}
+	
+	ShowReferencedWindow(gPreviewWindow);
+	
+	/* ãƒ«ãƒ¼ãƒ© */
+	ResetRuler();
+	
+	eWinRec=GetPaintWinRec(theWindow);
+	
+	/* ãƒ—ãƒ¬ãƒ“ãƒ¥ãƒ¼ã‚‚æ›´æ–° */
+	SetPortWindowPort(gPreviewWindow);
+	SizeWindow(gPreviewWindow,eWinRec->iconSize.right,eWinRec->iconSize.bottom,true);
+	ClipRect(&eWinRec->iconSize);
+	MyInvalWindowPortBounds(gPreviewWindow);
+	SetPortWindowPort(theWindow);
+	
+	/* æç”»ç‚¹ãƒ¢ãƒ¼ãƒ‰ãªã‚‰ãƒ‘ãƒ¬ãƒƒãƒˆã‚’è¡¨ç¤º */
+	if (eWinRec->isDotMode)
+		ShowReferencedWindow(DotModePalette);
+	else
+		HideReferencedWindow(DotModePalette);
+	
+	/* é¸æŠé ˜åŸŸãŒã‚ã‚‹ãªã‚‰é¸æŠãƒ„ãƒ¼ãƒ«ã«å¤‰ãˆã‚‹ */
+	if (!EmptyRgn(eWinRec->eSelectedRgn) && !gToolPrefs.selectionMasking)
+		ToolSelect(kMarqueeTool);
+	
+	if (gPaletteCheck == kPaletteCheckUsed)
+		UpdatePaletteCheck();
+	else
+	{
+		/* ã‚¢ã‚¤ã‚³ãƒ³ã‚’é–‹ã„ãŸã‚‚ã®ã§ã‚ã‚Œã°ã€å¿…è¦ã«å¿œã˜ã¦ã‚«ãƒ©ãƒ¼ãƒ‘ãƒ¬ãƒƒãƒˆã®å°ã‚’å¤‰æ›´ */
+		if (eWinRec->iconType.fileType == 'icns')
+		{
+			short	newPaletteCheck=gPaletteCheck;
+			
+			if (eWinRec->iconKind == kL8Data || eWinRec->iconKind == kS8Data)
+				newPaletteCheck=kPaletteCheckAIC;
+			else if (eWinRec->iconKind == kL4Data || eWinRec->iconKind == kS4Data)
+				newPaletteCheck=kPaletteCheck16;
+			
+			if (gPaletteCheck != newPaletteCheck)
+			{
+				HandlePaletteChoice(newPaletteCheck+1);
+			}
+		}
+	}
+}
+
+/* ã‚¿ã‚¤ãƒˆãƒ«ãƒãƒ¼ã®ãƒãƒƒãƒ—ã‚¢ãƒƒãƒ— */
+void TitlePopup(WindowPtr theWindow,Point popPos)
+{
+	FSSpec		spec,tempSpec;
+	MenuHandle	popMenu;
+	OSErr		err=noErr;
+	short		item=1;
+	long		selItem;
+	Boolean		savedFlag;
+	short		windowKind;
+	
+	if ((windowKind=GetExtWindowKind(theWindow))==kWindowTypePaintWindow)
+	{
+		PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
+		
+		if (eWinRec->iconType.fileType == 'icns') return;
+		
+		spec=eWinRec->saveFileSpec;
+		savedFlag=eWinRec->iconHasSaved;
+	}
+	else if (windowKind==kWindowTypeIconListWindow)
+	{
+		IconListWinRec	*iWinRec=GetIconListRec(theWindow);
+		
+		spec=iWinRec->iconFileSpec;
+		savedFlag=iWinRec->wasSaved;
+	}
+	else
+		return;
+	
+	tempSpec=spec;
+	
+	popMenu=GetMenu(mTitlePopup);
+	
+	if (savedFlag)
+	{
+		while (spec.parID!=fsRtParID && err==noErr)
+		{
+			AppendMenu(popMenu,"\p ");
+			SetMenuItemText(popMenu,item++,spec.name);
+			err=FSMakeFSSpec(spec.vRefNum,spec.parID,0,&spec);
+		}
+		if (err==noErr)
+		{
+			AppendMenu(popMenu,"\p ");
+			SetMenuItemText(popMenu,item++,spec.name);
+		}
+	}
+	else
+		AppendMenu(popMenu,"\pNot Saved Yet");
+	
+	InsertMenu(popMenu,-1);
+	
+	selItem=PopUpMenuSelect(popMenu,popPos.v,popPos.h,1);
+	
+	item=LoWord(selItem);
+	
+	if (item>1)
+	{
+		spec=tempSpec;
+		while (item-->2)
+		{
+			err=FSMakeFSSpec(spec.vRefNum,spec.parID,0,&spec);
+		}
+		
+		FSpAERevealFile(&spec);
+	}			
+	
+	DeleteMenu(mTitlePopup);
+	DisposeMenu(popMenu);
+}
+
+/* æŒ‡å®šãƒ•ã‚¡ã‚¤ãƒ«ã‚’Finderä¸Šã§è¡¨ç¤º */
+void FSpAERevealFile(FSSpec *spec)
+{
+	AliasHandle	fileAlias,parentAlias;
+	FSSpec		parentSpec;
+	
+	ProcessSerialNumber	psn;
+	Boolean		found;
+	OSErr		err;
+	
+	AEDesc		target={typeNull,NULL};
+	AppleEvent	aeEvent={typeNull,NULL};
+	AEDesc		parentDesc={typeNull,NULL};
+	AEDescList	fileList={typeNull,NULL};
+	
+	/* Finderã‚’æ¢ã™ */
+	found=FindProcessFromCreatorAndType(kFinderCreator,kFinderType,&psn);
+	if (!found) return;
+	
+	/* Finderã‚’ã‚¿ãƒ¼ã‚²ãƒƒãƒˆã«æŒ‡å®š */
+	err=AECreateDesc(typeProcessSerialNumber,&psn,sizeof(ProcessSerialNumber),&target);
+	
+	/* é€ä»˜ã™ã‚‹Appleã‚¤ãƒ™ãƒ³ãƒˆã‚’ä½œæˆ */
+	err=AECreateAppleEvent(kAEFinderEvents,kAERevealSelection,&target,kAutoGenerateReturnID,
+							kAnyTransactionID,&aeEvent);
+	
+	/* Finderä¸Šã§è¡¨ç¤ºã™ã‚‹ãƒ•ã‚¡ã‚¤ãƒ«ï¼ˆãƒ•ã‚©ãƒ«ãƒ€ï¼‰ã®ãƒªã‚¹ãƒˆã‚’ä½œæˆ */
+	err=AECreateList(nil,0,false,&fileList);
+	
+	/* ãƒªã‚¹ãƒˆã«ãƒ•ã‚¡ã‚¤ãƒ«ã‚’è¿½åŠ  */
+	err=NewAlias(nil,spec,&fileAlias);
+	if (err==noErr)
+	{
+		HLock((Handle)fileAlias);
+#if __AL_USE_OPAQUE_RECORD__
+		Size aliasSize = GetAliasSize( fileAlias );
+#else
+		unsigned short aliasSize = (*fileAlias)->aliasSize;
+#endif
+		err=AEPutPtr(&fileList,1,typeAlias,(Ptr)*fileAlias,aliasSize);
+		HUnlock((Handle)fileAlias);
+		DisposeHandle((Handle)fileAlias);
+	}
+	
+	/* ãƒªã‚¹ãƒˆã‚’Appleã‚¤ãƒ™ãƒ³ãƒˆã®keySelectionãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ã«è¨­å®šã™ã‚‹ */
+	err=AEPutParamDesc(&aeEvent,keySelection,&fileList);
+	
+	/* ãƒ•ã‚¡ã‚¤ãƒ«ã®è¦ªãƒ•ã‚©ãƒ«ãƒ€ã®ãƒ‡ã‚¹ã‚¯ãƒªãƒ—ã‚¿ã‚’ä½œæˆ */
+	err=FSMakeFSSpec(spec->vRefNum,spec->parID,0,&parentSpec);
+	err=NewAlias(nil,&parentSpec,&parentAlias);
+	if (err==noErr)
+	{
+		HLock((Handle)parentAlias);
+#if __AL_USE_OPAQUE_RECORD__
+		Size aliasSize = GetAliasSize( parentAlias );
+#else
+		unsigned short aliasSize = (*parentAlias)->aliasSize;
+#endif
+		err=AECreateDesc(typeAlias,(Ptr)*parentAlias,aliasSize,&parentDesc);
+		HUnlock((Handle)parentAlias);
+		DisposeHandle((Handle)parentAlias);
+	}
+	
+	/* è¦ªãƒ•ã‚©ãƒ«ãƒ€ã®ãƒ‡ã‚¹ã‚¯ãƒªãƒ—ã‚¿ã‚’keyDirectObjectãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ã«è¨­å®šã™ã‚‹ */
+	err=AEPutParamDesc(&aeEvent,keyDirectObject,&parentDesc);
+	
+	/* Appleã‚¤ãƒ™ãƒ³ãƒˆã‚’é€ä»˜ã™ã‚‹ */
+	err=AESend(&aeEvent,nil,kAENoReply+kAECanSwitchLayer+kAEAlwaysInteract,
+				kAENormalPriority,kNoTimeOut,nil,nil);
+	
+	/* ç¢ºä¿ã—ãŸãƒ‡ã‚¹ã‚¯ãƒªãƒ—ã‚¿ã‚’ç ´æ£„ã™ã‚‹ */
+	err=AEDisposeDesc(&target);
+	err=AEDisposeDesc(&aeEvent);
+	err=AEDisposeDesc(&fileList);
+	err=AEDisposeDesc(&parentDesc);
+	
+	err=SetFrontProcess(&psn);
+}
+
+/* ãƒ•ã‚¡ã‚¤ãƒ«ã‚’å¾—ã‚‹ */
+OSErr   GetFile(FSSpec *theSpec,long index,Boolean *type)
+{
+	CInfoPBRec	pb;
+	DirInfo		*fiPtr = &pb.dirInfo;
+	OSErr		err;
+	
+	fiPtr->ioCompletion	= nil;
+	fiPtr->ioVRefNum	= theSpec->vRefNum;
+	fiPtr->ioNamePtr	= theSpec->name;
+	fiPtr->ioDrDirID	= theSpec->parID;
+	fiPtr->ioFDirIndex	= (short)index;
+	
+	err = PBGetCatInfoSync(&pb);
+	
+	if(err == noErr) {
+		FSMakeFSSpec( pb.hFileInfo.ioVRefNum,pb.hFileInfo.ioFlParID,pb.hFileInfo.ioNamePtr, &(*theSpec) );
+        if( pb.hFileInfo.ioFlAttrib & 0x10 ){	/* ãƒ•ã‚©ãƒ«ãƒ€ã ã£ãŸã‚‰ */
+        	*type=true;
+        }else{									/* ãƒ•ã‚¡ã‚¤ãƒ«ã ã£ãŸã‚‰ */
+        	*type=false;
+        }
+	}
+	
+	return err;
+}

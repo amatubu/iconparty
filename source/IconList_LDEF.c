@@ -1,1 +1,408 @@
-/* ------------------------------------------------------------ *//*  IconList_LDEF.c                                             *//*     ƒAƒCƒRƒ“ƒŠƒXƒgƒEƒBƒ“ƒhƒE—p‚ÌLDEF                         *//*                                                              *//*                 1997.12.30 - 2001.12.31  naoki iimura         *//* ------------------------------------------------------------ *//* includes */#ifdef __APPLE_CC__#include	<Carbon/Carbon.h>#else#include	<Icons.h>#include	<NumberFormatting.h>#include	<LowMem.h>#include	<Resources.h>#include	<Gestalt.h>#endif#if TARGET_API_MAC_CARBON#include	"Globals.h"#endif#include	"Definition.h"#include	"IconRoutines.h"#include	"MenuRoutines.h"#include	"PreCarbonSupport.h"#define		isBlack(color) (color.red == 0 && color.green == 0 && color.blue == 0)/* prototypes */#if TARGET_API_MAC_CARBON	pascal void MyIconListLDEFProc(short message,Boolean selected,Rect *cellRect,Cell theCell,									short dataOffset,short dataLen,ListHandle theList);#endifstatic void	MyLDEFInit(ListHandle theList);static void	MyLDEFDraw(Boolean selected,Rect *cellRect,Cell theCell,					short dataOffset,short dataLen,ListHandle theList);//static void	MyLDEFHighlight(Rect *cellRect,Cell theCell,//					short dataOffset,short dataLen,ListHandle theList);static void	MyLDEFClose(ListHandle theList);static OSErr	MyLDEFGetIconSuite(IconSuiteRef *iconSuite,IconListRec *iconListRec,IconListDataRec *data);/* ÀÛ‚Ìƒ‹[ƒ`ƒ“ *//* MyLDEFFLDEF‚ÌƒƒCƒ“ƒ‹[ƒ`ƒ“B‘—‚ç‚ê‚Ä‚­‚éƒƒbƒZ[ƒW‚É‚æ‚Á‚Äˆ—‚ğ‚í‚¯‚é */#if TARGET_API_MAC_CARBONpascal void MyIconListLDEFProc(short message,Boolean selected,Rect *cellRect,Cell theCell,								short dataOffset,short dataLen,ListHandle theList)#elsepascal void	main(short message,Boolean selected,Rect *cellRect,Cell theCell,short dataOffset,					short dataLen,ListHandle theList)#endif{	switch (message)	{		case lInitMsg:			MyLDEFInit(theList);			break;				case lDrawMsg:		case lHiliteMsg:			MyLDEFDraw(selected,cellRect,theCell,dataOffset,dataLen,theList);			break;		//			MyLDEFHighlight(selected,cellRect,theCell,dataOffset,dataLen,theList);//			break;				case lCloseMsg:			MyLDEFClose(theList);			break;	}}/* ƒŠƒXƒg‚Ì‰Šú‰» *//* ‚±‚ÌLDEF‚Å‚Í‚â‚é‚±‚Æ‚ª‚È‚¢ */static void MyLDEFInit(ListHandle theList){	#pragma unused(theList)}/* ƒZƒ‹‚Ì•`‰æ *//* ƒZƒ‹‚Ì“à—e‚ğ‚Æ‚è‚¾‚µA•`‰æ‚·‚é */static void MyLDEFDraw(Boolean selected,Rect *cellRect,Cell theCell,short dataOffset,short dataLen,					ListHandle theList){	#pragma unused(dataOffset,theCell)	GrafPtr		savedPort;	RgnHandle	savedClip;	PenState	savedPenState;	IconListRec	*iconListRec;		Rect	iconRect={0,0,32,32},frameRect;		if (dataLen==0) return;		/* ƒ|[ƒgAƒNƒŠƒbƒvƒŠ[ƒWƒ‡ƒ“Aƒyƒ“ó‘Ô‚ğ•Û‘¶ */	GetPort(&savedPort);	SetPort(GetListPort(theList));	savedClip=NewRgn();	GetClip(savedClip);	ClipRect(cellRect);	GetPenState(&savedPenState);	PenNormal();	TextSize(9);		/* ƒAƒvƒŠƒP[ƒVƒ‡ƒ“‚ÌQÆ”Ô†‚È‚Ç‚Ìî•ñ‚ğ“¾‚é */	iconListRec=(IconListRec *)GetListRefCon(theList);		if (dataLen==sizeof(IconListDataRec *))	{		Str15	idStr;				IconSuiteRef	iconSuite;		OSErr	err;		Rect	idRect;		RgnHandle	frameRgn=NewRgn(),iconRgn=NewRgn();		Boolean	smallFlag;		Handle	h;		IconListDataRec	*cellData;				LGetCell(&cellData,&dataLen,theCell,theList);				/* ‚Æ‚è‚ ‚¦‚¸ƒAƒCƒRƒ“‚ğ“Ç‚İ‚Ş */		err=MyLDEFGetIconSuite(&iconSuite,iconListRec,cellData);		err=GetIconFromSuite(&h,iconSuite,kLarge1BitMask);		smallFlag=(h==nil);				/* ƒAƒCƒRƒ“‚Ì•\¦ˆÊ’u */		if (smallFlag)			SetRect(&iconRect,cellRect->left+12+8,cellRect->top+8+8,					cellRect->left+12+8+16,cellRect->top+8+8+16);		else			SetRect(&iconRect,cellRect->left+12,cellRect->top+8,					cellRect->left+32+12,cellRect->top+32+8);		frameRect=iconRect;		InsetRect(&frameRect,-3,-3);		RectRgn(frameRgn,&frameRect);				err=IconSuiteToRgn(iconRgn,&iconRect,kAlignNone,iconSuite);		DiffRgn(frameRgn,iconRgn,frameRgn);		EraseRgn(frameRgn);		DisposeRgn(frameRgn);		DisposeRgn(iconRgn);				idRect=*cellRect;		idRect.top+=32+8+2;				#if 1 /* OffScreen”Å */		{			GWorldPtr	tempGWorld;			GWorldPtr	currGWorld;			GDHandle	currDevice;			OSErr		err;						GetGWorld(&currGWorld,&currDevice);			err=NewGWorld(&tempGWorld,(iconListRec->isIconServicesAvailable ? 24 : 8),				cellRect,0,0,useTempMem);			SetGWorld(tempGWorld,0);			LockPixels(GetGWorldPixMap(tempGWorld));			EraseRect(cellRect);						TextSize(9);			TextFont(applFont);						/* id‚ğ•\¦ */			NumToString(cellData->resID,idStr);			if (cellData->resType == kIconFamilyType)				idStr[++idStr[0]]='i';			else if (smallFlag)				idStr[++idStr[0]]='s';			MoveTo(cellRect->left+28-(StringWidth(idStr)>>1),cellRect->top+5+32+5+12);						if (selected) /* ‘I‘ğ‚³‚ê‚Ä‚¢‚ê‚ÎƒnƒCƒ‰ƒCƒg‚³‚¹‚é */			{				RGBColor	hiliteColor,tempColor;								err=PlotIconSuite(&iconRect,kAlignNone,kTransformSelected,iconSuite);								PenMode(srcXor);				PenSize(2,2);				FrameRect(&frameRect);				PenNormal();								TextMode(srcCopy);				GetBackColor(&tempColor);				LMGetHiliteRGB(&hiliteColor);				RGBBackColor(&hiliteColor);				if (isBlack(hiliteColor))				{					ForeColor(whiteColor);					DrawString(idStr);					ForeColor(blackColor);				}				else				{					DrawString(idStr);				}				RGBBackColor(&tempColor);			}			else			{				err=PlotIconSuite(&iconRect,kAlignNone,kTransformNone,iconSuite);				TextMode(srcCopy);				DrawString(idStr);			}						SetGWorld(currGWorld,currDevice);			CopyBits(GetPortBitMapForCopyBits(tempGWorld),GetPortBitMapForCopyBits(currGWorld),				cellRect,cellRect,srcCopy,NULL);						UnlockPixels(GetGWorldPixMap(tempGWorld));			DisposeGWorld(tempGWorld);		}		#else				/* id‚ğ•\¦ */		NumToString(cellData->resID,idStr);		if (cellData->resType == kIconFamilyType)			idStr[++idStr[0]]='i';//		if (smallFlag)//			idStr[++idStr[0]]='s';		else		{			Str15	idStr2;						BlockMoveData(&idStr[0],&idStr2[0],idStr[0]+1);			idStr2[++idStr2[0]]='i';//			idStr2[++idStr2[0]]='s';						MoveTo(cellRect->left+28-(StringWidth(idStr2)>>1),cellRect->top+5+32+5+12);			ForeColor(whiteColor);			DrawString(idStr2);			ForeColor(blackColor);		}		MoveTo(cellRect->left+28-(StringWidth(idStr)>>1),cellRect->top+5+32+5+12);				if (selected) /* ‘I‘ğ‚³‚ê‚Ä‚¢‚ê‚ÎƒnƒCƒ‰ƒCƒg‚³‚¹‚é */		{			RGBColor	hiliteColor,tempColor;						err=PlotIconSuite(&iconRect,kAlignNone,kTransformSelected,iconSuite);						PenMode(srcXor);			PenSize(2,2);			FrameRect(&frameRect);			PenNormal();						TextMode(srcCopy);			GetBackColor(&tempColor);			LMGetHiliteRGB(&hiliteColor);			RGBBackColor(&hiliteColor);			if (isBlack(hiliteColor))			{				ForeColor(whiteColor);				DrawString(idStr);				ForeColor(blackColor);			}			else			{				DrawString(idStr);			}			RGBBackColor(&tempColor);		}		else		{			err=PlotIconSuite(&iconRect,kAlignNone,kTransformNone,iconSuite);			TextMode(srcCopy);			DrawString(idStr);		}		#endif				err=DisposeIconSuite(iconSuite,true);				UseResFile(iconListRec->gApplRefNum);	}	/* ƒ|[ƒgAƒNƒŠƒbƒvƒŠ[ƒWƒ‡ƒ“Aƒyƒ“ó‘Ô‚ğŒ³‚É–ß‚· */	SetPort(savedPort);	SetClip(savedClip);	DisposeRgn(savedClip);	SetPenState(&savedPenState);}#if 0/* ƒZƒ‹‚ğƒnƒCƒ‰ƒCƒg‚³‚¹‚é */	static void MyLDEFHighlight(Rect *cellRect,Cell theCell,short dataOffset,short dataLen,ListHandle theList){	#pragma unused(theCell,dataOffset,theList)	Rect	iconRect;		if (dataLen==0) return;		SetRect(&iconRect,cellRect->left+12,cellRect->top+8,		cellRect->left+32+12,cellRect->top+32+8);		InsetRect(&iconRect,-3,-3);		PenMode(srcXor);	PenSize(2,2);		FrameRect(&iconRect);		PenMode(srcCopy);	PenSize(1,1);}#endif/* ƒŠƒXƒg‚ğÁ‹‚·‚é *//* ƒŠƒXƒg‚Ìƒf[ƒ^‚Æ‚µ‚ÄŠm•Û‚µ‚½ƒƒ‚ƒŠ‚ğ‰ğ•ú */static void	MyLDEFClose(ListHandle theList){	Cell	aCell;	Ptr		dataPtr;	short	dataLength;	ListBounds	r;		SetPt(&aCell,0,0);	GetListDataBounds(theList,&r);	if (PtInRect(aCell,&r))	{		do		{			dataLength=sizeof(Ptr);			LGetCell(&dataPtr,&dataLength,aCell,theList);			if (dataLength==sizeof(Ptr))				DisposePtr(dataPtr);		} while (LNextCell(true,true,&aCell,theList));	}		DisposePtr((Ptr)GetListRefCon(theList));}/* w’èID‚ÌƒAƒCƒRƒ“‚ğæ“¾ */static OSErr MyLDEFGetIconSuite(IconSuiteRef *iconSuite,IconListRec *iconListRec,IconListDataRec *data){	OSErr	err;	Handle	iconData;		UseResFile(iconListRec->tempRefNum);		if (data->resType == kIconFamilyType)	{		/* 'icns' */		IconFamilyHandle	iconFamily;				iconFamily = (IconFamilyHandle)Get1Resource(kIconFamilyType,data->resID);		if (iconFamily == nil)		{			UseResFile(iconListRec->refNum);			iconFamily = (IconFamilyHandle)Get1Resource(kIconFamilyType,data->resID);		}				err=IconFamilyToIconSuite(iconFamily,kSelectorMy32Data,iconSuite);		ReleaseResource((Handle)iconFamily);	}	else	{		iconData=Get1Resource(kLarge1BitMask,data->resID);		if (iconData == nil)		{			iconData=Get1Resource(kSmall1BitMask,data->resID);			if (iconData==nil)			{				UseResFile(iconListRec->refNum);			}		}				err=Get1IconSuite(iconSuite,data->resID,			(iconListRec->isIconServicesAvailable ? kSelectorMy32Data : kSelectorMyData));	}		UseResFile(iconListRec->gApplRefNum);		return err;}#if !TARGET_API_MAC_CARBON/* ƒJƒŒƒ“ƒgƒŠƒ\[ƒX‚Ì’†‚©‚çƒAƒCƒRƒ“‚ğæ“¾ */OSErr Get1IconSuite(IconSuiteRef *theIconSuite,short theResID,IconSelectorValue selector){	OSErr	err;	ResType	resList[]={	kLarge1BitMask,kLarge4BitData,kLarge8BitData,kLarge32BitData,kLarge8BitMask,0,0,0,						kSmall1BitMask,kSmall4BitData,kSmall8BitData,kSmall32BitData,kSmall8BitMask,0,0,0,						 kMini1BitMask, kMini4BitData, kMini8BitData,0,0,0,0,0,						 kHuge1BitMask, kHuge4BitData, kHuge8BitData, kHuge32BitData, kHuge8BitMask,0,0,0};		short	i,j=0;	Handle	h;		err=NewIconSuite(theIconSuite);	if (err!=noErr) return err;		for (i=0; i<32 && err==noErr; i++)	{		if ((selector & (1L << i)) != 0)		{			h=Get1Resource(resList[i],theResID);			if (h != nil)			{				err=AddIconToSuite(h,*theIconSuite,resList[i]);				j++;			}		}	}		return err;}#endif
+/* ------------------------------------------------------------ */
+/*  IconList_LDEF.c                                             */
+/*     ã‚¢ã‚¤ã‚³ãƒ³ãƒªã‚¹ãƒˆã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ç”¨ã®LDEF                         */
+/*                                                              */
+/*                 1997.12.30 - 2001.12.31  naoki iimura         */
+/* ------------------------------------------------------------ */
+
+/* includes */
+#ifdef __APPLE_CC__
+#include	<Carbon/Carbon.h>
+#else
+#include	<Icons.h>
+#include	<NumberFormatting.h>
+#include	<LowMem.h>
+#include	<Resources.h>
+#include	<Gestalt.h>
+#endif
+
+#if TARGET_API_MAC_CARBON
+#include	"Globals.h"
+#endif
+#include	"Definition.h"
+#include	"IconRoutines.h"
+#include	"MenuRoutines.h"
+#include	"PreCarbonSupport.h"
+
+#define		isBlack(color) (color.red == 0 && color.green == 0 && color.blue == 0)
+
+/* prototypes */
+#if TARGET_API_MAC_CARBON
+	pascal void MyIconListLDEFProc(short message,Boolean selected,Rect *cellRect,Cell theCell,
+									short dataOffset,short dataLen,ListHandle theList);
+#endif
+
+static void	MyLDEFInit(ListHandle theList);
+static void	MyLDEFDraw(Boolean selected,Rect *cellRect,Cell theCell,
+					short dataOffset,short dataLen,ListHandle theList);
+//static void	MyLDEFHighlight(Rect *cellRect,Cell theCell,
+//					short dataOffset,short dataLen,ListHandle theList);
+static void	MyLDEFClose(ListHandle theList);
+
+static OSErr	MyLDEFGetIconSuite(IconSuiteRef *iconSuite,IconListRec *iconListRec,IconListDataRec *data);
+
+/* å®Ÿéš›ã®ãƒ«ãƒ¼ãƒãƒ³ */
+/* MyLDEFï¼šLDEFã®ãƒ¡ã‚¤ãƒ³ãƒ«ãƒ¼ãƒãƒ³ã€‚é€ã‚‰ã‚Œã¦ãã‚‹ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã«ã‚ˆã£ã¦å‡¦ç†ã‚’ã‚ã‘ã‚‹ */
+#if TARGET_API_MAC_CARBON
+pascal void MyIconListLDEFProc(short message,Boolean selected,Rect *cellRect,Cell theCell,
+								short dataOffset,short dataLen,ListHandle theList)
+#else
+pascal void	main(short message,Boolean selected,Rect *cellRect,Cell theCell,short dataOffset,
+					short dataLen,ListHandle theList)
+#endif
+{
+	switch (message)
+	{
+		case lInitMsg:
+			MyLDEFInit(theList);
+			break;
+		
+		case lDrawMsg:
+		case lHiliteMsg:
+			MyLDEFDraw(selected,cellRect,theCell,dataOffset,dataLen,theList);
+			break;
+		
+//			MyLDEFHighlight(selected,cellRect,theCell,dataOffset,dataLen,theList);
+//			break;
+		
+		case lCloseMsg:
+			MyLDEFClose(theList);
+			break;
+	}
+}
+
+/* ãƒªã‚¹ãƒˆã®åˆæœŸåŒ– */
+/* ã“ã®LDEFã§ã¯ã‚„ã‚‹ã“ã¨ãŒãªã„ */
+static void MyLDEFInit(ListHandle theList)
+{
+	#pragma unused(theList)
+}
+
+/* ã‚»ãƒ«ã®æç”» */
+/* ã‚»ãƒ«ã®å†…å®¹ã‚’ã¨ã‚Šã ã—ã€æç”»ã™ã‚‹ */
+static void MyLDEFDraw(Boolean selected,Rect *cellRect,Cell theCell,short dataOffset,short dataLen,
+					ListHandle theList)
+{
+	#pragma unused(dataOffset,theCell)
+	GrafPtr		savedPort;
+	RgnHandle	savedClip;
+	PenState	savedPenState;
+	IconListRec	*iconListRec;
+	
+	Rect	iconRect={0,0,32,32},frameRect;
+	
+	if (dataLen==0) return;
+	
+	/* ãƒãƒ¼ãƒˆã€ã‚¯ãƒªãƒƒãƒ—ãƒªãƒ¼ã‚¸ãƒ§ãƒ³ã€ãƒšãƒ³çŠ¶æ…‹ã‚’ä¿å­˜ */
+	GetPort(&savedPort);
+	SetPort(GetListPort(theList));
+	savedClip=NewRgn();
+	GetClip(savedClip);
+	ClipRect(cellRect);
+	GetPenState(&savedPenState);
+	PenNormal();
+	TextSize(9);
+	
+	/* ã‚¢ãƒ—ãƒªã‚±ãƒ¼ã‚·ãƒ§ãƒ³ã®å‚ç…§ç•ªå·ãªã©ã®æƒ…å ±ã‚’å¾—ã‚‹ */
+	iconListRec=(IconListRec *)GetListRefCon(theList);
+	
+	if (dataLen==sizeof(IconListDataRec *))
+	{
+		Str15	idStr;
+		
+		IconSuiteRef	iconSuite;
+		OSErr	err;
+		Rect	idRect;
+		RgnHandle	frameRgn=NewRgn(),iconRgn=NewRgn();
+		Boolean	smallFlag;
+		Handle	h;
+		IconListDataRec	*cellData;
+		
+		LGetCell(&cellData,&dataLen,theCell,theList);
+		
+		/* ã¨ã‚Šã‚ãˆãšã‚¢ã‚¤ã‚³ãƒ³ã‚’èª­ã¿è¾¼ã‚€ */
+		err=MyLDEFGetIconSuite(&iconSuite,iconListRec,cellData);
+		err=GetIconFromSuite(&h,iconSuite,kLarge1BitMask);
+		smallFlag=(h==nil);
+		
+		/* ã‚¢ã‚¤ã‚³ãƒ³ã®è¡¨ç¤ºä½ç½® */
+		if (smallFlag)
+			SetRect(&iconRect,cellRect->left+12+8,cellRect->top+8+8,
+					cellRect->left+12+8+16,cellRect->top+8+8+16);
+		else
+			SetRect(&iconRect,cellRect->left+12,cellRect->top+8,
+					cellRect->left+32+12,cellRect->top+32+8);
+		frameRect=iconRect;
+		InsetRect(&frameRect,-3,-3);
+		RectRgn(frameRgn,&frameRect);
+		
+		err=IconSuiteToRgn(iconRgn,&iconRect,kAlignNone,iconSuite);
+		DiffRgn(frameRgn,iconRgn,frameRgn);
+		EraseRgn(frameRgn);
+		DisposeRgn(frameRgn);
+		DisposeRgn(iconRgn);
+		
+		idRect=*cellRect;
+		idRect.top+=32+8+2;
+		
+		#if 1 /* OffScreenç‰ˆ */
+		{
+			GWorldPtr	tempGWorld;
+			GWorldPtr	currGWorld;
+			GDHandle	currDevice;
+			OSErr		err;
+			
+			GetGWorld(&currGWorld,&currDevice);
+			err=NewGWorld(&tempGWorld,(iconListRec->isIconServicesAvailable ? 24 : 8),
+				cellRect,0,0,useTempMem);
+			SetGWorld(tempGWorld,0);
+			LockPixels(GetGWorldPixMap(tempGWorld));
+			EraseRect(cellRect);
+			
+			TextSize(9);
+			TextFont(applFont);
+			
+			/* idã‚’è¡¨ç¤º */
+			NumToString(cellData->resID,idStr);
+			if (cellData->resType == kIconFamilyType)
+				idStr[++idStr[0]]='i';
+			else if (smallFlag)
+				idStr[++idStr[0]]='s';
+			MoveTo(cellRect->left+28-(StringWidth(idStr)>>1),cellRect->top+5+32+5+12);
+			
+			if (selected) /* é¸æŠã•ã‚Œã¦ã„ã‚Œã°ãƒã‚¤ãƒ©ã‚¤ãƒˆã•ã›ã‚‹ */
+			{
+				RGBColor	hiliteColor,tempColor;
+				
+				err=PlotIconSuite(&iconRect,kAlignNone,kTransformSelected,iconSuite);
+				
+				PenMode(srcXor);
+				PenSize(2,2);
+				FrameRect(&frameRect);
+				PenNormal();
+				
+				TextMode(srcCopy);
+				GetBackColor(&tempColor);
+				LMGetHiliteRGB(&hiliteColor);
+				RGBBackColor(&hiliteColor);
+				if (isBlack(hiliteColor))
+				{
+					ForeColor(whiteColor);
+					DrawString(idStr);
+					ForeColor(blackColor);
+				}
+				else
+				{
+					DrawString(idStr);
+				}
+				RGBBackColor(&tempColor);
+			}
+			else
+			{
+				err=PlotIconSuite(&iconRect,kAlignNone,kTransformNone,iconSuite);
+				TextMode(srcCopy);
+				DrawString(idStr);
+			}
+			
+			SetGWorld(currGWorld,currDevice);
+			CopyBits(GetPortBitMapForCopyBits(tempGWorld),GetPortBitMapForCopyBits(currGWorld),
+				cellRect,cellRect,srcCopy,NULL);
+			
+			UnlockPixels(GetGWorldPixMap(tempGWorld));
+			DisposeGWorld(tempGWorld);
+		}
+		#else
+		
+		/* idã‚’è¡¨ç¤º */
+		NumToString(cellData->resID,idStr);
+		if (cellData->resType == kIconFamilyType)
+			idStr[++idStr[0]]='i';
+//		if (smallFlag)
+//			idStr[++idStr[0]]='s';
+		else
+		{
+			Str15	idStr2;
+			
+			BlockMoveData(&idStr[0],&idStr2[0],idStr[0]+1);
+			idStr2[++idStr2[0]]='i';
+//			idStr2[++idStr2[0]]='s';
+			
+			MoveTo(cellRect->left+28-(StringWidth(idStr2)>>1),cellRect->top+5+32+5+12);
+			ForeColor(whiteColor);
+			DrawString(idStr2);
+			ForeColor(blackColor);
+		}
+		MoveTo(cellRect->left+28-(StringWidth(idStr)>>1),cellRect->top+5+32+5+12);
+		
+		if (selected) /* é¸æŠã•ã‚Œã¦ã„ã‚Œã°ãƒã‚¤ãƒ©ã‚¤ãƒˆã•ã›ã‚‹ */
+		{
+			RGBColor	hiliteColor,tempColor;
+			
+			err=PlotIconSuite(&iconRect,kAlignNone,kTransformSelected,iconSuite);
+			
+			PenMode(srcXor);
+			PenSize(2,2);
+			FrameRect(&frameRect);
+			PenNormal();
+			
+			TextMode(srcCopy);
+			GetBackColor(&tempColor);
+			LMGetHiliteRGB(&hiliteColor);
+			RGBBackColor(&hiliteColor);
+			if (isBlack(hiliteColor))
+			{
+				ForeColor(whiteColor);
+				DrawString(idStr);
+				ForeColor(blackColor);
+			}
+			else
+			{
+				DrawString(idStr);
+			}
+			RGBBackColor(&tempColor);
+		}
+		else
+		{
+			err=PlotIconSuite(&iconRect,kAlignNone,kTransformNone,iconSuite);
+			TextMode(srcCopy);
+			DrawString(idStr);
+		}
+		#endif
+		
+		err=DisposeIconSuite(iconSuite,true);
+		
+		UseResFile(iconListRec->gApplRefNum);
+	}
+
+	/* ãƒãƒ¼ãƒˆã€ã‚¯ãƒªãƒƒãƒ—ãƒªãƒ¼ã‚¸ãƒ§ãƒ³ã€ãƒšãƒ³çŠ¶æ…‹ã‚’å…ƒã«æˆ»ã™ */
+	SetPort(savedPort);
+	SetClip(savedClip);
+	DisposeRgn(savedClip);
+	SetPenState(&savedPenState);
+}
+
+#if 0
+/* ã‚»ãƒ«ã‚’ãƒã‚¤ãƒ©ã‚¤ãƒˆã•ã›ã‚‹ */	
+static void MyLDEFHighlight(Rect *cellRect,Cell theCell,short dataOffset,short dataLen,ListHandle theList)
+{
+	#pragma unused(theCell,dataOffset,theList)
+	Rect	iconRect;
+	
+	if (dataLen==0) return;
+	
+	SetRect(&iconRect,cellRect->left+12,cellRect->top+8,
+		cellRect->left+32+12,cellRect->top+32+8);
+	
+	InsetRect(&iconRect,-3,-3);
+	
+	PenMode(srcXor);
+	PenSize(2,2);
+	
+	FrameRect(&iconRect);
+	
+	PenMode(srcCopy);
+	PenSize(1,1);
+}
+#endif
+
+/* ãƒªã‚¹ãƒˆã‚’æ¶ˆå»ã™ã‚‹ */
+/* ãƒªã‚¹ãƒˆã®ãƒ‡ãƒ¼ã‚¿ã¨ã—ã¦ç¢ºä¿ã—ãŸãƒ¡ãƒ¢ãƒªã‚’è§£æ”¾ */
+static void	MyLDEFClose(ListHandle theList)
+{
+	Cell	aCell;
+	Ptr		dataPtr;
+	short	dataLength;
+	ListBounds	r;
+	
+	SetPt(&aCell,0,0);
+	GetListDataBounds(theList,&r);
+	if (PtInRect(aCell,&r))
+	{
+		do
+		{
+			dataLength=sizeof(Ptr);
+			LGetCell(&dataPtr,&dataLength,aCell,theList);
+			if (dataLength==sizeof(Ptr))
+				DisposePtr(dataPtr);
+		} while (LNextCell(true,true,&aCell,theList));
+	}
+	
+	DisposePtr((Ptr)GetListRefCon(theList));
+}
+
+/* æŒ‡å®šIDã®ã‚¢ã‚¤ã‚³ãƒ³ã‚’å–å¾— */
+static OSErr MyLDEFGetIconSuite(IconSuiteRef *iconSuite,IconListRec *iconListRec,IconListDataRec *data)
+{
+	OSErr	err;
+	Handle	iconData;
+	
+	UseResFile(iconListRec->tempRefNum);
+	
+	if (data->resType == kIconFamilyType)
+	{
+		/* 'icns' */
+		IconFamilyHandle	iconFamily;
+		
+		iconFamily = (IconFamilyHandle)Get1Resource(kIconFamilyType,data->resID);
+		if (iconFamily == nil)
+		{
+			UseResFile(iconListRec->refNum);
+			iconFamily = (IconFamilyHandle)Get1Resource(kIconFamilyType,data->resID);
+		}
+		
+		err=IconFamilyToIconSuite(iconFamily,kSelectorMy32Data,iconSuite);
+		ReleaseResource((Handle)iconFamily);
+	}
+	else
+	{
+		iconData=Get1Resource(kLarge1BitMask,data->resID);
+		if (iconData == nil)
+		{
+			iconData=Get1Resource(kSmall1BitMask,data->resID);
+			if (iconData==nil)
+			{
+				UseResFile(iconListRec->refNum);
+			}
+		}
+		
+		err=Get1IconSuite(iconSuite,data->resID,
+			(iconListRec->isIconServicesAvailable ? kSelectorMy32Data : kSelectorMyData));
+	}
+	
+	UseResFile(iconListRec->gApplRefNum);
+	
+	return err;
+}
+
+#if !TARGET_API_MAC_CARBON
+/* ã‚«ãƒ¬ãƒ³ãƒˆãƒªã‚½ãƒ¼ã‚¹ã®ä¸­ã‹ã‚‰ã‚¢ã‚¤ã‚³ãƒ³ã‚’å–å¾— */
+OSErr Get1IconSuite(IconSuiteRef *theIconSuite,short theResID,IconSelectorValue selector)
+{
+	OSErr	err;
+	ResType	resList[]={	kLarge1BitMask,kLarge4BitData,kLarge8BitData,kLarge32BitData,kLarge8BitMask,0,0,0,
+						kSmall1BitMask,kSmall4BitData,kSmall8BitData,kSmall32BitData,kSmall8BitMask,0,0,0,
+						 kMini1BitMask, kMini4BitData, kMini8BitData,0,0,0,0,0,
+						 kHuge1BitMask, kHuge4BitData, kHuge8BitData, kHuge32BitData, kHuge8BitMask,0,0,0};
+	
+	short	i,j=0;
+	Handle	h;
+	
+	err=NewIconSuite(theIconSuite);
+	if (err!=noErr) return err;
+	
+	for (i=0; i<32 && err==noErr; i++)
+	{
+		if ((selector & (1L << i)) != 0)
+		{
+			h=Get1Resource(resList[i],theResID);
+			if (h != nil)
+			{
+				err=AddIconToSuite(h,*theIconSuite,resList[i]);
+				j++;
+			}
+		}
+	}
+	
+	return err;
+}
+#endif

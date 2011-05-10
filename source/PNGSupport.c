@@ -1,6 +1,6 @@
 /* ------------------------------------------------------------ */
 /*  PNGSupport.c                                                */
-/*      PNG‚ÌƒGƒ“ƒR[ƒhƒ‹[ƒ`ƒ“                                 */
+/*      PNGã®ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‰ãƒ«ãƒ¼ãƒãƒ³                                 */
 /*                                                              */
 /*                 1999.11.9 - 2001.1.27  naoki iimura        	*/
 /* ------------------------------------------------------------ */
@@ -61,7 +61,7 @@ static RGBColor	gTransColor;
 #define	PNGERR8	8
 
 
-/* PNG•Û‘¶ */
+/* PNGä¿å­˜ */
 extern void PNGEncode(const FSSpec *theFile,GWorldPtr theImage,RgnHandle saveRgn,
 					short colorNum,short depth,Boolean interlaced,short transColorIndex,
 					const RGBColor *transColor,short compLevel,OSType creator)
@@ -100,14 +100,14 @@ extern void PNGEncode(const FSSpec *theFile,GWorldPtr theImage,RgnHandle saveRgn
 	
 	GetGWorld(&cPort,&cDevice);
 	
-	/* ƒtƒ@ƒCƒ‹‚ª‚È‚¯‚ê‚Îì¬‚µAŠJ‚­ */
+	/* ãƒ•ã‚¡ã‚¤ãƒ«ãŒãªã‘ã‚Œã°ä½œæˆã—ã€é–‹ã */
 	err=FSpGetFInfo(theFile,&fndrInfo);
 	if (err==fnfErr)
 		err=FSpCreate(theFile,creator,kPNGFileType,smSystemScript);
 	err=FSpOpenDF(theFile,fsWrPerm,&myFile.refNum);
 	if (err!=noErr) return;
 	
-	/* PNG•Û‘¶—p‚Ì\‘¢‘Ì‚ğì‚é */
+	/* PNGä¿å­˜ç”¨ã®æ§‹é€ ä½“ã‚’ä½œã‚‹ */
 	write_ptr=png_create_write_struct(PNG_LIBPNG_VER_STRING,(png_voidp)NULL,
 				png_default_error,png_default_warning);
 	if (write_ptr == NULL)
@@ -117,7 +117,7 @@ extern void PNGEncode(const FSSpec *theFile,GWorldPtr theImage,RgnHandle saveRgn
 		return;
 	}
 	
-	/* ƒGƒ‰[ƒnƒ“ƒhƒŠƒ“ƒOƒ‹[ƒ`ƒ“ */
+	/* ã‚¨ãƒ©ãƒ¼ãƒãƒ³ãƒ‰ãƒªãƒ³ã‚°ãƒ«ãƒ¼ãƒãƒ³ */
 	myError.err=noErr;
 	myError.cPort=cPort;
 	myError.cDevice=cDevice;
@@ -134,13 +134,13 @@ extern void PNGEncode(const FSSpec *theFile,GWorldPtr theImage,RgnHandle saveRgn
 		return;
 	}
 	
-	/* ‘‚«o‚µƒ‹[ƒ`ƒ“İ’è */
+	/* æ›¸ãå‡ºã—ãƒ«ãƒ¼ãƒãƒ³è¨­å®š */
 	png_set_write_fn(write_ptr,(png_voidp)&myFile,png_default_write_data,NULL);
 	
-	/* ƒvƒƒOƒŒƒXƒ‹[ƒ`ƒ“ */
+	/* ãƒ—ãƒ­ã‚°ãƒ¬ã‚¹ãƒ«ãƒ¼ãƒãƒ³ */
 	png_set_write_status_fn(write_ptr,NULL);
 	
-	/* ƒtƒ@ƒCƒ‹‚Ìİ’è */
+	/* ãƒ•ã‚¡ã‚¤ãƒ«ã®è¨­å®š */
 	GetRegionBounds(saveRgn,&saveRect);
 	width=saveRect.right-saveRect.left;
 	height=saveRect.bottom-saveRect.top;
@@ -153,7 +153,7 @@ extern void PNGEncode(const FSSpec *theFile,GWorldPtr theImage,RgnHandle saveRgn
 	}
 	else
 	{
-		bit_depth=8; /* rgb‚²‚Æ‚É8ƒrƒbƒg */
+		bit_depth=8; /* rgbã”ã¨ã«8ãƒ“ãƒƒãƒˆ */
 		color_type=PNG_COLOR_TYPE_RGB; /* rgb color */
 		filters = PNG_ALL_FILTERS;
 	}
@@ -161,13 +161,13 @@ extern void PNGEncode(const FSSpec *theFile,GWorldPtr theImage,RgnHandle saveRgn
 	compression_type=PNG_COMPRESSION_TYPE_BASE;
 	filter_type=PNG_FILTER_TYPE_BASE;
 	
-	/* ƒtƒBƒ‹ƒ^ */
+	/* ãƒ•ã‚£ãƒ«ã‚¿ */
 	png_set_filter(write_ptr,0,filters);
 	
-	/* ˆ³kƒŒƒxƒ‹ */
+	/* åœ§ç¸®ãƒ¬ãƒ™ãƒ« */
 	png_set_compression_level(write_ptr,compLevel);
 	
-	/* ‘å‚«‚³‚È‚Ç */
+	/* å¤§ãã•ãªã© */
 	png_set_IHDR(write_ptr,write_info_ptr,width,height,bit_depth,color_type,
 				interlace_type,compression_type,filter_type);
 	
@@ -176,7 +176,7 @@ extern void PNGEncode(const FSSpec *theFile,GWorldPtr theImage,RgnHandle saveRgn
 	savePix=GetGWorldPixMap(theImage);
 	LockPixels(savePix);
 	
-	/* ƒJƒ‰[ƒpƒŒƒbƒg */
+	/* ã‚«ãƒ©ãƒ¼ãƒ‘ãƒ¬ãƒƒãƒˆ */
 	if (color_type == PNG_COLOR_TYPE_PALETTE)
 	{
 		num_palette=colorNum;
@@ -195,17 +195,17 @@ extern void PNGEncode(const FSSpec *theFile,GWorldPtr theImage,RgnHandle saveRgn
 		png_set_PLTE(write_ptr,write_info_ptr,color_palette,num_palette);
 	}
 	
-	/* ƒKƒ“ƒ} */
+	/* ã‚¬ãƒ³ãƒ */
 	gamma=0.55555;
 	png_set_gAMA(write_ptr,write_info_ptr,gamma);
 	
-	/* “§‰ßF */
+	/* é€éè‰² */
 	if (transColorIndex>=0)
 	{
 		switch (color_type)
 		{
 			case PNG_COLOR_TYPE_RGB:
-				/* RGB‚Ìê‡A2bytes * 3‚Å“§‰ßF‚ğw’è */
+				/* RGBã®å ´åˆã€2bytes * 3ã§é€éè‰²ã‚’æŒ‡å®š */
 				trans16=(png_color_16p)NewPtr(sizeof(png_color_16));
 				trans16->red=transColor->red;
 				trans16->green=transColor->green;
@@ -224,7 +224,7 @@ extern void PNGEncode(const FSSpec *theFile,GWorldPtr theImage,RgnHandle saveRgn
 					short	i;
 					short	color_num=transColorIndex+1;
 					
-					trans=(png_bytep)NewPtr(color_num); /* •K—v•ª */
+					trans=(png_bytep)NewPtr(color_num); /* å¿…è¦åˆ† */
 					for (i=0; i<transColorIndex; i++)
 						trans[i]=255U;
 					trans[i]=0;
@@ -235,7 +235,7 @@ extern void PNGEncode(const FSSpec *theFile,GWorldPtr theImage,RgnHandle saveRgn
 		}
 	}
 	
-	/* iƒtƒ@ƒCƒ‹‚ÌC³“ú‚Æˆê’v‚³‚¹‚éj */
+	/* æ™‚åˆ»ï¼ˆãƒ•ã‚¡ã‚¤ãƒ«ã®ä¿®æ­£æ—¥ã¨ä¸€è‡´ã•ã›ã‚‹ï¼‰ */
 	{
 		CInfoPBRec	cInfo;
 		OSErr	err;
@@ -243,8 +243,8 @@ extern void PNGEncode(const FSSpec *theFile,GWorldPtr theImage,RgnHandle saveRgn
 		png_time	pTime;
 		
 		cInfo.hFileInfo.ioFDirIndex=0;
-		/* ‚±‚ê‚ğ‚O‚É‚·‚é‚±‚Æ‚É‚æ‚Á‚ÄAioVRefNum‚Å¦‚³‚ê‚éƒ{ƒŠƒ…[ƒ€ƒŠƒtƒ@ƒŒƒ“ƒXA
-		   ioDirID‚Å¦‚³‚ê‚éƒfƒBƒŒƒNƒgƒŠ‚©‚çƒtƒ@ƒCƒ‹‚ğ“Á’è‚·‚é */
+		/* ã“ã‚Œã‚’ï¼ã«ã™ã‚‹ã“ã¨ã«ã‚ˆã£ã¦ã€ioVRefNumã§ç¤ºã•ã‚Œã‚‹ãƒœãƒªãƒ¥ãƒ¼ãƒ ãƒªãƒ•ã‚¡ãƒ¬ãƒ³ã‚¹ã€
+		   ioDirIDã§ç¤ºã•ã‚Œã‚‹ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‹ã‚‰ãƒ•ã‚¡ã‚¤ãƒ«ã‚’ç‰¹å®šã™ã‚‹ */
 		cInfo.hFileInfo.ioVRefNum=theFile->vRefNum;
 		cInfo.hFileInfo.ioDirID=theFile->parID;
 		cInfo.hFileInfo.ioNamePtr=(StringPtr)theFile->name;
@@ -265,7 +265,7 @@ extern void PNGEncode(const FSSpec *theFile,GWorldPtr theImage,RgnHandle saveRgn
 		}
 	}
 	
-	/* ƒeƒLƒXƒg */
+	/* ãƒ†ã‚­ã‚¹ãƒˆ */
 	{
 		png_text	text;
 		
@@ -276,24 +276,24 @@ extern void PNGEncode(const FSSpec *theFile,GWorldPtr theImage,RgnHandle saveRgn
 		png_set_text(write_ptr,write_info_ptr,&text,1);
 	}
 	
-	/* ‰ğ‘œ“xi72dpi = 2834.6456693dpm (dots per meter)j */
+	/* è§£åƒåº¦ï¼ˆ72dpi = 2834.6456693dpm (dots per meter)ï¼‰ */
 	png_set_pHYs(write_ptr,write_info_ptr,2835,2835,PNG_RESOLUTION_METER);
 	
-	/* ƒwƒbƒ_‚ğ•Û‘¶ */
+	/* ãƒ˜ãƒƒãƒ€ã‚’ä¿å­˜ */
 	png_write_info(write_ptr,write_info_ptr);
 	
 	/* 4 bytes per 1 pixel -> 3 bytes per 1 pixel */
 	if (color_type == PNG_COLOR_TYPE_RGB)
 		png_set_filler(write_ptr,0,PNG_FILLER_BEFORE);
 
-	/* ƒf[ƒ^‚ÌˆÊ’u‚ğì¬ */
+	/* ãƒ‡ãƒ¼ã‚¿ã®ä½ç½®ã‚’ä½œæˆ */
 //	LockPixels(savePix);
 	baseAddr=MyGetPixBaseAddr(savePix); //+saveRect.left;
 	rowBytes=MyGetPixRowBytes(savePix) & 0x3fff;
 	//baseAddr+=saveRect.top * rowBytes;
 	row_bufp=(png_bytep *)NewPtr(sizeof(png_bytep)*height);
 	
-	/* ƒAƒhƒŒƒX‚Ìİ’è */
+	/* ã‚¢ãƒ‰ãƒ¬ã‚¹ã®è¨­å®š */
 	for (y = 0; y < height; y++)
 	{
 		row_bufp[y]=(png_bytep)baseAddr;
@@ -302,41 +302,41 @@ extern void PNGEncode(const FSSpec *theFile,GWorldPtr theImage,RgnHandle saveRgn
 		baseAddr+=rowBytes;
 	}
 	
-	/* ‘‚«‚İ */
+	/* æ›¸ãè¾¼ã¿ */
 	png_write_image(write_ptr,row_bufp);
 	
-	/* •Û‘¶I—¹ */
+	/* ä¿å­˜çµ‚äº† */
 	png_write_end(write_ptr,write_info_ptr);
 	
 	UnlockPixels(savePix);
 	SetGWorld(cPort,cDevice);
 	
-	/* “r’†‚ÅŠm•Û‚µ‚½ƒƒ‚ƒŠ‚ğ‰ğ•ú */
-	/* ƒJƒ‰[ƒe[ƒuƒ‹ */
+	/* é€”ä¸­ã§ç¢ºä¿ã—ãŸãƒ¡ãƒ¢ãƒªã‚’è§£æ”¾ */
+	/* ã‚«ãƒ©ãƒ¼ãƒ†ãƒ¼ãƒ–ãƒ« */
 	if (color_palette != NULL) DisposePtr((Ptr)color_palette);
 	
-	/* “§‰ßF */
+	/* é€éè‰² */
 	if (trans != NULL) DisposePtr((Ptr)trans);
 	if (trans16 != NULL) DisposePtr((Ptr)trans16);
 	
 	/* row_bufp */
 	DisposePtr((Ptr)row_bufp);
 	
-	/* \‘¢‘Ì©‘Ì‚ğíœ */
+	/* æ§‹é€ ä½“è‡ªä½“ã‚’å‰Šé™¤ */
 	png_destroy_write_struct(&write_ptr,&write_info_ptr);
 	
-	/* ƒtƒ@ƒCƒ‹‚ÌƒTƒCƒY‚ğİ’è */
+	/* ãƒ•ã‚¡ã‚¤ãƒ«ã®ã‚µã‚¤ã‚ºã‚’è¨­å®š */
 	err=GetFPos(myFile.refNum,&filePos);
 	err=SetEOF(myFile.refNum,filePos);
 	
-	/* ƒtƒ@ƒCƒ‹‚ğ•Â‚¶‚é */
+	/* ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‰ã˜ã‚‹ */
 	err=FSClose(myFile.refNum);
 	FlushVol(0,theFile->vRefNum);
 }
 
 #define	PNG_BYTES_TO_CHECK	8
 
-/* PNG“Ç‚İ‚İ */
+/* PNGèª­ã¿è¾¼ã¿ */
 extern OSErr PNGDecode(const FSSpec *theFile,GWorldPtr *theImage,GWorldPtr *maskImage,Boolean useTransColor)
 {
 	MyPNGErrorRec	myError;
@@ -373,11 +373,11 @@ extern OSErr PNGDecode(const FSSpec *theFile,GWorldPtr *theImage,GWorldPtr *mask
 	
 	GetGWorld(&cPort,&cDevice);
 	
-	/* ƒtƒ@ƒCƒ‹‚ğŠJ‚­ */
+	/* ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ã */
 	err=FSpOpenDF(theFile,fsRdPerm,&myFile.refNum);
 	if (err!=noErr) return err;
 	
-	/* ƒVƒOƒlƒ`ƒƒ‚Ìƒ`ƒFƒbƒN */
+	/* ã‚·ã‚°ãƒãƒãƒ£ã®ãƒã‚§ãƒƒã‚¯ */
 	err=FSRead(myFile.refNum,&size,buf);
 	if (err!=noErr || size!=PNG_BYTES_TO_CHECK)
 	{
@@ -389,10 +389,10 @@ extern OSErr PNGDecode(const FSSpec *theFile,GWorldPtr *theImage,GWorldPtr *mask
 	{
 		ErrorAlertFromResource(PNGERR_RESID,PNGERR3);
 		FSClose(myFile.refNum);
-		return unknownFormatErr; /* ‚ÜA‚È‚ñ‚Å‚à‚¢‚¢‚ñ‚¾‚¯‚Ç */
+		return unknownFormatErr; /* ã¾ã€ãªã‚“ã§ã‚‚ã„ã„ã‚“ã ã‘ã© */
 	}
 	
-	/* “Ç‚İ‚İ—p‚Ì\‘¢‘Ì */
+	/* èª­ã¿è¾¼ã¿ç”¨ã®æ§‹é€ ä½“ */
 	read_ptr=png_create_read_struct(PNG_LIBPNG_VER_STRING,(png_voidp)NULL,
 				png_default_error,png_default_warning);
 	if (read_ptr == NULL)
@@ -401,14 +401,14 @@ extern OSErr PNGDecode(const FSSpec *theFile,GWorldPtr *theImage,GWorldPtr *mask
 		return memFullErr;
 	}
 	
-	/* ƒGƒ‰[ƒnƒ“ƒhƒŠƒ“ƒOƒ‹[ƒ`ƒ“ */
+	/* ã‚¨ãƒ©ãƒ¼ãƒãƒ³ãƒ‰ãƒªãƒ³ã‚°ãƒ«ãƒ¼ãƒãƒ³ */
 	myError.err=noErr;
 	myError.cPort=cPort;
 	myError.cDevice=cDevice;
 	png_set_error_fn(read_ptr,(png_voidp)&myError,png_default_error,
 				png_default_warning);
 	
-	/* î•ñ\‘¢‘Ì */
+	/* æƒ…å ±æ§‹é€ ä½“ */
 	read_info_ptr=png_create_info_struct(read_ptr);
 	end_info_ptr=png_create_info_struct(read_ptr);
 	
@@ -421,19 +421,19 @@ extern OSErr PNGDecode(const FSSpec *theFile,GWorldPtr *theImage,GWorldPtr *mask
 		return -2;
 	}
 	
-	/* “Ç‚İ‚İƒ‹[ƒ`ƒ“İ’è */
+	/* èª­ã¿è¾¼ã¿ãƒ«ãƒ¼ãƒãƒ³è¨­å®š */
 	png_set_read_fn(read_ptr,(png_voidp)&myFile,png_default_read_data);
 	
-	/* ƒvƒƒOƒŒƒXƒ‹[ƒ`ƒ“ */
+	/* ãƒ—ãƒ­ã‚°ãƒ¬ã‚¹ãƒ«ãƒ¼ãƒãƒ³ */
 	png_set_write_status_fn(read_ptr,NULL);
 	
-	/* “Ç‚İ‚ñ‚Å‚ ‚éƒoƒCƒg”‚ğİ’è */
+	/* èª­ã¿è¾¼ã‚“ã§ã‚ã‚‹ãƒã‚¤ãƒˆæ•°ã‚’è¨­å®š */
 	png_set_sig_bytes(read_ptr,PNG_BYTES_TO_CHECK);
 	
-	/* İ’è‚ğ“Ç‚İ‚Ş */
+	/* è¨­å®šã‚’èª­ã¿è¾¼ã‚€ */
 	png_read_info(read_ptr,read_info_ptr);
 	
-	/* width‚È‚Ç‚ğ“Ç‚İ‚Ş */
+	/* widthãªã©ã‚’èª­ã¿è¾¼ã‚€ */
 	result=png_get_IHDR(read_ptr,read_info_ptr,&width,&height,&bit_depth,&color_type,
 						&interlace_type,&compression_type,&filter_type);
 	if (!result)
@@ -443,7 +443,7 @@ extern OSErr PNGDecode(const FSSpec *theFile,GWorldPtr *theImage,GWorldPtr *mask
 		return -3;
 	}
 	
-	/* ˆê‰ƒTƒCƒY‚Ìƒ`ƒFƒbƒN */
+	/* ä¸€å¿œã‚µã‚¤ã‚ºã®ãƒã‚§ãƒƒã‚¯ */
 	if (width > 32767 || height > 32767)
 	{
 		ErrorAlertFromResource(PNGERR_RESID,PNGERR5);
@@ -454,10 +454,10 @@ extern OSErr PNGDecode(const FSSpec *theFile,GWorldPtr *theImage,GWorldPtr *mask
 	
 	SetRect(&imageRect,0,0,width,height);
 	
-	/* ƒKƒ“ƒ}‚Í‚Ç‚¤‚µ‚æ‚¤ */
+	/* ã‚¬ãƒ³ãƒã¯ã©ã†ã—ã‚ˆã† */
 	png_get_gAMA(read_ptr,read_info_ptr,&gamma);
 	
-	/* ƒJƒ‰[ƒ^ƒCƒv‚ğƒ`ƒFƒbƒN‚µAƒAƒ‹ƒtƒ@ƒ`ƒƒƒ“ƒlƒ‹‚ª‚ ‚é‚ÍŒx‚µ‚Äíœ */
+	/* ã‚«ãƒ©ãƒ¼ã‚¿ã‚¤ãƒ—ã‚’ãƒã‚§ãƒƒã‚¯ã—ã€ã‚¢ãƒ«ãƒ•ã‚¡ãƒãƒ£ãƒ³ãƒãƒ«ãŒã‚ã‚‹æ™‚ã¯è­¦å‘Šã—ã¦å‰Šé™¤ */
 	if ((color_type & PNG_COLOR_MASK_ALPHA) != 0)
 	{
 		ErrorAlertFromResource(PNGERR_RESID,PNGERR6);
@@ -466,20 +466,20 @@ extern OSErr PNGDecode(const FSSpec *theFile,GWorldPtr *theImage,GWorldPtr *mask
 		color_type -= PNG_COLOR_MASK_ALPHA;
 	}
 	
-	/* 16bit‚Ìê‡‚Í8bit‚É‚·‚é */
+	/* 16bitã®å ´åˆã¯8bitã«ã™ã‚‹ */
 	if (bit_depth == 16) png_set_strip_16(read_ptr);
 	
-	/* ƒJƒ‰[ƒ^ƒCƒv‚²‚Æ‚Éê‡‚í‚¯‚µAƒJƒ‰[ƒpƒŒƒbƒg‚ğì¬ */
+	/* ã‚«ãƒ©ãƒ¼ã‚¿ã‚¤ãƒ—ã”ã¨ã«å ´åˆã‚ã‘ã—ã€ã‚«ãƒ©ãƒ¼ãƒ‘ãƒ¬ãƒƒãƒˆã‚’ä½œæˆ */
 	switch (color_type)
 	{
 		case PNG_COLOR_TYPE_PALETTE:
-			/* ƒpƒŒƒbƒg */
-			/* ƒJƒ‰[ƒpƒŒƒbƒg‚ğ“Ç‚İ‚Ş */
+			/* ãƒ‘ãƒ¬ãƒƒãƒˆ */
+			/* ã‚«ãƒ©ãƒ¼ãƒ‘ãƒ¬ãƒƒãƒˆã‚’èª­ã¿è¾¼ã‚€ */
 			pixelDepth=bit_depth;
 			
 			png_get_PLTE(read_ptr,read_info_ptr,&palette,&num_palette);
 			
-			/* ƒJƒ‰[ƒe[ƒuƒ‹‚ğì¬‚·‚é */
+			/* ã‚«ãƒ©ãƒ¼ãƒ†ãƒ¼ãƒ–ãƒ«ã‚’ä½œæˆã™ã‚‹ */
 			ctable=(CTabHandle)NewHandle(sizeof(ColorTable)+sizeof(ColorSpec)*(num_palette-1));
 			if (ctable == nil)
 			{
@@ -489,7 +489,7 @@ extern OSErr PNGDecode(const FSSpec *theFile,GWorldPtr *theImage,GWorldPtr *mask
 				return memFullErr;
 			}
 			
-			/* ƒJƒ‰[ƒe[ƒuƒ‹‚É’l‚ğ‘ã“ü */
+			/* ã‚«ãƒ©ãƒ¼ãƒ†ãƒ¼ãƒ–ãƒ«ã«å€¤ã‚’ä»£å…¥ */
 			HLock((Handle)ctable);
 			(*ctable)->ctSeed=UniqueID('clut');
 			(*ctable)->ctFlags=0;
@@ -506,15 +506,15 @@ extern OSErr PNGDecode(const FSSpec *theFile,GWorldPtr *theImage,GWorldPtr *mask
 			
 			if (useTransColor)
 			{
-				/* ƒpƒŒƒbƒg‚Ì‚¾‚¯“§‰ßF‚ğ’²‚×‚é */
+				/* ãƒ‘ãƒ¬ãƒƒãƒˆã®æ™‚ã ã‘é€éè‰²ã‚’èª¿ã¹ã‚‹ */
 				png_get_tRNS(read_ptr,read_info_ptr,&trans,&num_trans,NULL);
 			}
 			break;
 		
 		case PNG_COLOR_TYPE_GRAY:
 		case PNG_COLOR_TYPE_GRAY_ALPHA:
-			/* ƒOƒŒ[ƒXƒP[ƒ‹ */
-			/* ƒJƒ‰[ƒe[ƒuƒ‹‚ğì¬‚·‚é */
+			/* ã‚°ãƒ¬ãƒ¼ã‚¹ã‚±ãƒ¼ãƒ« */
+			/* ã‚«ãƒ©ãƒ¼ãƒ†ãƒ¼ãƒ–ãƒ«ã‚’ä½œæˆã™ã‚‹ */
 			pixelDepth=(bit_depth ==16 ? 8 : bit_depth);
 			
 			ctable=GetGrayscaleCTable(pixelDepth,false);
@@ -530,17 +530,17 @@ extern OSErr PNGDecode(const FSSpec *theFile,GWorldPtr *theImage,GWorldPtr *mask
 		case PNG_COLOR_TYPE_RGB:
 		case PNG_COLOR_TYPE_RGB_ALPHA:
 			/* RGB */
-			/* ƒJƒ‰[ƒe[ƒuƒ‹‚Í‚¢‚ç‚È‚¢ */
+			/* ã‚«ãƒ©ãƒ¼ãƒ†ãƒ¼ãƒ–ãƒ«ã¯ã„ã‚‰ãªã„ */
 			pixelDepth=24;
 			ctable=nil;
 			png_set_filler(read_ptr,0,PNG_FILLER_BEFORE);
 			break;
 	}
 	
-	/* ƒAƒbƒvƒf[ƒg */
+	/* ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆ */
 	png_read_update_info(read_ptr,read_info_ptr);
 	
-	/* ƒJƒ‰[ƒpƒŒƒbƒgAƒrƒbƒg”‚É]‚Á‚ÄGWorld‚ğì¬ */
+	/* ã‚«ãƒ©ãƒ¼ãƒ‘ãƒ¬ãƒƒãƒˆã€ãƒ“ãƒƒãƒˆæ•°ã«å¾“ã£ã¦GWorldã‚’ä½œæˆ */
 	err=NewGWorld(theImage,pixelDepth,&imageRect,ctable,0,useTempMem);
 	if (err!=noErr)
 	{
@@ -551,14 +551,14 @@ extern OSErr PNGDecode(const FSSpec *theFile,GWorldPtr *theImage,GWorldPtr *mask
 		return err;
 	}
 	
-	/* ƒAƒhƒŒƒX‚Ìİ’è */
+	/* ã‚¢ãƒ‰ãƒ¬ã‚¹ã®è¨­å®š */
 	SetGWorld(*theImage,0);
 	portPix=GetGWorldPixMap(*theImage);
 	LockPixels(portPix);
 	baseAddr=MyGetPixBaseAddr(portPix);
 	rowBytes=MyGetPixRowBytes(portPix) & 0x3fff;
 	
-	/* row_buf‚ğŠm•Û */
+	/* row_bufã‚’ç¢ºä¿ */
 	row_bufp=(png_bytep *)NewPtr(sizeof(png_bytep)*height);
 	
 	for (y=0; y<height; y++)
@@ -567,16 +567,16 @@ extern OSErr PNGDecode(const FSSpec *theFile,GWorldPtr *theImage,GWorldPtr *mask
 		baseAddr+=rowBytes;
 	}
 	
-	/* “Ç‚İ‚İ */
+	/* èª­ã¿è¾¼ã¿ */
 	png_read_image(read_ptr,row_bufp);
 	DisposePtr((Ptr)row_bufp);
 	
-	/* “Ç‚İ‚İI—¹ */
+	/* èª­ã¿è¾¼ã¿çµ‚äº† */
 	png_read_end(read_ptr,end_info_ptr);
 	
 	UnlockPixels(portPix);
 	
-	/* “§‰ßF‚Ì”½‰f */
+	/* é€éè‰²ã®åæ˜  */
 	if (trans != NULL)
 	{
 		GWorldPtr	maskGWorld;
@@ -588,14 +588,14 @@ extern OSErr PNGDecode(const FSSpec *theFile,GWorldPtr *theImage,GWorldPtr *mask
 			SetGWorld(maskGWorld,0);
 			LockPixels(GetGWorldPixMap(maskGWorld));
 			EraseRect(&imageRect);
-		//	PaintRect(&imageRect);	/* ‚Æ‚è‚ ‚¦‚¸‘S‘Ì‚ªƒ}ƒXƒN */
+		//	PaintRect(&imageRect);	/* ã¨ã‚Šã‚ãˆãšå…¨ä½“ãŒãƒã‚¹ã‚¯ */
 			
 			csUPP = NewColorSearchUPP(MySearchTransProc);
 			AddSearch(csUPP);
 			
 			for (i=0; i<num_trans; i++)
 			{
-				if (trans[i]==0) /* “§–¾ */
+				if (trans[i]==0) /* é€æ˜ */
 				{
 					gTransColor=(*ctable)->ctTable[i].rgb;
 					CopyBits(GetPortBitMapForCopyBits(*theImage),
@@ -624,17 +624,17 @@ extern OSErr PNGDecode(const FSSpec *theFile,GWorldPtr *theImage,GWorldPtr *mask
 	
 	SetGWorld(cPort,cDevice);
 	
-	/* ƒf[ƒ^‚Ì”jŠü */
+	/* ãƒ‡ãƒ¼ã‚¿ã®ç ´æ£„ */
 	png_destroy_read_struct(&read_ptr,&read_info_ptr,&end_info_ptr);
 	DisposeHandle((Handle)ctable);
 	
-	/* ƒtƒ@ƒCƒ‹‚ğ•Â‚¶‚é */
+	/* ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‰ã˜ã‚‹ */
 	FSClose(myFile.refNum);
 	
 	return noErr;
 }
 
-/* F‚ğ’T‚· */
+/* è‰²ã‚’æ¢ã™ */
 static pascal Boolean MySearchTransProc(RGBColor *color,long *pos)
 {
 	if (EqualColor(color,&gTransColor))
@@ -644,7 +644,7 @@ static pascal Boolean MySearchTransProc(RGBColor *color,long *pos)
 	return true;
 }
 
-/* “Ç‚İ‚İƒ‹[ƒ`ƒ“ */
+/* èª­ã¿è¾¼ã¿ãƒ«ãƒ¼ãƒãƒ³ */
 static void png_default_read_data(png_structp png_ptr,png_bytep data,png_size_t length)
 {
 	OSErr	err;
@@ -657,7 +657,7 @@ static void png_default_read_data(png_structp png_ptr,png_bytep data,png_size_t 
 	}
 }
 
-/* ‘‚«o‚µƒ‹[ƒ`ƒ“ */
+/* æ›¸ãå‡ºã—ãƒ«ãƒ¼ãƒãƒ³ */
 static void png_default_write_data(png_structp png_ptr,png_bytep data,png_size_t length)
 {
 	OSErr	err;
@@ -671,15 +671,15 @@ static void png_default_write_data(png_structp png_ptr,png_bytep data,png_size_t
 	}
 }
 
-/* Œxƒ‹[ƒ`ƒ“ */
+/* è­¦å‘Šãƒ«ãƒ¼ãƒãƒ³ */
 static void png_default_warning(png_structp png_ptr,png_const_charp message)
 {
 	#pragma unused(png_ptr,message)
 	
-	/* ‚Æ‚è‚ ‚¦‚¸‚È‚É‚à‚µ‚È‚¢ */
+	/* ã¨ã‚Šã‚ãˆãšãªã«ã‚‚ã—ãªã„ */
 }
 
-/* ƒGƒ‰[ƒ‹[ƒ`ƒ“ */
+/* ã‚¨ãƒ©ãƒ¼ãƒ«ãƒ¼ãƒãƒ³ */
 static void png_default_error(png_structp png_ptr,png_const_charp message)
 {
 	Str255	errStr,tempStr;

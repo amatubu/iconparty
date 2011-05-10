@@ -1,6 +1,6 @@
 /* ------------------------------------------------------------ */
 /*  Tools.c                                                     */
-/*     ƒc[ƒ‹ˆ—                                               */
+/*     ãƒ„ãƒ¼ãƒ«å‡¦ç†                                               */
 /*                                                              */
 /*                 1997.1.28 - 2001.3.10  naoki iimura        	*/
 /* ------------------------------------------------------------ */
@@ -38,7 +38,7 @@ static Boolean	ChangePESize(short *width,short *height);
 extern WindowPtr	PatternPalette;
 
 
-/* ƒc[ƒ‹‘I‘ğ */
+/* ãƒ„ãƒ¼ãƒ«é¸æŠ */
 void ToolSelect(short tool)
 {
 	GrafPtr		port;
@@ -52,8 +52,8 @@ void ToolSelect(short tool)
 	
 	if (tool>nTools || tool<0) return;
 	
-	/* ‘I‘ğƒc[ƒ‹ˆÈŠO‚ğ‘I‚ñ‚¾‚Æ‚«A‚Ç‚±‚©‚ª‘I‘ğ‚³‚ê‚Ä‚¢‚ê‚ÎŒÅ’è‚·‚é */
-	/* ‘I‘ğ—Ìˆæ‚Å‚Ìƒ}ƒXƒLƒ“ƒO‚ª—LŒø‚Ì‚Æ‚«‚ÍAŒÅ’è‚µ‚È‚¢ */
+	/* é¸æŠãƒ„ãƒ¼ãƒ«ä»¥å¤–ã‚’é¸ã‚“ã ã¨ãã€ã©ã“ã‹ãŒé¸æŠã•ã‚Œã¦ã„ã‚Œã°å›ºå®šã™ã‚‹ */
+	/* é¸æŠé ˜åŸŸã§ã®ãƒã‚¹ã‚­ãƒ³ã‚°ãŒæœ‰åŠ¹ã®ã¨ãã¯ã€å›ºå®šã—ãªã„ */
 	if (theWindow!=nil && GetExtWindowKind(theWindow)==kWindowTypePaintWindow && !gToolPrefs.selectionMasking)
 	{
 		PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
@@ -75,7 +75,7 @@ void ToolSelect(short tool)
 	GetPort(&port);
 	SetPortWindowPort(gToolPalette);
 	
-	/* ‘I‚Î‚ê‚½ƒc[ƒ‹‚ğƒnƒCƒ‰ƒCƒg‚³‚¹‚é */
+	/* é¸ã°ã‚ŒãŸãƒ„ãƒ¼ãƒ«ã‚’ãƒã‚¤ãƒ©ã‚¤ãƒˆã•ã›ã‚‹ */
 	pic=GetPicture(kToolPalettePictureResID);
 	GetWindowPortBounds(gToolPalette,&r);
 	DrawPicture(pic,&r);
@@ -84,7 +84,7 @@ void ToolSelect(short tool)
 	SetPort(port);
 }
 
-/* ƒc[ƒ‹ƒpƒŒƒbƒg‚Ìƒ_ƒuƒ‹ƒNƒŠƒbƒN */
+/* ãƒ„ãƒ¼ãƒ«ãƒ‘ãƒ¬ãƒƒãƒˆã®ãƒ€ãƒ–ãƒ«ã‚¯ãƒªãƒƒã‚¯ */
 void DoubleClickTool(short tool)
 {
 	WindowPtr	theWindow=MyFrontNonFloatingWindow();
@@ -101,12 +101,12 @@ void DoubleClickTool(short tool)
 	switch (tool)
 	{
 		case kPencilTool:
-			/* ‰”•Mƒc[ƒ‹‚ğƒ_ƒuƒ‹ƒNƒŠƒbƒN¨ƒyƒ“ƒTƒCƒY‚Ì•ÏX */
+			/* é‰›ç­†ãƒ„ãƒ¼ãƒ«ã‚’ãƒ€ãƒ–ãƒ«ã‚¯ãƒªãƒƒã‚¯â†’ãƒšãƒ³ã‚µã‚¤ã‚ºã®å¤‰æ›´ */
 			ChangePenSize();
 			break;
 		
 		case kEraserTool:
-			/* Á‚µƒSƒ€ƒc[ƒ‹‚ğƒ_ƒuƒ‹ƒNƒŠƒbƒN¨‘S‰æ–ÊÁ‹ */
+			/* æ¶ˆã—ã‚´ãƒ ãƒ„ãƒ¼ãƒ«ã‚’ãƒ€ãƒ–ãƒ«ã‚¯ãƒªãƒƒã‚¯â†’å…¨ç”»é¢æ¶ˆå» */
 			if (theWindow==nil) return;
 			
 			windowKind=GetExtWindowKind(theWindow);
@@ -116,16 +116,16 @@ void DoubleClickTool(short tool)
 			isBackMode=(eWinRec->backgroundGWorld == nil);
 			GoOffPort(theWindow);
 			
-			/* Á‹‚·‚é”ÍˆÍ */
+			/* æ¶ˆå»ã™ã‚‹ç¯„å›² */
 			if (EmptyRgn(eWinRec->eSelectedRgn))
 				effectRect=eWinRec->iconSize;
 			else
 				effectRect=eWinRec->selectedRect;
 			
-			/* Á‹ */
+			/* æ¶ˆå» */
 			SetGWorld(eWinRec->editDataPtr,0);
 			LockPixels(GetGWorldPixMap(eWinRec->editDataPtr));
-			if (isBackMode)  /* ”wŒi‚ª‚È‚¢ê‡‚Í”wŒiF‚Å“h‚é */
+			if (isBackMode)  /* èƒŒæ™¯ãŒãªã„å ´åˆã¯èƒŒæ™¯è‰²ã§å¡—ã‚‹ */
 				RGBBackColor(&gBackColor.rgb);
 			EraseRect(&effectRect);
 			BackColor(whiteColor);
@@ -133,9 +133,9 @@ void DoubleClickTool(short tool)
 			
 			SetGWorld(eWinRec->currentMask,0);
 			LockPixels(GetGWorldPixMap(eWinRec->currentMask));
-			if (!isBackMode || gBackColor.isTransparent)  /* ”wŒi‚ª‚ ‚éA‚ ‚é‚¢‚Í”wŒiF‚ª“§–¾‚Ì‚Íƒ}ƒXƒN‚ğÁ‹ */
+			if (!isBackMode || gBackColor.isTransparent)  /* èƒŒæ™¯ãŒã‚ã‚‹ã€ã‚ã‚‹ã„ã¯èƒŒæ™¯è‰²ãŒé€æ˜ã®æ™‚ã¯ãƒã‚¹ã‚¯ã‚’æ¶ˆå» */
 				EraseRgn(eWinRec->selectionPos);
-			else /* ‚»‚êˆÈŠO‚Ìê‡‚Í‘I‘ğ”ÍˆÍ‘S‘Ì‚ğƒ}ƒXƒN‰» */
+			else /* ãã‚Œä»¥å¤–ã®å ´åˆã¯é¸æŠç¯„å›²å…¨ä½“ã‚’ãƒã‚¹ã‚¯åŒ– */
 				PaintRgn(eWinRec->selectionPos);
 			CopyRgn(eWinRec->selectionPos,eWinRec->updateRgn);
 			
@@ -144,19 +144,19 @@ void DoubleClickTool(short tool)
 			
 			UpdateTransparentMenu();
 			SetUndoMode(umPaint);
-			if (gPaletteCheck == kPaletteCheckUsed) /* ƒpƒŒƒbƒg‚Ìƒ`ƒFƒbƒN‚ğƒAƒbƒvƒf[ƒg */
+			if (gPaletteCheck == kPaletteCheckUsed) /* ãƒ‘ãƒ¬ãƒƒãƒˆã®ãƒã‚§ãƒƒã‚¯ã‚’ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆ */
 				UpdatePaletteCheck();
 			break;
 		
 		case kMarqueeTool:
-			/* ‘I‘ğƒc[ƒ‹‚ğƒ_ƒuƒ‹ƒNƒŠƒbƒN¨‘S‰æ–Ê‘I‘ğ */
+			/* é¸æŠãƒ„ãƒ¼ãƒ«ã‚’ãƒ€ãƒ–ãƒ«ã‚¯ãƒªãƒƒã‚¯â†’å…¨ç”»é¢é¸æŠ */
 			if (theWindow==nil) return;
 			
 			windowKind=GetExtWindowKind(theWindow);
 			if (windowKind != kWindowTypePaintWindow) return;
 			
 			eWinRec=GetPaintWinRec(theWindow);
-			if (eWinRec->isSelected) /* ‘I‘ğ”ÍˆÍ‚ª‚ ‚ê‚ÎŒÅ’è‚·‚é */
+			if (eWinRec->isSelected) /* é¸æŠç¯„å›²ãŒã‚ã‚Œã°å›ºå®šã™ã‚‹ */
 				FixSelection(theWindow);
 			
 			GoOffPort(theWindow);
@@ -168,19 +168,19 @@ void DoubleClickTool(short tool)
 			break;
 		
 		case kSpoitTool:
-			/* ƒXƒ|ƒCƒgƒc[ƒ‹‚ğƒ_ƒuƒ‹ƒNƒŠƒbƒN¨‰æ–Ê‚Ì”CˆÓ‚ÌêŠ‚©‚çF‚ğ‚Æ‚é */
+			/* ã‚¹ãƒã‚¤ãƒˆãƒ„ãƒ¼ãƒ«ã‚’ãƒ€ãƒ–ãƒ«ã‚¯ãƒªãƒƒã‚¯â†’ç”»é¢ã®ä»»æ„ã®å ´æ‰€ã‹ã‚‰è‰²ã‚’ã¨ã‚‹ */
 			GetDesktopColor();
 			break;
 	}
 }
 
-/* ƒOƒŠƒbƒh‚Ì•ÏX */
+/* ã‚°ãƒªãƒƒãƒ‰ã®å¤‰æ›´ */
 void ChangeGrid(short item)
 {
 	#pragma unused(item)
 }
 
-/* ƒyƒ“ƒTƒCƒY‚Ì•ÏX */
+/* ãƒšãƒ³ã‚µã‚¤ã‚ºã®å¤‰æ›´ */
 void ChangePenSize(void)
 {
 	short	prevPenHeight = gPenHeight,
@@ -188,22 +188,22 @@ void ChangePenSize(void)
 	
 	if (ChangePESize(&gPenWidth,&gPenHeight))
 	{
-		/* ƒƒjƒ…[‚ÌXV */
+		/* ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã®æ›´æ–° */
 		MenuHandle	menu;
 		
 		menu = GetMenuHandle(mPenSize);
 		CheckMenuItem(menu,(prevPenHeight-1)*4+prevPenWidth,false);
 		CheckMenuItem(menu,(gPenHeight-1)*4+gPenWidth,true);
 		
-		/* î•ñƒEƒBƒ“ƒhƒE‚ÌÄ•`‰æ */
+		/* æƒ…å ±ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®å†æç”» */
 		RedrawInfo();
 		
-		/* ƒc[ƒ‹‚Ì‘I‘ğ */
+		/* ãƒ„ãƒ¼ãƒ«ã®é¸æŠ */
 		ToolSelect(kPencilTool);
 	}
 }
 
-/* Á‚µƒSƒ€‚ÌƒTƒCƒY‚Ì•ÏX */
+/* æ¶ˆã—ã‚´ãƒ ã®ã‚µã‚¤ã‚ºã®å¤‰æ›´ */
 void ChangeEraserSize(void)
 {
 	short	prevEraserHeight = gEraserHeight,
@@ -211,22 +211,22 @@ void ChangeEraserSize(void)
 	
 	if (ChangePESize(&gEraserWidth,&gEraserHeight))
 	{
-		/* ƒƒjƒ…[‚ÌXV */
+		/* ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã®æ›´æ–° */
 		MenuHandle	menu;
 		
 		menu = GetMenuHandle(mEraserSize);
 		CheckMenuItem(menu,(prevEraserHeight-1)*4+prevEraserWidth,false);
 		CheckMenuItem(menu,(gEraserHeight-1)*4+gEraserWidth,true);
 		
-		/* î•ñƒEƒBƒ“ƒhƒE‚ÌÄ•`‰æ */
+		/* æƒ…å ±ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®å†æç”» */
 		RedrawInfo();
 		
-		/* ƒc[ƒ‹‚Ì‘I‘ğ */
+		/* ãƒ„ãƒ¼ãƒ«ã®é¸æŠ */
 		ToolSelect(kEraserTool);
 	}
 }
 
-/* ƒyƒ“^Á‚µƒSƒ€‚ÌƒTƒCƒY‚Ì•ÏXƒƒCƒ“ƒ‹[ƒ`ƒ“ */
+/* ãƒšãƒ³ï¼æ¶ˆã—ã‚´ãƒ ã®ã‚µã‚¤ã‚ºã®å¤‰æ›´ãƒ¡ã‚¤ãƒ³ãƒ«ãƒ¼ãƒãƒ³ */
 Boolean ChangePESize(short *width,short *height)
 {
 	MenuHandle	menu;
@@ -272,7 +272,7 @@ Boolean ChangePESize(short *width,short *height)
 	return false;
 }
 
-/* “§–¾“x‚Ìİ’è */
+/* é€æ˜åº¦ã®è¨­å®š */
 void ChangeMode(short item)
 {
 	unsigned short	temp;
@@ -289,7 +289,7 @@ void ChangeMode(short item)
 	}
 }
 
-/* “§–¾“x‚Ì•ÏX */
+/* é€æ˜åº¦ã®å¤‰æ›´ */
 void ChangeTransparency(void)
 {
 	MenuHandle	menu;
@@ -319,16 +319,16 @@ void ChangeTransparency(void)
 	}
 }
 
-/* ‘I‘ğF‚Ì•ÏX */
+/* é¸æŠè‰²ã®å¤‰æ›´ */
 void ChangeColor(RGBColor *newColor,Boolean isTransparent)
 {
 	GrafPtr	port;
 	Rect	r;
 	
 	if (EqualColor(newColor,&gCurrentColor.rgb) && isTransparent == gCurrentColor.isTransparent)
-		return; /* Œ»İ‚Ì‘I‘ğF‚Æ“¯‚¶ê‡‚Í‚È‚É‚à‚µ‚È‚¢ */
+		return; /* ç¾åœ¨ã®é¸æŠè‰²ã¨åŒã˜å ´åˆã¯ãªã«ã‚‚ã—ãªã„ */
 	
-	/* ƒJƒ‰[ƒpƒŒƒbƒg‚ÌƒnƒCƒ‰ƒCƒgXV */
+	/* ã‚«ãƒ©ãƒ¼ãƒ‘ãƒ¬ãƒƒãƒˆã®ãƒã‚¤ãƒ©ã‚¤ãƒˆæ›´æ–° */
 	GetPort(&port);
 	HiliteSelectedColor(1,false);
 	HiliteSelectedColor(2,false);
@@ -340,20 +340,20 @@ void ChangeColor(RGBColor *newColor,Boolean isTransparent)
 	HiliteSelectedColor(2,true);
 	HiliteSelectedColor(3,true);
 	
-	/* ƒuƒŒƒ“ƒhƒpƒŒƒbƒgXV */
+	/* ãƒ–ãƒ¬ãƒ³ãƒ‰ãƒ‘ãƒ¬ãƒƒãƒˆæ›´æ–° */
 	DrawBlend();
 	SetPortWindowPort(gBlendPalette);
 	GetWindowPortBounds(gBlendPalette,&r);
 	CopyBits(GetPortBitMapForCopyBits(gBlendPalettePtr),GetPortBitMapForCopyBits(GetWindowPort(gBlendPalette)),
 		&r,&r,srcCopy,nil);
 	
-	/* ƒpƒ^[ƒ“ƒpƒŒƒbƒgXV */
+	/* ãƒ‘ã‚¿ãƒ¼ãƒ³ãƒ‘ãƒ¬ãƒƒãƒˆæ›´æ–° */
 	MyInvalWindowPortBounds(PatternPalette);
 	
 	SetPort(port);
 }
 
-/* ”wŒiF‚Ì•ÏX */
+/* èƒŒæ™¯è‰²ã®å¤‰æ›´ */
 void ChangeBackColor(RGBColor *newColor,Boolean isTransparent)
 {
 	GrafPtr	port;
@@ -365,20 +365,20 @@ void ChangeBackColor(RGBColor *newColor,Boolean isTransparent)
 	gBackColor.isTransparent=isTransparent;
 	
 	GetPort(&port);
-	/* ƒuƒŒƒ“ƒhƒpƒŒƒbƒgXV */
+	/* ãƒ–ãƒ¬ãƒ³ãƒ‰ãƒ‘ãƒ¬ãƒƒãƒˆæ›´æ–° */
 	DrawBlend();
 	SetPortWindowPort(gBlendPalette);
 	GetWindowPortBounds(gBlendPalette,&r);
 	CopyBits(GetPortBitMapForCopyBits(gBlendPalettePtr),GetPortBitMapForCopyBits(GetWindowPort(gBlendPalette)),
 		&r,&r,srcCopy,nil);
 	
-	/* ƒpƒ^[ƒ“ƒpƒŒƒbƒgXV */
+	/* ãƒ‘ã‚¿ãƒ¼ãƒ³ãƒ‘ãƒ¬ãƒƒãƒˆæ›´æ–° */
 	MyInvalWindowPortBounds(PatternPalette);
 	
 	SetPort(port);
 }
 
-/* ‰æ–Êã‚©‚çF‚ğ“¾‚é 1.0b5’Ç‰Á */
+/* ç”»é¢ä¸Šã‹ã‚‰è‰²ã‚’å¾—ã‚‹ 1.0b5è¿½åŠ  */
 void GetDesktopColor(void)
 {
 	#if !TARGET_API_MAC_CARBON
@@ -391,7 +391,7 @@ void GetDesktopColor(void)
 	
 	MySetCursor(gToolPrefs.changeSpoitCursor ? 139 : 128+kSpoitTool);
 	
-	/* ƒ}ƒEƒXƒNƒŠƒbƒN‚ğ“Ç‚İ”ò‚Î‚· */
+	/* ãƒã‚¦ã‚¹ã‚¯ãƒªãƒƒã‚¯ã‚’èª­ã¿é£›ã°ã™ */
 	while (Button()) ;
 	
 	GetPort(&port);
@@ -399,7 +399,7 @@ void GetDesktopColor(void)
 	
 	while (!Button())
 	{
-		/* ƒL[ƒ{[ƒh‚Ìó‘Ô‚ğŠÄ‹‚µAcmd+.‚È‚çI‚í‚é */
+		/* ã‚­ãƒ¼ãƒœãƒ¼ãƒ‰ã®çŠ¶æ…‹ã‚’ç›£è¦–ã—ã€cmd+.ãªã‚‰çµ‚ã‚ã‚‹ */
 		GetKeys(theKeys);
 		if (BitTst(theKeys,48) && BitTst(theKeys,40))
 		{
@@ -407,7 +407,7 @@ void GetDesktopColor(void)
 			break;
 		}
 		
-		/* ƒ}ƒEƒXˆÊ’u‚ÌF‚ğ‚Æ‚èAƒuƒŒƒ“ƒhƒpƒŒƒbƒgã‚Å•\¦ */
+		/* ãƒã‚¦ã‚¹ä½ç½®ã®è‰²ã‚’ã¨ã‚Šã€ãƒ–ãƒ¬ãƒ³ãƒ‰ãƒ‘ãƒ¬ãƒƒãƒˆä¸Šã§è¡¨ç¤º */
 		GetMouse(&mousePt);
 		GetCPixel(mousePt.h,mousePt.v,&newColor);
 		FixColor(&newColor);
@@ -427,12 +427,12 @@ void GetDesktopColor(void)
 	gCurrentColor=prevColor;
 	if (result)
 	{
-		/* F‚ğİ’è */
+		/* è‰²ã‚’è¨­å®š */
 		ChangeColor(&newColor,false);
 	}
 	else
 	{
-		/* ƒuƒŒƒ“ƒhƒpƒŒƒbƒg‚ğŒ³‚É–ß‚· */
+		/* ãƒ–ãƒ¬ãƒ³ãƒ‰ãƒ‘ãƒ¬ãƒƒãƒˆã‚’å…ƒã«æˆ»ã™ */
 		DrawBlend();
 		SetPort(gBlendPalette);
 		InvalRect(&gBlendPalette->portRect);
@@ -464,7 +464,7 @@ void GetDesktopColor(void)
 	
 	MySetCursor(gToolPrefs.changeSpoitCursor ? 139 : 128+kSpoitTool);
 	
-	/* ƒ}ƒEƒXƒNƒŠƒbƒN‚ğ“Ç‚İ”ò‚Î‚· */
+	/* ãƒã‚¦ã‚¹ã‚¯ãƒªãƒƒã‚¯ã‚’èª­ã¿é£›ã°ã™ */
 	while (StillDown()) ;
 	
 	GetPort(&port);
@@ -516,7 +516,7 @@ void GetDesktopColor(void)
 	FlushEvents(mDownMask+mUpMask+keyDownMask,0);
 	while (quitFlag)
 	{
-		/* ƒL[ƒ{[ƒh‚Ìó‘Ô‚ğŠÄ‹‚µAcmd+.‚È‚çI‚í‚é */
+		/* ã‚­ãƒ¼ãƒœãƒ¼ãƒ‰ã®çŠ¶æ…‹ã‚’ç›£è¦–ã—ã€cmd+.ãªã‚‰çµ‚ã‚ã‚‹ */
 		isEventAvail=WaitNextEvent(mUpMask+keyDownMask,&theEvent,0,nil);
 		if (isEventAvail)
 		{
@@ -533,7 +533,7 @@ void GetDesktopColor(void)
 			}
 		}
 		
-		/* ƒ}ƒEƒXˆÊ’u‚ÌF‚ğ‚Æ‚èAƒuƒŒƒ“ƒhƒpƒŒƒbƒgã‚Å•\¦ */
+		/* ãƒã‚¦ã‚¹ä½ç½®ã®è‰²ã‚’ã¨ã‚Šã€ãƒ–ãƒ¬ãƒ³ãƒ‰ãƒ‘ãƒ¬ãƒƒãƒˆä¸Šã§è¡¨ç¤º */
 		SetPortWindowPort(deskWindow);
 		GetMouse(&mousePt);
 		GetCPixel(mousePt.h,mousePt.v,&newColor);
@@ -558,12 +558,12 @@ void GetDesktopColor(void)
 	gCurrentColor=prevColor;
 	if (result)
 	{
-		/* F‚ğİ’è */
+		/* è‰²ã‚’è¨­å®š */
 		ChangeColor(&newColor,false);
 	}
 	else
 	{
-		/* ƒuƒŒƒ“ƒhƒpƒŒƒbƒg‚ğŒ³‚É–ß‚· */
+		/* ãƒ–ãƒ¬ãƒ³ãƒ‰ãƒ‘ãƒ¬ãƒƒãƒˆã‚’å…ƒã«æˆ»ã™ */
 		DrawBlend();
 		SetPortWindowPort(gBlendPalette);
 		MyInvalWindowPortBounds(gBlendPalette);
@@ -573,7 +573,7 @@ void GetDesktopColor(void)
 	#endif
 }
 
-/* F‚ğ256F‚É•â³i‰˜‚¢‚â‚è•û‚¾j */
+/* è‰²ã‚’256è‰²ã«è£œæ­£ï¼ˆæ±šã„ã‚„ã‚Šæ–¹ã ï¼‰ */
 void FixColor(RGBColor *c)
 {
 	long	l;

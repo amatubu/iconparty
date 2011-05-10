@@ -57,7 +57,7 @@ static void	MyNumToTimeString(unsigned long time,Str255 str);
 static pascal Boolean	AboutFilter(DialogPtr dp,EventRecord *theEvent,short *item);
 #endif
 
-/* ƒuƒŒƒ“ƒhƒpƒŒƒbƒgŠÖŒWB–{—ˆ‚È‚ç‚±‚±‚É’u‚­‚×‚«‚Å‚Í‚È‚¢‚ª */
+/* ãƒ–ãƒ¬ãƒ³ãƒ‰ãƒ‘ãƒ¬ãƒƒãƒˆé–¢ä¿‚ã€‚æœ¬æ¥ãªã‚‰ã“ã“ã«ç½®ãã¹ãã§ã¯ãªã„ãŒ */
 static void	SaveBlendPalette(FSSpec *theFile);
 
 /* -> ICSupport.c */
@@ -88,7 +88,7 @@ extern WindowPtr	ColorPalette1,ColorPalette2;
 #define	MENUERR2	2
 
 
-/* ƒƒjƒ…[ƒo[‚Ì‰Šú‰» */
+/* ãƒ¡ãƒ‹ãƒ¥ãƒ¼ãƒãƒ¼ã®åˆæœŸåŒ– */
 void MenuBarInit(void)
 {
 	Handle		menuBar;
@@ -98,13 +98,13 @@ void MenuBarInit(void)
 	SetMenuBar(menuBar);
 	
 	#if !TARGET_API_MAC_CARBON
-	/* ƒAƒbƒvƒ‹ƒƒjƒ…[ */
+	/* ã‚¢ãƒƒãƒ—ãƒ«ãƒ¡ãƒ‹ãƒ¥ãƒ¼ */
 	menu=GetMenuHandle(mApple);
 	AppendResMenu(menu,'DRVR');
 	#endif
 	
 	#if TARGET_API_MAC_CARBON
-	/* ƒtƒ@ƒCƒ‹ƒƒjƒ…[‚ÌI—¹‚ğƒƒ“ƒeƒiƒ“ƒX */
+	/* ãƒ•ã‚¡ã‚¤ãƒ«ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã®çµ‚äº†ã‚’ãƒ¡ãƒ³ãƒ†ãƒŠãƒ³ã‚¹ */
 	if (isOSX)
 	{
 		MenuItemIndex i;
@@ -124,7 +124,7 @@ void MenuBarInit(void)
 	}
 	#endif
 	
-	/* ŠK‘wƒƒjƒ…[ */
+	/* éšå±¤ãƒ¡ãƒ‹ãƒ¥ãƒ¼ */
 	menu=GetMenu(mTransp);
 	InsertMenu(menu,-1);
 	
@@ -140,7 +140,7 @@ void MenuBarInit(void)
 	menu=GetMenu(mColorMode);
 	InsertMenu(menu,-1);
 	
-	/* ƒyƒ“ƒTƒCƒYƒƒjƒ…[ */
+	/* ãƒšãƒ³ã‚µã‚¤ã‚ºãƒ¡ãƒ‹ãƒ¥ãƒ¼ */
 	#if TARGET_API_MAC_CARBON
 	{
 		OSErr	err;
@@ -196,36 +196,36 @@ void MenuBarInit(void)
 	
 	UpdateToolMenu();
 	
-	/* V‹Kƒƒjƒ…[‚ğ‚¢‚¶‚é */
+	/* æ–°è¦ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã‚’ã„ã˜ã‚‹ */
 	UpdateNewMenu();
 	
 	UpdatePasteMenu();
 	
-	/* ƒc[ƒ‹‚Ì‘I‘ğ”ÍˆÍ */
+	/* ãƒ„ãƒ¼ãƒ«ã®é¸æŠç¯„å›² */
 	menu=GetMenuHandle(mTool);
 	MyDisableMenuItem(menu,iSelection);
 	
-	/* ƒEƒBƒ“ƒhƒE‚Ì”{—¦ */
+	/* ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®å€ç‡ */
 	menu=GetMenuHandle(mWindow);
 	MyDisableMenuItem(menu,iMag);
 	
 	if (gSystemVersion >= 0x0800)
 	{
-		/* ƒtƒ@ƒCƒ‹ƒƒjƒ…[ */
+		/* ãƒ•ã‚¡ã‚¤ãƒ«ãƒ¡ãƒ‹ãƒ¥ãƒ¼ */
 		menu=GetMenuHandle(mFile);
 		SetItemCmd(menu,iSaveAs,'S');
 		SetMenuItemModifiers(menu,iSaveAs,kMenuShiftModifier);
 		SetItemCmd(menu,iOpenClipboard,'O');
 		SetMenuItemModifiers(menu,iOpenClipboard,kMenuShiftModifier);
 		
-		/* •ÒWƒƒjƒ…[ */
+		/* ç·¨é›†ãƒ¡ãƒ‹ãƒ¥ãƒ¼ */
 		menu=GetMenuHandle(mEdit);
 		SetItemCmd(menu,iBackground,'B');
 		SetMenuItemModifiers(menu,iBackground,kMenuShiftModifier);
 		SetItemCmd(menu,iHideBackground,'H');
 		SetMenuItemModifiers(menu,iHideBackground,kMenuShiftModifier);
 		
-		/* ƒAƒCƒRƒ“ƒƒjƒ…[ */
+		/* ã‚¢ã‚¤ã‚³ãƒ³ãƒ¡ãƒ‹ãƒ¥ãƒ¼ */
 		menu=GetMenuHandle(mIcon);
 		SetItemCmd(menu,iNewIconFile,'N');
 		SetMenuItemModifiers(menu,iNewIconFile,kMenuShiftModifier);
@@ -236,7 +236,7 @@ void MenuBarInit(void)
 		SetItemCmd(menu,iExportIcon,'E');
 		SetMenuItemModifiers(menu,iExportIcon,kMenuShiftModifier);
 		
-		/* Fƒ‚[ƒhƒƒjƒ…[iƒTƒuƒƒjƒ…[j */
+		/* è‰²ãƒ¢ãƒ¼ãƒ‰ãƒ¡ãƒ‹ãƒ¥ãƒ¼ï¼ˆã‚µãƒ–ãƒ¡ãƒ‹ãƒ¥ãƒ¼ï¼‰ */
 /*		menu=GetMenuHandle(mColorMode);
 		SetItemCmd(menu,i216Color,'6');
 		SetMenuItemModifiers(menu,i216Color,kMenuNoCommandModifier);
@@ -259,7 +259,7 @@ void MenuBarInit(void)
 		SetItemCmd(menu,iMonoD,'1');
 		SetMenuItemModifiers(menu,iMonoD,kMenuNoCommandModifier+kMenuShiftModifier); */
 		
-		/* Œø‰Êƒƒjƒ…[ */
+		/* åŠ¹æœãƒ¡ãƒ‹ãƒ¥ãƒ¼ */
 /*		menu=GetMenuHandle(mEffect);
 		SetItemCmd(menu,iOpaque,'O');
 		SetMenuItemModifiers(menu,iOpaque,kMenuNoCommandModifier);
@@ -273,7 +273,7 @@ void MenuBarInit(void)
 		SetMenuItemModifiers(menu,iFlipVertical,kMenuNoCommandModifier); */
 		
 		#if TARGET_API_MAC_CARBON
-		/* ‘I‘ğ”ÍˆÍƒƒjƒ…[ */
+		/* é¸æŠç¯„å›²ãƒ¡ãƒ‹ãƒ¥ãƒ¼ */
 		menu=GetMenuHandle(mSelection);
 		if (isOSX)
 		{
@@ -305,7 +305,7 @@ void MenuBarInit(void)
 	DrawMenuBar();
 }
 
-/* ƒƒjƒ…[‚Ì‘I‘ğ */
+/* ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã®é¸æŠ */
 void HandleMenuChoice(long menuChoice)
 {
 	short menu,item;
@@ -414,7 +414,7 @@ void HandleMenuChoice(long menuChoice)
 	}
 }
 
-/* ƒAƒbƒvƒ‹ƒƒjƒ…[ */
+/* ã‚¢ãƒƒãƒ—ãƒ«ãƒ¡ãƒ‹ãƒ¥ãƒ¼ */
 void HandleAppleChoice(short item)
 {
 	#if !TARGET_API_MAC_CARBON
@@ -430,7 +430,7 @@ void HandleAppleChoice(short item)
 			break;
 		
 		default:
-			/* ƒfƒXƒNƒAƒNƒZƒTƒŠiƒAƒbƒvƒ‹ƒƒjƒ…[€–Új‚ÌŒÄ‚Ño‚µ */
+			/* ãƒ‡ã‚¹ã‚¯ã‚¢ã‚¯ã‚»ã‚µãƒªï¼ˆã‚¢ãƒƒãƒ—ãƒ«ãƒ¡ãƒ‹ãƒ¥ãƒ¼é …ç›®ï¼‰ã®å‘¼ã³å‡ºã— */
 			#if !TARGET_API_MAC_CARBON
 			appleMenu=GetMenuHandle(mApple);
 			GetMenuItemText(appleMenu,item,accName);
@@ -457,7 +457,7 @@ enum {
 	kAboutSupportWebIndex,
 };
 
-/* ƒAƒoƒEƒgƒ_ƒCƒAƒƒO‚Ì•\¦ */
+/* ã‚¢ãƒã‚¦ãƒˆãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã®è¡¨ç¤º */
 void About(void)
 {
 	DialogPtr	dp;
@@ -477,7 +477,7 @@ void About(void)
 	
 	SuspendFloatingWindows();
 	
-	/* ƒo[ƒWƒ‡ƒ“ */
+	/* ãƒãƒ¼ã‚¸ãƒ§ãƒ³ */
 	UseResFile(gApplRefNum);
 	vers=(VersRecHndl)GetResource('vers',1);
 	
@@ -486,19 +486,19 @@ void About(void)
 	dp=GetNewDialog(128,nil,kFirstWindowOfClass);
 	SetDialogDefaultItem(dp,ok);
 	
-	/* IC‚ªg—p‰Â”\‚©‚Ç‚¤‚© */
+	/* ICãŒä½¿ç”¨å¯èƒ½ã‹ã©ã†ã‹ */
 	if (!IsICInstalled())
 		HideDialogItem(dp,kAboutSupportWebIndex);
 	
-	/* ƒAƒCƒeƒ€‚ÌˆÊ’u‚ğ’²® */
-	/* g—p‰ñ” */
-	NumToString(1+(long)gUsedCount.usedCount,numStr); /* 1‰ñ•ª•â³i1.0b11j */
+	/* ã‚¢ã‚¤ãƒ†ãƒ ã®ä½ç½®ã‚’èª¿æ•´ */
+	/* ä½¿ç”¨å›æ•° */
+	NumToString(1+(long)gUsedCount.usedCount,numStr); /* 1å›åˆ†è£œæ­£ï¼ˆ1.0b11ï¼‰ */
 	GetIndString(str2,136,4);
 	PStrCat(str2,numStr);
 	MySetDialogItemText(dp,kAboutNumValueIndex,numStr,9,teJustRight);
 	
 	#if !TARGET_API_MAC_CARBON
-	/* ƒvƒƒZƒX‚Ìî•ñ */
+	/* ãƒ—ãƒ­ã‚»ã‚¹ã®æƒ…å ± */
 	GetCurrentProcess(&psn);
 	processInfo.processInfoLength=sizeof(ProcessInfoRec);
 	processInfo.processName=nil;
@@ -506,12 +506,12 @@ void About(void)
 	processInfo.processAppSpec=nil;
 	GetProcessInformation(&psn,&processInfo);
 	
-	/* g—pŠÔ */
+	/* ä½¿ç”¨æ™‚é–“ */
 	oldTime=gUsedCount.usedTime+processInfo.processActiveTime/60;
 	MyNumToTimeString(oldTime,numStr);
 	MySetDialogItemText(dp,kAboutTimeValueIndex,numStr,9,teJustRight);
 	
-	/* c‚èƒƒ‚ƒŠ */
+	/* æ®‹ã‚Šãƒ¡ãƒ¢ãƒª */
 	NumToString((long)processInfo.processFreeMem/1024,numStr);
 	CatChar(' ',numStr);
 	CatChar('/',numStr);
@@ -565,7 +565,7 @@ void About(void)
 						
 						UseResFile(gApplRefNum);
 						
-						/* ƒAƒCƒRƒ“ */
+						/* ã‚¢ã‚¤ã‚³ãƒ³ */
 						GetDialogItemRect(dp,kAboutIconIndex,&box);
 						GetIconSuite(&theIconHnd, 128, svAllLargeData);
 						SetPortDialogPort(dp);
@@ -596,7 +596,7 @@ void About(void)
 				{
 					if (DialogSelect(&theEvent,&dp,&item))
 					{
-						if (item == kAboutSupportWebIndex) /* ƒTƒ|[ƒgwebƒ{ƒ^ƒ“ */
+						if (item == kAboutSupportWebIndex) /* ã‚µãƒãƒ¼ãƒˆwebãƒœã‚¿ãƒ³ */
 						{
 							Str255	urlStr;
 							
@@ -662,7 +662,7 @@ void About(void)
 	SetPort(port);
 }
 
-/* ƒ_ƒCƒAƒƒO‚ÌƒAƒCƒeƒ€‚ÉƒeƒLƒXƒg‚ğİ’è */
+/* ãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã®ã‚¢ã‚¤ãƒ†ãƒ ã«ãƒ†ã‚­ã‚¹ãƒˆã‚’è¨­å®š */
 void MySetDialogItemText(DialogPtr theDialog,short item,Str255 string,short fontSize,short just)
 {
 	#if TARGET_API_MAC_CARBON
@@ -677,7 +677,7 @@ void MySetDialogItemText(DialogPtr theDialog,short item,Str255 string,short font
 	GrafPtr	port;
 	#endif
 	
-	/* ‚Ü‚¸ƒeƒLƒXƒg‚ğİ’è */
+	/* ã¾ãšãƒ†ã‚­ã‚¹ãƒˆã‚’è¨­å®š */
 	GetDialogItem(theDialog,item,&itemType,&h,&box);
 	SetDialogItemText(h,string);
 	
@@ -718,7 +718,7 @@ void MySetDialogItemText(DialogPtr theDialog,short item,Str255 string,short font
 }
 
 #if !TARGET_API_MAC_CARBON
-/* ”’l‚ğŠÔ•¶š—ñ‚É•ÏŠ· */
+/* æ•°å€¤ã‚’æ™‚é–“æ–‡å­—åˆ—ã«å¤‰æ› */
 void MyNumToTimeString(unsigned long time,Str255 str)
 {
 	unsigned long	hour;
@@ -738,7 +738,7 @@ void MyNumToTimeString(unsigned long time,Str255 str)
 	CatChar('0'+(UInt8)(second%10),str);
 }
 
-/* ƒAƒoƒEƒgƒ_ƒCƒAƒƒO‚Ìƒ‚[ƒ_ƒ‹ƒtƒBƒ‹ƒ^ */
+/* ã‚¢ãƒã‚¦ãƒˆãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã®ãƒ¢ãƒ¼ãƒ€ãƒ«ãƒ•ã‚£ãƒ«ã‚¿ */
 pascal Boolean AboutFilter(DialogPtr dp,EventRecord *theEvent,short *item)
 {
 	#pragma unused(dp,item)
@@ -749,7 +749,7 @@ pascal Boolean AboutFilter(DialogPtr dp,EventRecord *theEvent,short *item)
 }
 #endif
 
-/* ƒtƒ@ƒCƒ‹ƒƒjƒ…[ */
+/* ãƒ•ã‚¡ã‚¤ãƒ«ãƒ¡ãƒ‹ãƒ¥ãƒ¼ */
 void HandleFileChoice(short item)
 {
 	WindowPtr	theWindow;
@@ -847,7 +847,7 @@ void HandleFileChoice(short item)
 	}
 }
 
-/* •ÒWƒƒjƒ…[ */
+/* ç·¨é›†ãƒ¡ãƒ‹ãƒ¥ãƒ¼ */
 void HandleEditChoice(short item)
 {
 	WindowPtr	theWindow;
@@ -926,7 +926,7 @@ void HandleEditChoice(short item)
 	}
 }
 
-/* Œø‰Êƒƒjƒ…[ */
+/* åŠ¹æœãƒ¡ãƒ‹ãƒ¥ãƒ¼ */
 void HandleEffectChoice(short item)
 {
 	WindowPtr	theWindow=MyFrontNonFloatingWindow();
@@ -1007,7 +1007,7 @@ void HandleEffectChoice(short item)
 					}
 					CopyRgn(eWinRec->selectionPos,eWinRec->updateRgn);
 					DispOffPort(theWindow);
-					if (gPaletteCheck == kPaletteCheckUsed) /* ƒpƒŒƒbƒg‚Ìƒ`ƒFƒbƒN‚ğƒAƒbƒvƒf[ƒg */
+					if (gPaletteCheck == kPaletteCheckUsed) /* ãƒ‘ãƒ¬ãƒƒãƒˆã®ãƒã‚§ãƒƒã‚¯ã‚’ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆ */
 						UpdatePaletteCheck();
 				}
 				break;
@@ -1015,7 +1015,7 @@ void HandleEffectChoice(short item)
 	}
 }
 
-/* ƒc[ƒ‹ƒƒjƒ…[ */
+/* ãƒ„ãƒ¼ãƒ«ãƒ¡ãƒ‹ãƒ¥ãƒ¼ */
 void HandleToolChoice(short item)
 {
 	MenuHandle	menu;
@@ -1048,14 +1048,14 @@ void HandleToolChoice(short item)
 	}
 }
 
-/* “§–¾“xƒƒjƒ…[iƒTƒuƒƒjƒ…[j */
+/* é€æ˜åº¦ãƒ¡ãƒ‹ãƒ¥ãƒ¼ï¼ˆã‚µãƒ–ãƒ¡ãƒ‹ãƒ¥ãƒ¼ï¼‰ */
 void HandleBlendChoice(short item)
 {
 	MenuHandle	bMenu;
 	
 	if (item==gBSelectedItem) return;
 	
-	/* ‘I‚Î‚ê‚Ä‚¢‚éƒƒjƒ…[‚Éƒ`ƒFƒbƒNƒ}[ƒN‚ğ‚Â‚¯‚é */
+	/* é¸ã°ã‚Œã¦ã„ã‚‹ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã«ãƒã‚§ãƒƒã‚¯ãƒãƒ¼ã‚¯ã‚’ã¤ã‘ã‚‹ */
 	bMenu=GetMenuHandle(mTransp);
 	if (bMenu==nil)
 	{
@@ -1071,7 +1071,7 @@ void HandleBlendChoice(short item)
 	RedrawInfo();
 }
 
-/* ƒyƒ“ƒTƒCƒYƒƒjƒ…[iƒTƒuƒƒjƒ…[j */
+/* ãƒšãƒ³ã‚µã‚¤ã‚ºãƒ¡ãƒ‹ãƒ¥ãƒ¼ï¼ˆã‚µãƒ–ãƒ¡ãƒ‹ãƒ¥ãƒ¼ï¼‰ */
 void HandlePenSizeChoice(short item)
 {
 	MenuHandle	menu;
@@ -1106,7 +1106,7 @@ void HandleEraserSizeChoice(short item)
 	RedrawInfo();
 }
 
-/* ƒOƒŠƒbƒhƒƒjƒ…[iƒTƒuƒƒjƒ…[j */
+/* ã‚°ãƒªãƒƒãƒ‰ãƒ¡ãƒ‹ãƒ¥ãƒ¼ï¼ˆã‚µãƒ–ãƒ¡ãƒ‹ãƒ¥ãƒ¼ï¼‰ */
 void HandleGridChoice(short item)
 {
 	MenuHandle	gMenu;
@@ -1151,7 +1151,7 @@ void HandleGridChoice(short item)
 		gToolPrefs.gridMode=(gToolPrefs.gridMode & 0xf0)+item;
 	}
 	
-	/* •\¦‚³‚ê‚Ä‚¢‚é‚·‚×‚Ä‚ÌƒGƒfƒBƒbƒgƒEƒBƒ“ƒhƒE‚ÉƒOƒŠƒbƒh‚ğ•\¦‚·‚é */
+	/* è¡¨ç¤ºã•ã‚Œã¦ã„ã‚‹ã™ã¹ã¦ã®ã‚¨ãƒ‡ã‚£ãƒƒãƒˆã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã«ã‚°ãƒªãƒƒãƒ‰ã‚’è¡¨ç¤ºã™ã‚‹ */
 	GetPort(&port);
 	
 	theWindow=MyFrontNonFloatingWindow();
@@ -1164,7 +1164,7 @@ void HandleGridChoice(short item)
 	SetPort(port);
 }
 
-/* ƒyƒ“‚ÌFƒƒjƒ…[iƒTƒuƒƒjƒ…[j */
+/* ãƒšãƒ³ã®è‰²ãƒ¡ãƒ‹ãƒ¥ãƒ¼ï¼ˆã‚µãƒ–ãƒ¡ãƒ‹ãƒ¥ãƒ¼ï¼‰ */
 void HandlePenColorChoice(short item)
 {
 	MyColorRec	newColor;
@@ -1179,7 +1179,7 @@ void HandlePenColorChoice(short item)
 	
 	switch (item)
 	{
-		/* ‚·‚²‚­‚¢‚¢‚©‚°‚ñ‚Èˆ—‚¾‚ÈcB‚ÜA“®‚¯‚Î‚¢‚¢‚Ì‚¾‚¯‚ÇB */
+		/* ã™ã”ãã„ã„ã‹ã’ã‚“ãªå‡¦ç†ã ãªâ€¦ã€‚ã¾ã€å‹•ã‘ã°ã„ã„ã®ã ã‘ã©ã€‚ */
 		case iPenLighten:
 			GetCPixel(0x01,0x2b,&newColor.rgb);
 			break;
@@ -1209,7 +1209,7 @@ void HandlePenColorChoice(short item)
 	ChangeColor(&newColor.rgb,newColor.isTransparent);
 }
 
-/* ƒJƒ‰[ƒ‚[ƒhƒƒjƒ…[iƒTƒuƒƒjƒ…[j */
+/* ã‚«ãƒ©ãƒ¼ãƒ¢ãƒ¼ãƒ‰ãƒ¡ãƒ‹ãƒ¥ãƒ¼ï¼ˆã‚µãƒ–ãƒ¡ãƒ‹ãƒ¥ãƒ¼ï¼‰ */
 void HandleColorModeChoice(short item)
 {
 	WindowPtr theWindow=MyFrontNonFloatingWindow();
@@ -1221,10 +1221,10 @@ void HandleColorModeChoice(short item)
 		if (item>iMonochrome)
 		{
 			item-=i216ColorD-1;
-			ChangeColorMode(theWindow,item,true); /* ƒfƒBƒU‚ ‚è */
+			ChangeColorMode(theWindow,item,true); /* ãƒ‡ã‚£ã‚¶ã‚ã‚Š */
 		}
 		else
-			ChangeColorMode(theWindow,item,false); /* ƒfƒBƒU‚È‚µ */
+			ChangeColorMode(theWindow,item,false); /* ãƒ‡ã‚£ã‚¶ãªã— */
 		
 		if (gOtherPrefs.checkWhenColorChanged)
 		{
@@ -1244,7 +1244,7 @@ void HandleColorModeChoice(short item)
 	}
 }
 
-/* ƒAƒCƒRƒ“ƒƒjƒ…[ */
+/* ã‚¢ã‚¤ã‚³ãƒ³ãƒ¡ãƒ‹ãƒ¥ãƒ¼ */
 void HandleIconChoice(short item)
 {
 	WindowPtr	theWindow=MyFrontNonFloatingWindow();
@@ -1312,7 +1312,7 @@ void HandleIconChoice(short item)
 	}
 }
 
-/* ƒEƒBƒ“ƒhƒEƒƒjƒ…[ */
+/* ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ãƒ¡ãƒ‹ãƒ¥ãƒ¼ */
 void HandleWindowChoice(short item)
 {
 	WindowPtr	theWindow=MyFrontNonFloatingWindow();
@@ -1320,7 +1320,7 @@ void HandleWindowChoice(short item)
 	item-=4;
 	if (item<=iWinNum)
 	{
-		/* ƒAƒCƒRƒ“ƒŠƒXƒg */
+		/* ã‚¢ã‚¤ã‚³ãƒ³ãƒªã‚¹ãƒˆ */
 		while (theWindow!=nil)
 		{
 			if (GetExtWindowKind(theWindow)==kWindowTypeIconListWindow)
@@ -1337,7 +1337,7 @@ void HandleWindowChoice(short item)
 		
 		if (item<=fWinNum)
 		{
-			/* ƒAƒCƒRƒ“ƒtƒ@ƒ~ƒŠƒEƒBƒ“ƒhƒE */
+			/* ã‚¢ã‚¤ã‚³ãƒ³ãƒ•ã‚¡ãƒŸãƒªã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ */
 			while (theWindow!=nil)
 			{
 				if (GetExtWindowKind(theWindow)==kWindowTypeIconFamilyWindow)
@@ -1352,7 +1352,7 @@ void HandleWindowChoice(short item)
 		{
 			item-=(fWinNum>0 ? fWinNum : -1)+1;
 			
-			/* ƒyƒCƒ“ƒgƒEƒBƒ“ƒhƒE */
+			/* ãƒšã‚¤ãƒ³ãƒˆã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ */
 			while (theWindow!=nil)
 			{
 				if (GetExtWindowKind(theWindow)==kWindowTypePaintWindow)
@@ -1371,7 +1371,7 @@ void HandleWindowChoice(short item)
 	}
 }
 
-/* ”{—¦ƒƒjƒ…[ */
+/* å€ç‡ãƒ¡ãƒ‹ãƒ¥ãƒ¼ */
 void HandleMagChoice(short item)
 {
 	WindowPtr	theWindow=MyFrontNonFloatingWindow();
@@ -1387,7 +1387,7 @@ void HandleMagChoice(short item)
 	}
 }
 
-/* •\¦ƒƒjƒ…[ */
+/* è¡¨ç¤ºãƒ¡ãƒ‹ãƒ¥ãƒ¼ */
 void HandleDispChoice(short item)
 {
 	if (item == iShowAllPalettes) /* show all palettes */
@@ -1396,7 +1396,7 @@ void HandleDispChoice(short item)
 		ShowHidePalette2(item);
 }
 
-/* ƒJƒ‰[ƒpƒŒƒbƒgƒƒjƒ…[iƒTƒuƒƒjƒ…[j */
+/* ã‚«ãƒ©ãƒ¼ãƒ‘ãƒ¬ãƒƒãƒˆãƒ¡ãƒ‹ãƒ¥ãƒ¼ï¼ˆã‚µãƒ–ãƒ¡ãƒ‹ãƒ¥ãƒ¼ï¼‰ */
 void HandlePaletteChoice(short item)
 {
 	MenuHandle	menu;
@@ -1418,7 +1418,7 @@ void HandlePaletteChoice(short item)
 	SetPort(port);
 }
 
-/* ƒuƒŒƒ“ƒhƒpƒŒƒbƒgƒƒjƒ…[iƒTƒuƒƒjƒ…[j */
+/* ãƒ–ãƒ¬ãƒ³ãƒ‰ãƒ‘ãƒ¬ãƒƒãƒˆãƒ¡ãƒ‹ãƒ¥ãƒ¼ï¼ˆã‚µãƒ–ãƒ¡ãƒ‹ãƒ¥ãƒ¼ï¼‰ */
 void HandleBlendPaletteChoice(short item)
 {
 	MenuHandle	menu;
@@ -1432,7 +1432,7 @@ void HandleBlendPaletteChoice(short item)
 	switch (item)
 	{
 		case iBlendLoad:
-			/* “Ç‚İ‚İ */
+			/* èª­ã¿è¾¼ã¿ */
 			GetIndString(prompt,155,4);
 			
 			DeactivateFloatersAndFirstDocumentWindow();
@@ -1471,7 +1471,7 @@ void HandleBlendPaletteChoice(short item)
 			break;
 		
 		case iBlendSave:
-			/* •Û‘¶ */
+			/* ä¿å­˜ */
 			GetIndString(filename,155,2);
 			
 			DeactivateFloatersAndFirstDocumentWindow();
@@ -1527,12 +1527,12 @@ void HandleBlendPaletteChoice(short item)
 				err=NavDisposeReply(&theReply);
 			}
 			
-			/* ƒtƒ@ƒCƒ‹‚ğŠJ‚­ */
+			/* ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ã */
 			SaveBlendPalette(&theFile);
 			break;
 		
 		case iBlendLock:
-			/* ƒƒbƒN */
+			/* ãƒ­ãƒƒã‚¯ */
 			GetPort(&port);
 			gBlendLocked = !gBlendLocked;
 			DrawBlend();
@@ -1544,14 +1544,14 @@ void HandleBlendPaletteChoice(short item)
 	}
 }
 
-/* ƒuƒŒƒ“ƒhƒpƒŒƒbƒg“Ç‚İ‚İ */
+/* ãƒ–ãƒ¬ãƒ³ãƒ‰ãƒ‘ãƒ¬ãƒƒãƒˆèª­ã¿è¾¼ã¿ */
 void LoadBlendPalette(FSSpec *theFile)
 {
 	short		refNum;
 	CTabHandle	ctab;
 	ColorSpecPtr	cspec;
 	
-	/* ƒtƒ@ƒCƒ‹‚ğŠJ‚­ */
+	/* ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ã */
 	refNum=FSpOpenResFile(theFile,fsRdPerm);
 	if (refNum<=0)
 	{
@@ -1561,13 +1561,13 @@ void LoadBlendPalette(FSSpec *theFile)
 	
 	UseResFile(refNum);
 	
-	/* ƒJƒ‰[ƒe[ƒuƒ‹‚ğ“Ç‚İ‚Ş */
+	/* ã‚«ãƒ©ãƒ¼ãƒ†ãƒ¼ãƒ–ãƒ«ã‚’èª­ã¿è¾¼ã‚€ */
 	ctab=(CTabHandle)Get1Resource('clut',128);
 	HLock((Handle)ctab);
 	cspec=(**ctab).ctTable;
 	
 	{
-		/* Œ»İ‚Ì‘I‘ğF‚ğ•Û‘¶ */
+		/* ç¾åœ¨ã®é¸æŠè‰²ã‚’ä¿å­˜ */
 		MyColorRec	tempColor1=gCurrentColor,tempColor2=gPrevColor;
 		
 		gBlendLocked=false;
@@ -1584,7 +1584,7 @@ void LoadBlendPalette(FSSpec *theFile)
 	UseResFile(gApplRefNum);
 }
 
-/* ƒuƒŒƒ“ƒhƒpƒŒƒbƒg•Û‘¶ */
+/* ãƒ–ãƒ¬ãƒ³ãƒ‰ãƒ‘ãƒ¬ãƒƒãƒˆä¿å­˜ */
 void SaveBlendPalette(FSSpec *theFile)
 {
 	short		refNum;
@@ -1600,7 +1600,7 @@ void SaveBlendPalette(FSSpec *theFile)
 	
 	UseResFile(refNum);
 	
-	/* F‚ğ•Û‘¶‚·‚é‚½‚ß‚ÉƒJƒ‰[ƒe[ƒuƒ‹‚ğì¬ */
+	/* è‰²ã‚’ä¿å­˜ã™ã‚‹ãŸã‚ã«ã‚«ãƒ©ãƒ¼ãƒ†ãƒ¼ãƒ–ãƒ«ã‚’ä½œæˆ */
 	ctab=(CTabHandle)NewHandle(sizeof(ColorTable)+sizeof(ColorSpec));
 	(**ctab).ctSeed=UniqueID('clut');
 	(**ctab).ctFlags=0;
@@ -1620,7 +1620,7 @@ void SaveBlendPalette(FSSpec *theFile)
 	UseResFile(gApplRefNum);
 }
 
-/* ‘I‘ğ”ÍˆÍƒƒjƒ…[ */
+/* é¸æŠç¯„å›²ãƒ¡ãƒ‹ãƒ¥ãƒ¼ */
 void HandleSelectionChoice(short item)
 {
 	WindowPtr	theWindow=MyFrontNonFloatingWindow();
@@ -1660,7 +1660,7 @@ void HandleSelectionChoice(short item)
 	}
 }
 
-/* ƒvƒŒƒrƒ…[‚Ì”wŒiƒƒjƒ…[iƒTƒuƒƒjƒ…[j */
+/* ãƒ—ãƒ¬ãƒ“ãƒ¥ãƒ¼ã®èƒŒæ™¯ãƒ¡ãƒ‹ãƒ¥ãƒ¼ï¼ˆã‚µãƒ–ãƒ¡ãƒ‹ãƒ¥ãƒ¼ï¼‰ */
 void HandleListBackgroundChoice(short item)
 {
 	MenuHandle	menu;
@@ -1672,11 +1672,11 @@ void HandleListBackgroundChoice(short item)
 	CheckMenuItem(menu,gListBackground,false);
 	gListBackground=item;
 	
-	/* ƒvƒŒƒrƒ…[‚ğXV */
+	/* ãƒ—ãƒ¬ãƒ“ãƒ¥ãƒ¼ã‚’æ›´æ–° */
 	MyInvalWindowPortBounds(gPreviewWindow);
 }
 
-/* ‘OŒi‚Ì•s“§–¾“xƒƒjƒ…[iƒTƒuƒƒjƒ…[j */
+/* å‰æ™¯ã®ä¸é€æ˜åº¦ãƒ¡ãƒ‹ãƒ¥ãƒ¼ï¼ˆã‚µãƒ–ãƒ¡ãƒ‹ãƒ¥ãƒ¼ï¼‰ */
 void HandleForeTransparencyChoice(short item)
 {
 	WindowPtr	theWindow;
@@ -1691,7 +1691,7 @@ void HandleForeTransparencyChoice(short item)
 	newTrans=(item-iForeTrans100+kForeTrans100);
 	if (newTrans==eWinRec->foreTransparency) return;
 	
-	eWinRec->pForeTransparency=eWinRec->foreTransparency; /* ƒoƒbƒNƒAƒbƒv */
+	eWinRec->pForeTransparency=eWinRec->foreTransparency; /* ãƒãƒƒã‚¯ã‚¢ãƒƒãƒ— */
 	eWinRec->foreTransparency=newTrans;
 	
 	GetWindowPortBounds(theWindow,&r);
@@ -1705,7 +1705,7 @@ void HandleForeTransparencyChoice(short item)
 	SetUndoMode(umChangeTransparency);
 }
 
-/* ƒƒjƒ…[‚ÌƒAƒbƒvƒf[ƒgˆ— */
+/* ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã®ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆå‡¦ç† */
 void UpdateMenus(void)
 {
 	UpdateEffectMenu();
@@ -1722,7 +1722,7 @@ void UpdateMenus(void)
 	UpdateIconMenu();
 }
 
-/* V‹Kƒƒjƒ…[‚ğİ’è‚É‚æ‚Á‚Ä•ÏX */
+/* æ–°è¦ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã‚’è¨­å®šã«ã‚ˆã£ã¦å¤‰æ›´ */
 void UpdateNewMenu(void)
 {
 	MenuHandle	menu;
@@ -1733,9 +1733,9 @@ void UpdateNewMenu(void)
 	SetMenuItemText(menu,iNew,itemStr);
 }
 
-/* ‘I‘ğ”ÍˆÍ‚Ì‚ ‚é‚È‚µ‚É‚æ‚Á‚Ä */
-/* ƒJƒbƒg^ƒRƒs[^Á‹^•¡»^‘I‘ğ”ÍˆÍ‚ğ•Û‘¶ƒƒjƒ…[‚ğƒAƒbƒvƒf[ƒg */
-/* Œø‰Êƒƒjƒ…[‚Ìd‚Ë‡‚¹‚ÉŠÖ‚·‚éƒƒjƒ…[‚à */
+/* é¸æŠç¯„å›²ã®ã‚ã‚‹ãªã—ã«ã‚ˆã£ã¦ */
+/* ã‚«ãƒƒãƒˆï¼ã‚³ãƒ”ãƒ¼ï¼æ¶ˆå»ï¼è¤‡è£½ï¼é¸æŠç¯„å›²ã‚’ä¿å­˜ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã‚’ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆ */
+/* åŠ¹æœãƒ¡ãƒ‹ãƒ¥ãƒ¼ã®é‡ã­åˆã›ã«é–¢ã™ã‚‹ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã‚‚ */
 void UpdateClipMenu(void)
 {
 	MenuHandle	menu;
@@ -1753,7 +1753,7 @@ void UpdateClipMenu(void)
 		case kWindowTypePaintWindow:
 			eSelectedRgn=(GetPaintWinRec(theWindow))->eSelectedRgn;
 			
-			if (EmptyRgn(eSelectedRgn)) /* ‚Ç‚±‚à‘I‘ğ‚³‚ê‚Ä‚¢‚È‚¢ */
+			if (EmptyRgn(eSelectedRgn)) /* ã©ã“ã‚‚é¸æŠã•ã‚Œã¦ã„ãªã„ */
 			{
 				menu=GetMenuHandle(mEdit);
 				MyDisableMenuItem(menu,iCut);
@@ -1827,7 +1827,7 @@ void UpdateClipMenu(void)
 				
 				err=GetDataFromIPIcon(&dataHandle,&fWinRec->ipIcon,fWinRec->selectedIcon);
 				
-				/* ‘I‘ğƒAƒCƒRƒ“‚ ‚è */
+				/* é¸æŠã‚¢ã‚¤ã‚³ãƒ³ã‚ã‚Š */
 				if (err==noErr && dataHandle != nil)
 				{
 					MyEnableMenuItem(menu,iCopy);
@@ -1861,7 +1861,7 @@ void UpdateClipMenu(void)
 }
 
 
-/* ƒNƒŠƒbƒvƒ{[ƒh‚Ì“à—e‚É‚æ‚Á‚Äƒy[ƒXƒgƒƒjƒ…[‚ğXV */
+/* ã‚¯ãƒªãƒƒãƒ—ãƒœãƒ¼ãƒ‰ã®å†…å®¹ã«ã‚ˆã£ã¦ãƒšãƒ¼ã‚¹ãƒˆãƒ¡ãƒ‹ãƒ¥ãƒ¼ã‚’æ›´æ–° */
 void UpdatePasteMenu(void)
 {
 	MenuHandle	menu;
@@ -1898,7 +1898,7 @@ void UpdatePasteMenu(void)
 	switch (GetExtWindowKind(theWindow))
 	{
 		case kWindowTypePaintWindow:
-			/* dataSize‚Íæ‚Ù‚Ç’²‚×‚½‚à‚Ì‚ğ—¬—p */
+			/* dataSizeã¯å…ˆã»ã©èª¿ã¹ãŸã‚‚ã®ã‚’æµç”¨ */
 			break;
 		
 		case kWindowTypeIconListWindow:
@@ -1936,7 +1936,7 @@ void UpdatePasteMenu(void)
 		MyEnableMenuItem(menu,iPaste);
 }
 
-/* ƒc[ƒ‹ƒƒjƒ…[‚ğXViƒOƒŠƒbƒhAƒ‹[ƒ‰[ƒ‚[ƒhj */
+/* ãƒ„ãƒ¼ãƒ«ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã‚’æ›´æ–°ï¼ˆã‚°ãƒªãƒƒãƒ‰ã€ãƒ«ãƒ¼ãƒ©ãƒ¼ãƒ¢ãƒ¼ãƒ‰ï¼‰ */
 void UpdateToolMenu(void)
 {
 	MenuHandle	menu;
@@ -1955,8 +1955,8 @@ void UpdateToolMenu(void)
 	CheckMenuItem(menu,gPaletteCheck+1,true);
 }
 
-/* Œø‰Êƒƒjƒ…[A•ÒWƒƒjƒ…[‚È‚Ç‚ÌXV */
-/* ƒEƒBƒ“ƒhƒE‚ª•\¦‚³‚ê‚Ä‚¢‚é‚©‚Ç‚¤‚©‚É‚æ‚Á‚ÄXV‚·‚é */
+/* åŠ¹æœãƒ¡ãƒ‹ãƒ¥ãƒ¼ã€ç·¨é›†ãƒ¡ãƒ‹ãƒ¥ãƒ¼ãªã©ã®æ›´æ–° */
+/* ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ãŒè¡¨ç¤ºã•ã‚Œã¦ã„ã‚‹ã‹ã©ã†ã‹ã«ã‚ˆã£ã¦æ›´æ–°ã™ã‚‹ */
 void UpdateEffectMenu(void)
 {
 	MenuHandle	menu;
@@ -1966,7 +1966,7 @@ void UpdateEffectMenu(void)
 	
 	theWindow=MyFrontNonFloatingWindow();
 	
-	/* ƒEƒBƒ“ƒhƒE‚ªŠJ‚©‚ê‚Ä‚¢‚È‚¢ */
+	/* ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ãŒé–‹ã‹ã‚Œã¦ã„ãªã„ */
 	if (theWindow==nil)
 	{
 		menu=GetMenuHandle(mEdit);
@@ -1995,7 +1995,7 @@ void UpdateEffectMenu(void)
 			MyEnableMenuItem(menu,0);
 			MyEnableMenuItem(menu,iSelectAll);
 			
-			/* ”wŒi‚ª‚ ‚é‚ÍƒTƒCƒY•ÏX•s‰Âib’è“Iˆ’uj */
+			/* èƒŒæ™¯ãŒã‚ã‚‹æ™‚ã¯ã‚µã‚¤ã‚ºå¤‰æ›´ä¸å¯ï¼ˆæš«å®šçš„å‡¦ç½®ï¼‰ */
 			eWinRec=GetPaintWinRec(theWindow);
 			if (eWinRec->backgroundGWorld || eWinRec->foregroundGWorld)
 				MyDisableMenuItem(menu,iIconSize);
@@ -2006,7 +2006,7 @@ void UpdateEffectMenu(void)
 			menu=GetMenuHandle(mEffect);
 			MyEnableMenuItem(menu,0);
 			
-			/* •`‰æ“_ƒ‚[ƒh‚Å‚ÍF•ÏŠ·‚Ì"6"‚È‚Ç‚ÌƒVƒ‡[ƒgƒJƒbƒg‚ğg—p•s‰Â */
+			/* æç”»ç‚¹ãƒ¢ãƒ¼ãƒ‰ã§ã¯è‰²å¤‰æ›ã®"6"ãªã©ã®ã‚·ãƒ§ãƒ¼ãƒˆã‚«ãƒƒãƒˆã‚’ä½¿ç”¨ä¸å¯ */
 /*			menu=GetMenuHandle(mColorMode);
 			if (eWinRec->isDotMode)
 			{
@@ -2051,7 +2051,7 @@ void UpdateEffectMenu(void)
 	DrawMenuBar();
 }
 
-/* undoƒƒjƒ…[‚ÌƒAƒbƒvƒf[ƒg */
+/* undoãƒ¡ãƒ‹ãƒ¥ãƒ¼ã®ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆ */
 void UpdateUndoMenu(void)
 {
 	WindowPtr	theWindow=MyFrontNonFloatingWindow();
@@ -2092,7 +2092,7 @@ void UpdateUndoMenu(void)
 		MyEnableMenuItem(menu,iUndo);
 }
 
-/* ƒEƒBƒ“ƒhƒEƒƒjƒ…[‚ÌƒAƒbƒvƒf[ƒg */
+/* ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã®ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆ */
 void UpdateWindowMenu(void)
 {
 	MenuHandle	menu=GetMenuHandle(mWindow);
@@ -2126,23 +2126,23 @@ void UpdateWindowMenu(void)
 	}
 	menu=GetMenuHandle(mWindow);
 	
-	/* ‚Ü‚¸AƒEƒBƒ“ƒhƒEƒŠƒXƒg‚ğÁ‚· */
+	/* ã¾ãšã€ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ãƒªã‚¹ãƒˆã‚’æ¶ˆã™ */
 	numItems=CountMenuItems(menu);
 	while(numItems>3)
 		DeleteMenuItem(menu,numItems--);
 	
-	/* ƒEƒBƒ“ƒhƒE‚Ì”‚ğ‰Šú‰» */
+	/* ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®æ•°ã‚’åˆæœŸåŒ– */
 	eWinNum=0;
 	iWinNum=0;
 	fWinNum=0;
 	
-	/* ŠJ‚©‚ê‚Ä‚¢‚éƒEƒBƒ“ƒhƒEƒŠƒXƒg‚ğ’Ç‰Á‚·‚é */
+	/* é–‹ã‹ã‚Œã¦ã„ã‚‹ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ãƒªã‚¹ãƒˆã‚’è¿½åŠ ã™ã‚‹ */
 	while (theWindow!=nil)
 	{
 		switch (GetExtWindowKind(theWindow))
 		{
 			case kWindowTypeIconListWindow:
-				/* ƒAƒCƒRƒ“ƒŠƒXƒgƒEƒBƒ“ƒhƒE */
+				/* ã‚¢ã‚¤ã‚³ãƒ³ãƒªã‚¹ãƒˆã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ */
 				iWinNum++;
 				if (iWinNum==1)
 					InsertMenuItem(menu,"\p-",3);
@@ -2161,7 +2161,7 @@ void UpdateWindowMenu(void)
 				break;
 			
 			case kWindowTypeIconFamilyWindow:
-				/* ƒtƒ@ƒ~ƒŠƒEƒBƒ“ƒhƒE */
+				/* ãƒ•ã‚¡ãƒŸãƒªã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ */
 				fWinNum++;
 				item=3+1+(iWinNum==0 ? -1 : iWinNum);
 				if (fWinNum==1)
@@ -2201,7 +2201,7 @@ void UpdateWindowMenu(void)
 	}
 }
 
-/* ƒAƒCƒRƒ“ƒƒjƒ…[‚ÌƒAƒbƒvƒf[ƒg */
+/* ã‚¢ã‚¤ã‚³ãƒ³ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã®ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆ */
 void UpdateIconMenu(void)
 {
 	MenuHandle	menu=GetMenuHandle(mIcon);
@@ -2223,7 +2223,7 @@ void UpdateIconMenu(void)
 				MyDisableMenuItem(menu,iOpenWithResEdit);
 			
 			num=IsMultiIconSelected(iWinRec);
-			if (num == 1) /* ‚P‚Â‚¾‚¯‘I‚Î‚ê‚Ä‚¢‚é‚Ì‚İ—LŒø */
+			if (num == 1) /* ï¼‘ã¤ã ã‘é¸ã°ã‚Œã¦ã„ã‚‹æ™‚ã®ã¿æœ‰åŠ¹ */
 			{
 				MyEnableMenuItem(menu,iIconInfo);
 				MyEnableMenuItem(menu,iExportIcon);
@@ -2260,7 +2260,7 @@ void UpdateIconMenu(void)
 	MyDisableMenuItem(menu,iOpenWithResEdit);
 }
 
-/* ‘I‘ğ”ÍˆÍƒƒjƒ…[‚ÌƒAƒbƒvƒf[ƒg */
+/* é¸æŠç¯„å›²ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã®ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆ */
 void UpdateSelectionMenu(void)
 {
 	WindowPtr	theWindow=MyFrontNonFloatingWindow();
@@ -2294,14 +2294,14 @@ void UpdateSelectionMenu(void)
 	}
 	else
 	{
-		/* ‘I‘ğ”ÍˆÍƒTƒuƒƒjƒ…[‚»‚Ì‚à‚Ì‚ğg—p•s‰Â”\‚É‚·‚é */
+		/* é¸æŠç¯„å›²ã‚µãƒ–ãƒ¡ãƒ‹ãƒ¥ãƒ¼ãã®ã‚‚ã®ã‚’ä½¿ç”¨ä¸å¯èƒ½ã«ã™ã‚‹ */
 		menu=GetMenuHandle(mTool);
 		MyDisableMenuItem(menu,iSelection);
 	}
 }
 
-/* æÁƒƒjƒ…[Aundo mode‚Ìİ’è */
-/* mode‚ª•‰‚È‚çredo mode */
+/* å–æ¶ˆãƒ¡ãƒ‹ãƒ¥ãƒ¼ã€undo modeã®è¨­å®š */
+/* modeãŒè² ãªã‚‰redo mode */
 void SetUndoMode(short mode)
 {
 	PaintWinRec	*eWinRec;
@@ -2309,7 +2309,7 @@ void SetUndoMode(short mode)
 	
 	if (mode<=-undoModeNum || mode>=undoModeNum) return;
 	
-	/* ƒEƒBƒ“ƒhƒE‚Ìî•ñ‚ğ“¾‚é */
+	/* ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®æƒ…å ±ã‚’å¾—ã‚‹ */
 	theWindow=MyFrontNonFloatingWindow();
 	if (theWindow!=nil)
 	{
@@ -2339,7 +2339,7 @@ void SetUndoMode(short mode)
 	UpdateUndoMenu();
 }
 
-/* •Û‘¶ƒƒjƒ…[‚ÌXV */
+/* ä¿å­˜ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã®æ›´æ–° */
 void UpdateSaveMenu(void)
 {
 	MenuHandle	menu;
@@ -2359,8 +2359,8 @@ void UpdateSaveMenu(void)
 					case kGIFFileType:
 					case 'Icon':
 					case 'wIco':
-						/* GIFAƒAƒCƒRƒ“‚Â‚«ƒtƒHƒ‹ƒ_AWindowsƒAƒCƒRƒ“‚É‚Â‚¢‚Ä‚ÍA
-						  “Ç‚İ‚Şƒ‹[ƒ`ƒ“‚ª‚È‚¢‚½‚ß•œ‹A•s‰Â”\ */
+						/* GIFã€ã‚¢ã‚¤ã‚³ãƒ³ã¤ããƒ•ã‚©ãƒ«ãƒ€ã€Windowsã‚¢ã‚¤ã‚³ãƒ³ã«ã¤ã„ã¦ã¯ã€
+						  èª­ã¿è¾¼ã‚€ãƒ«ãƒ¼ãƒãƒ³ãŒãªã„ãŸã‚å¾©å¸°ä¸å¯èƒ½ */
 						iconHasSaved=false;
 						break;
 				}
@@ -2375,7 +2375,7 @@ void UpdateSaveMenu(void)
 				iconHasChanged=(*GetIconFamilyRec(theWindow)).wasChanged;
 				iconHasSaved=(*GetIconFamilyRec(theWindow)).isSaved;
 				
-				/* –¢•Û‘¶‚Ìê‡‚ÍA•ÏXƒtƒ‰ƒO‚ª—§‚Á‚Ä‚¢‚é‚±‚Æ‚É‚µ‚Äu•Û‘¶vƒƒjƒ…[‚ğg—p‰Â‚É */
+				/* æœªä¿å­˜ã®å ´åˆã¯ã€å¤‰æ›´ãƒ•ãƒ©ã‚°ãŒç«‹ã£ã¦ã„ã‚‹ã“ã¨ã«ã—ã¦ã€Œä¿å­˜ã€ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã‚’ä½¿ç”¨å¯ã« */
 				if (!iconHasSaved) iconHasChanged = true;
 				break;
 		}
@@ -2389,14 +2389,14 @@ void UpdateSaveMenu(void)
 		if (iconHasSaved) MyEnableMenuItem(menu,iRevert);
 		else MyDisableMenuItem(menu,iRevert);
 	}
-	else /* ƒAƒCƒRƒ“‚Ì“à—e‚ª•Ï‰»‚µ‚Ä‚¢‚È‚¯‚ê‚Î•Û‘¶‚µ‚È‚¢ */
+	else /* ã‚¢ã‚¤ã‚³ãƒ³ã®å†…å®¹ãŒå¤‰åŒ–ã—ã¦ã„ãªã‘ã‚Œã°ä¿å­˜ã—ãªã„ */
 	{
 		MyDisableMenuItem(menu,iSave);
 		MyDisableMenuItem(menu,iRevert);
 	}
 }
 
-/* ƒoƒbƒNƒOƒ‰ƒEƒ“ƒhƒƒjƒ…[‚ÌXV */
+/* ãƒãƒƒã‚¯ã‚°ãƒ©ã‚¦ãƒ³ãƒ‰ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã®æ›´æ–° */
 void UpdateBGMenu(void)
 {
 	MenuHandle	menu;
@@ -2454,7 +2454,7 @@ void UpdateBGMenu(void)
 	}
 }
 
-/* “§–¾^•s“§–¾ƒƒjƒ…[‚ÌXV */
+/* é€æ˜ï¼ä¸é€æ˜ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã®æ›´æ–° */
 void UpdateTransparentMenu(void)
 {
 	MenuHandle	menu;
@@ -2473,7 +2473,7 @@ void UpdateTransparentMenu(void)
 			OSErr	err;
 			RgnHandle	maskRgn;
 			
-			/* ƒ}ƒXƒN‚Æ‘I‘ğ”ÍˆÍ‚ªˆê’v‚·‚éê‡‚Í•s“§–¾ */
+			/* ãƒã‚¹ã‚¯ã¨é¸æŠç¯„å›²ãŒä¸€è‡´ã™ã‚‹å ´åˆã¯ä¸é€æ˜ */
 			maskRgn=NewRgn();
 			MyLockPixels(currentMask);
 			err=BitMapToRegion(maskRgn,GetPortBitMapForCopyBits(eWinRec->currentMask));
@@ -2486,7 +2486,7 @@ void UpdateTransparentMenu(void)
 			}
 			MyUnlockPixels(currentMask);
 			
-			/* ƒ}ƒXƒN‚Æ”’ˆÈŠO‚Ì•”•ª‚ªˆê’v‚·‚éê‡‚Í“§–¾ */
+			/* ãƒã‚¹ã‚¯ã¨ç™½ä»¥å¤–ã®éƒ¨åˆ†ãŒä¸€è‡´ã™ã‚‹å ´åˆã¯é€æ˜ */
 			if (err==noErr && !isOpaque)
 			{
 				GWorldPtr	maskGWorld;
@@ -2510,7 +2510,7 @@ void UpdateTransparentMenu(void)
 			}
 			DisposeRgn(maskRgn);
 			
-			/* ƒuƒŒƒ“ƒhƒ‚[ƒh‚©‚Ç‚¤‚© */
+			/* ãƒ–ãƒ¬ãƒ³ãƒ‰ãƒ¢ãƒ¼ãƒ‰ã‹ã©ã†ã‹ */
 			isBlend = (eWinRec->selectionBlend == blend);
 		}
 	}

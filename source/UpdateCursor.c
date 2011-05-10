@@ -1,1 +1,418 @@
-/* *  UpdataCursor.c *  IconParty * *  Created by naoki iimura on Sun Jul 14 2002. *  Copyright (c) 1997-2002 naoki iimura. All rights reserved. * */#if __APPLE_CC__#include <Carbon/Carbon.h>#endif#include "UpdateCursor.h"#include "Globals.h"#include "PreCarbonSupport.h"#include "PaintRoutines.h"#include "WindowRoutines.h"#include "IconFamilyWindow.h"#include "TabletUtils.h"#include "UsefulRoutines.h"static OSErr	SetPenCursorMain(short width,short height,RGBColor *crsrColor);extern WindowPtr	ColorPalette1,ColorPalette2;typedef struct {	short	width;	short	height;	RGBColor	color;} MyCursorRec;static short	gCrsrID;MyCursorRec		gCursData={0,0,{0,0,0}};/* É}ÉEÉXÉJÅ[É\ÉãÇÃïœçX */void UpdateMouseCursor(Point mousePt){	WindowPtr	theWindow;	short	thePart;	KeyMap	theKeys;	Point	localPt;	GrafPtr	port;	Rect	editRect;		#if !TARGET_API_MAC_CARBON	if (isTSMgrAvailable)	{		thePart=FindServiceWindow(mousePt,&theWindow); /* 1.0b5í«â¡ */		if (theWindow!=nil) /* TSMÉtÉçÅ[ÉeÉBÉìÉOÉEÉBÉìÉhÉEè„ */		{			MakeArrowCursorRgn();			gCrsrID = 0;			SetTSMCursor(mousePt);			ResetRuler();			return;		}	}	#endif		thePart=FindWindow(mousePt,&theWindow);	if (theWindow==nil) /* ÉEÉBÉìÉhÉEè„Ç≈Ç»Ç¢ */	{		MakeArrowCursorRgn();		MySetCursor(0);		return;	}		GetPort(&port);	SetPortWindowPort(theWindow);	localPt=mousePt;	GlobalToLocal(&localPt);		if (gToolPrefs.showRuler)		DrawRuler(mousePt);		if (thePart!=inContent || (localPt.h<0 || localPt.v<0))	{		MakeArrowCursorRgn();		MySetCursor(0);	}	else	{		if (!IsWindowHilited(theWindow)) /* ÉAÉNÉeÉBÉuÇ≈Ç»Ç¢ÉEÉBÉìÉhÉEè„Ç≈ÇÕñÓàÛÉJÅ[É\Éã */		{			MakeArrowCursorRgn();			MySetCursor(0);		}		else		{			Boolean	cmdDown,optDown,ctrlDown;						switch (GetExtWindowKind(theWindow))			{				case kWindowTypePaintWindow:	//				InvertDot(theWindow);										GetWindowPortBounds(theWindow,&editRect);					editRect.right-=kScrollBarWidth;					editRect.bottom-=kScrollBarHeight;					if (!PtInRect(localPt,&editRect)) /* ÉyÉCÉìÉgóÃàÊÇ≈Ç»ÇØÇÍÇŒñÓàÛÉJÅ[É\Éã */					{						RgnHandle	tempRgn=NewRgn();						Point	offset={0,0};												LocalToGlobal(&offset);						MakeArrowCursorRgn();						RectRgn(tempRgn,&editRect);						OffsetRgn(tempRgn,offset.h,offset.v);						DiffRgn(gCurRgnHand,tempRgn,gCurRgnHand);						DisposeRgn(tempRgn);						MySetCursor(0);						break;					}										SetEmptyRgn(gCurRgnHand);										GetKeys(theKeys);					cmdDown=BitTst(theKeys,48);					optDown=BitTst(theKeys,61);					ctrlDown=BitTst(theKeys,60);										if (cmdDown && optDown) /* ÉOÉâÉuÉXÉNÉçÅ[Éã */					{						MySetCursor(140);						break;					}										if (gSelectedTool==kMarqueeTool) /* ëIëÉcÅ[Éã */					{						if (isTabletAvailable && IsEraser() && gTabletPrefs.useEraser)							SetPenCursor(kEraserTool);						else						{							RgnHandle	eSelectedRgn=(GetPaintWinRec(theWindow))->eSelectedRgn;														if (PtInRgn(localPt,eSelectedRgn)) /* ëIëóÃàÊì‡ */							{								if (optDown) /* ÉIÉvÉVÉáÉìÉLÅ[ */									MySetCursor(kCursorHandOffPlus);								else									MySetCursor(kCursorHandOff);							}							else								MySetCursor(128+kMarqueeTool);						}					}					else /* ëIëÉcÅ[Éãà»äO */					{						short	tool;												if (optDown) /* ÉIÉvÉVÉáÉìÉLÅ[ Å® ÉXÉ|ÉCÉg */							tool=kSpoitTool;						else if (isTabletAvailable && gTabletPrefs.useEraser && IsEraser())							tool=kEraserTool;						else							tool=gSelectedTool;												switch (tool)						{							case kPencilTool:								if (cmdDown)								{									if (gToolPrefs.eraserByCmdKey && !ctrlDown)										SetPenCursor(kEraserTool);									else										MySetCursor(137);								}								else									SetPenCursor(kPencilTool);								break;														case kEraserTool:								SetPenCursor(kEraserTool);								break;														case kSpoitTool:								MySetCursor((gToolPrefs.changeSpoitCursor ? 139 : 128+kSpoitTool));								break;														default:								MySetCursor(128+gSelectedTool);						}					}					break;								case kWindowTypeColorPalette1:				case kWindowTypeColorPalette2:					GetWindowContentRgn(theWindow,gCurRgnHand);					MySetCursor(gToolPrefs.changeSpoitCursor ? 139 : 128+kSpoitTool);					break;								case kWindowTypeBlendPalette:					UpdateCursorInBlendPalette(localPt);					break;								case kWindowTypeIconFamilyWindow:					UpdateCursorInFamilyWindow(theWindow,localPt);					break;								case kWindowTypeFavoritePalette:					GetKeys(theKeys);					cmdDown=BitTst(theKeys,48);					UpdateCursorInFavoritePalette(localPt,cmdDown);					break;								case kWindowTypePreviewWindow:				case kWindowTypeToolPalette:				case kWindowTypeTitleWindow:				default:					MakeArrowCursorRgn();					MySetCursor(0);					break;			}		}	}		SetPort(port);}/* ñÓàÛÉJÅ[É\ÉãÇ…Ç∑ÇÈÉäÅ[ÉWÉáÉìÇåvéZ */void MakeArrowCursorRgn(void){	RgnHandle	tempRgn=NewRgn();		/* Ç‹Ç∏ÅAâÊñ ëSëÃ */	CopyRgn(GetGrayRgn(),gCurRgnHand);		/* ÉJÉâÅ[ÉpÉåÉbÉgÅAÉuÉåÉìÉhÉpÉåÉbÉgÇÃÉRÉìÉeÉìÉgÉäÅ[ÉWÉáÉìÇèúÇ≠ */	if (IsWindowVisible(ColorPalette1))	{		GetWindowContentRgn(ColorPalette1,tempRgn);		DiffRgn(gCurRgnHand,tempRgn,gCurRgnHand);	}	if (IsWindowVisible(ColorPalette2))	{		GetWindowContentRgn(ColorPalette2,tempRgn);		DiffRgn(gCurRgnHand,tempRgn,gCurRgnHand);	}	if (IsWindowVisible(gBlendPalette))	{		GetWindowContentRgn(gBlendPalette,tempRgn);		DiffRgn(gCurRgnHand,tempRgn,gCurRgnHand);	}		DisposeRgn(tempRgn);}/* âîïMÉcÅ[ÉãÅAè¡ÇµÉSÉÄÉcÅ[ÉãÇÃÉ}ÉEÉXÉJÅ[É\ÉãÇçÏê¨ÇµÇƒê›íË */void SetPenCursor(short tool){	if (gToolPrefs.changePencilCursor)	{		short	ratio=0;		WindowPtr	theWindow=MyFrontNonFloatingWindow();		OSErr	err;				if (theWindow!=nil && GetExtWindowKind(theWindow)==kWindowTypePaintWindow)			ratio=(GetPaintWinRec(theWindow))->ratio;				switch (tool)		{			case kPencilTool:				err=SetPenCursorMain(gPenWidth<<ratio,gPenHeight<<ratio,&gCurrentColor.rgb);				if (err!=noErr)					MySetCursor(128+kPencilTool);				break;						case kEraserTool:				err=SetPenCursorMain(gEraserWidth<<ratio,gEraserHeight<<ratio,&gBackColor.rgb);				if (err!=noErr)					MySetCursor(128+kEraserTool);				break;						default:				MySetCursor(0);		}	}	else	{		switch (tool)		{			case kPencilTool:				MySetCursor(128+kPencilTool);				break;						case kEraserTool:				MySetCursor(128+kEraserTool);				break;						default:				MySetCursor(0);		}	}}/* É}ÉEÉXÉJÅ[É\ÉãÇÃçÏê¨ÉÅÉCÉì */OSErr SetPenCursorMain(short width,short height,RGBColor *crsrColor){	GWorldPtr		cursGWorld;	PixMapHandle	pmh;	OSErr			err;	Rect			cursRect={0,0,16,16},r;	Cursor			curs;	short			i;	Ptr				baseAddr;	long			rowBytes;	GWorldPtr		cPort;	GDHandle		cDevice;		if (width <= 0 || width > 16 || height <= 0 || height > 16) return paramErr;		if (gCrsrID==-1)	{		if (gCursData.width == width && gCursData.height == height && EqualColor(&gCursData.color,crsrColor))			return noErr;	}	else		gCrsrID=-1;		gCursData.width=width;	gCursData.height=height;	gCursData.color=*crsrColor;		GetGWorld(&cPort,&cDevice);		err=NewGWorld(&cursGWorld,1,&cursRect,0,0,useTempMem);	if (err!=noErr) return err;		pmh=GetGWorldPixMap(cursGWorld);	LockPixels(pmh);	baseAddr=MyGetPixBaseAddr(pmh);	rowBytes=MyGetPixRowBytes(pmh) & 0x3fff;		/* GWorldÇ…ÉJÅ[É\ÉãÇ…Ç∑ÇÈäGÇï`âÊ */	SetGWorld(cursGWorld,0);	EraseRect(&cursRect);	SetRect(&r,0,0,width,height);	PaintRect(&r);		/* ÉJÅ[É\ÉãÇ…ÉRÉsÅ[ */	for (i=0; i<16; i++)	{		curs.data[i]=*(short *)baseAddr;		baseAddr+=rowBytes;				curs.mask[i]=0;	}		SetGWorld(cPort,cDevice);	UnlockPixels(pmh);	DisposeGWorld(cursGWorld);		if (gToolPrefs.useColorCursor) /* ÉJÉâÅ[ÉJÅ[É\Éã */	{		CCrsrHandle		ccurs;		short			j;		UInt32			*ul;				ccurs=GetCCursor(128);		(**(**(**ccurs).crsrMap).pmTable).ctTable[1].rgb=*crsrColor;		CTabChanged((**(**ccurs).crsrMap).pmTable);		HLock((**ccurs).crsrData);		ul=(UInt32 *)*(**ccurs).crsrData;				for (i=0; i<16; i++)		{			*ul=0;			for (j=0; j<16; j++)				*ul+=((UInt32)((curs.data[i] >> j) & 1)) << (j*2);			ul++;		}				HUnlock((**ccurs).crsrData);		BlockMoveData(&curs.data[0],&(**ccurs).crsr1Data[0],16*16/8);		BlockMoveData(&curs.data[0],&(**ccurs).crsrMask[0],16*16/8);		SetPt(&(**ccurs).crsrHotSpot,width/2,height/2);		SetCCursor(ccurs);		DisposeCCursor(ccurs);	}	else	{		/* ÉJÅ[É\ÉãÇÃíÜêS */		SetPt(&curs.hotSpot,width/2,height/2);				SetCursor(&curs);	}		return noErr;}/* ÉJÅ[É\ÉãÇÃïœçX */void MySetCursor(short id){	CursHandle	curs;		if (id==gCrsrID) return;		gCrsrID=id;		switch (id)	{		case 0:			InitCursor();			break;				case -1:			break;				default:			curs=GetCursor(id);			SetCursor(*curs);	}}
+/*
+ *  UpdataCursor.c
+ *  IconParty
+ *
+ *  Created by naoki iimura on Sun Jul 14 2002.
+ *  Copyright (c) 1997-2002 naoki iimura. All rights reserved.
+ *
+ */
+
+#if __APPLE_CC__
+#include <Carbon/Carbon.h>
+#endif
+
+#include "UpdateCursor.h"
+#include "Globals.h"
+#include "PreCarbonSupport.h"
+#include "PaintRoutines.h"
+#include "WindowRoutines.h"
+#include "IconFamilyWindow.h"
+#include "TabletUtils.h"
+#include "UsefulRoutines.h"
+
+
+static OSErr	SetPenCursorMain(short width,short height,RGBColor *crsrColor);
+
+
+extern WindowPtr	ColorPalette1,ColorPalette2;
+
+typedef struct {
+	short	width;
+	short	height;
+	RGBColor	color;
+} MyCursorRec;
+
+static short	gCrsrID;
+MyCursorRec		gCursData={0,0,{0,0,0}};
+
+
+
+/* „Éû„Ç¶„Çπ„Ç´„Éº„ÇΩ„É´„ÅÆÂ§âÊõ¥ */
+void UpdateMouseCursor(Point mousePt)
+{
+	WindowPtr	theWindow;
+	short	thePart;
+	KeyMap	theKeys;
+	Point	localPt;
+	GrafPtr	port;
+	Rect	editRect;
+	
+	#if !TARGET_API_MAC_CARBON
+	if (isTSMgrAvailable)
+	{
+		thePart=FindServiceWindow(mousePt,&theWindow); /* 1.0b5ËøΩÂä† */
+		if (theWindow!=nil) /* TSM„Éï„É≠„Éº„ÉÜ„Ç£„É≥„Ç∞„Ç¶„Ç£„É≥„Éâ„Ç¶‰∏ä */
+		{
+			MakeArrowCursorRgn();
+			gCrsrID = 0;
+			SetTSMCursor(mousePt);
+			ResetRuler();
+			return;
+		}
+	}
+	#endif
+	
+	thePart=FindWindow(mousePt,&theWindow);
+	if (theWindow==nil) /* „Ç¶„Ç£„É≥„Éâ„Ç¶‰∏ä„Åß„Å™„ÅÑ */
+	{
+		MakeArrowCursorRgn();
+		MySetCursor(0);
+		return;
+	}
+	
+	GetPort(&port);
+	SetPortWindowPort(theWindow);
+	localPt=mousePt;
+	GlobalToLocal(&localPt);
+	
+	if (gToolPrefs.showRuler)
+		DrawRuler(mousePt);
+	
+	if (thePart!=inContent || (localPt.h<0 || localPt.v<0))
+	{
+		MakeArrowCursorRgn();
+		MySetCursor(0);
+	}
+	else
+	{
+		if (!IsWindowHilited(theWindow)) /* „Ç¢„ÇØ„ÉÜ„Ç£„Éñ„Åß„Å™„ÅÑ„Ç¶„Ç£„É≥„Éâ„Ç¶‰∏ä„Åß„ÅØÁü¢Âç∞„Ç´„Éº„ÇΩ„É´ */
+		{
+			MakeArrowCursorRgn();
+			MySetCursor(0);
+		}
+		else
+		{
+			Boolean	cmdDown,optDown,ctrlDown;
+			
+			switch (GetExtWindowKind(theWindow))
+			{
+				case kWindowTypePaintWindow:
+	//				InvertDot(theWindow);
+					
+					GetWindowPortBounds(theWindow,&editRect);
+					editRect.right-=kScrollBarWidth;
+					editRect.bottom-=kScrollBarHeight;
+					if (!PtInRect(localPt,&editRect)) /* „Éö„Ç§„É≥„ÉàÈ†òÂüü„Åß„Å™„Åë„Çå„Å∞Áü¢Âç∞„Ç´„Éº„ÇΩ„É´ */
+					{
+						RgnHandle	tempRgn=NewRgn();
+						Point	offset={0,0};
+						
+						LocalToGlobal(&offset);
+						MakeArrowCursorRgn();
+						RectRgn(tempRgn,&editRect);
+						OffsetRgn(tempRgn,offset.h,offset.v);
+						DiffRgn(gCurRgnHand,tempRgn,gCurRgnHand);
+						DisposeRgn(tempRgn);
+						MySetCursor(0);
+						break;
+					}
+					
+					SetEmptyRgn(gCurRgnHand);
+					
+					GetKeys(theKeys);
+					cmdDown=BitTst(theKeys,48);
+					optDown=BitTst(theKeys,61);
+					ctrlDown=BitTst(theKeys,60);
+					
+					if (cmdDown && optDown) /* „Ç∞„É©„Éñ„Çπ„ÇØ„É≠„Éº„É´ */
+					{
+						MySetCursor(140);
+						break;
+					}
+					
+					if (gSelectedTool==kMarqueeTool) /* ÈÅ∏Êäû„ÉÑ„Éº„É´ */
+					{
+						if (isTabletAvailable && IsEraser() && gTabletPrefs.useEraser)
+							SetPenCursor(kEraserTool);
+						else
+						{
+							RgnHandle	eSelectedRgn=(GetPaintWinRec(theWindow))->eSelectedRgn;
+							
+							if (PtInRgn(localPt,eSelectedRgn)) /* ÈÅ∏ÊäûÈ†òÂüüÂÜÖ */
+							{
+								if (optDown) /* „Ç™„Éó„Ç∑„Éß„É≥„Ç≠„Éº */
+									MySetCursor(kCursorHandOffPlus);
+								else
+									MySetCursor(kCursorHandOff);
+							}
+							else
+								MySetCursor(128+kMarqueeTool);
+						}
+					}
+					else /* ÈÅ∏Êäû„ÉÑ„Éº„É´‰ª•Â§ñ */
+					{
+						short	tool;
+						
+						if (optDown) /* „Ç™„Éó„Ç∑„Éß„É≥„Ç≠„Éº ‚Üí „Çπ„Éù„Ç§„Éà */
+							tool=kSpoitTool;
+						else if (isTabletAvailable && gTabletPrefs.useEraser && IsEraser())
+							tool=kEraserTool;
+						else
+							tool=gSelectedTool;
+						
+						switch (tool)
+						{
+							case kPencilTool:
+								if (cmdDown)
+								{
+									if (gToolPrefs.eraserByCmdKey && !ctrlDown)
+										SetPenCursor(kEraserTool);
+									else
+										MySetCursor(137);
+								}
+								else
+									SetPenCursor(kPencilTool);
+								break;
+							
+							case kEraserTool:
+								SetPenCursor(kEraserTool);
+								break;
+							
+							case kSpoitTool:
+								MySetCursor((gToolPrefs.changeSpoitCursor ? 139 : 128+kSpoitTool));
+								break;
+							
+							default:
+								MySetCursor(128+gSelectedTool);
+						}
+					}
+					break;
+				
+				case kWindowTypeColorPalette1:
+				case kWindowTypeColorPalette2:
+					GetWindowContentRgn(theWindow,gCurRgnHand);
+					MySetCursor(gToolPrefs.changeSpoitCursor ? 139 : 128+kSpoitTool);
+					break;
+				
+				case kWindowTypeBlendPalette:
+					UpdateCursorInBlendPalette(localPt);
+					break;
+				
+				case kWindowTypeIconFamilyWindow:
+					UpdateCursorInFamilyWindow(theWindow,localPt);
+					break;
+				
+				case kWindowTypeFavoritePalette:
+					GetKeys(theKeys);
+					cmdDown=BitTst(theKeys,48);
+					UpdateCursorInFavoritePalette(localPt,cmdDown);
+					break;
+				
+				case kWindowTypePreviewWindow:
+				case kWindowTypeToolPalette:
+				case kWindowTypeTitleWindow:
+				default:
+					MakeArrowCursorRgn();
+					MySetCursor(0);
+					break;
+			}
+		}
+	}
+	
+	SetPort(port);
+}
+
+/* Áü¢Âç∞„Ç´„Éº„ÇΩ„É´„Å´„Åô„Çã„É™„Éº„Ç∏„Éß„É≥„ÇíË®àÁÆó */
+void MakeArrowCursorRgn(void)
+{
+	RgnHandle	tempRgn=NewRgn();
+	
+	/* „Åæ„Åö„ÄÅÁîªÈù¢ÂÖ®‰Ωì */
+	CopyRgn(GetGrayRgn(),gCurRgnHand);
+	
+	/* „Ç´„É©„Éº„Éë„É¨„ÉÉ„Éà„ÄÅ„Éñ„É¨„É≥„Éâ„Éë„É¨„ÉÉ„Éà„ÅÆ„Ç≥„É≥„ÉÜ„É≥„Éà„É™„Éº„Ç∏„Éß„É≥„ÇíÈô§„Åè */
+	if (IsWindowVisible(ColorPalette1))
+	{
+		GetWindowContentRgn(ColorPalette1,tempRgn);
+		DiffRgn(gCurRgnHand,tempRgn,gCurRgnHand);
+	}
+	if (IsWindowVisible(ColorPalette2))
+	{
+		GetWindowContentRgn(ColorPalette2,tempRgn);
+		DiffRgn(gCurRgnHand,tempRgn,gCurRgnHand);
+	}
+	if (IsWindowVisible(gBlendPalette))
+	{
+		GetWindowContentRgn(gBlendPalette,tempRgn);
+		DiffRgn(gCurRgnHand,tempRgn,gCurRgnHand);
+	}
+	
+	DisposeRgn(tempRgn);
+}
+
+/* ÈâõÁ≠Ü„ÉÑ„Éº„É´„ÄÅÊ∂à„Åó„Ç¥„É†„ÉÑ„Éº„É´„ÅÆ„Éû„Ç¶„Çπ„Ç´„Éº„ÇΩ„É´„Çí‰ΩúÊàê„Åó„Å¶Ë®≠ÂÆö */
+void SetPenCursor(short tool)
+{
+	if (gToolPrefs.changePencilCursor)
+	{
+		short	ratio=0;
+		WindowPtr	theWindow=MyFrontNonFloatingWindow();
+		OSErr	err;
+		
+		if (theWindow!=nil && GetExtWindowKind(theWindow)==kWindowTypePaintWindow)
+			ratio=(GetPaintWinRec(theWindow))->ratio;
+		
+		switch (tool)
+		{
+			case kPencilTool:
+				err=SetPenCursorMain(gPenWidth<<ratio,gPenHeight<<ratio,&gCurrentColor.rgb);
+				if (err!=noErr)
+					MySetCursor(128+kPencilTool);
+				break;
+			
+			case kEraserTool:
+				err=SetPenCursorMain(gEraserWidth<<ratio,gEraserHeight<<ratio,&gBackColor.rgb);
+				if (err!=noErr)
+					MySetCursor(128+kEraserTool);
+				break;
+			
+			default:
+				MySetCursor(0);
+		}
+	}
+	else
+	{
+		switch (tool)
+		{
+			case kPencilTool:
+				MySetCursor(128+kPencilTool);
+				break;
+			
+			case kEraserTool:
+				MySetCursor(128+kEraserTool);
+				break;
+			
+			default:
+				MySetCursor(0);
+		}
+	}
+}
+
+/* „Éû„Ç¶„Çπ„Ç´„Éº„ÇΩ„É´„ÅÆ‰ΩúÊàê„É°„Ç§„É≥ */
+OSErr SetPenCursorMain(short width,short height,RGBColor *crsrColor)
+{
+	GWorldPtr		cursGWorld;
+	PixMapHandle	pmh;
+	OSErr			err;
+	Rect			cursRect={0,0,16,16},r;
+	Cursor			curs;
+	short			i;
+	Ptr				baseAddr;
+	long			rowBytes;
+	GWorldPtr		cPort;
+	GDHandle		cDevice;
+	
+	if (width <= 0 || width > 16 || height <= 0 || height > 16) return paramErr;
+	
+	if (gCrsrID==-1)
+	{
+		if (gCursData.width == width && gCursData.height == height && EqualColor(&gCursData.color,crsrColor))
+			return noErr;
+	}
+	else
+		gCrsrID=-1;
+	
+	gCursData.width=width;
+	gCursData.height=height;
+	gCursData.color=*crsrColor;
+	
+	GetGWorld(&cPort,&cDevice);
+	
+	err=NewGWorld(&cursGWorld,1,&cursRect,0,0,useTempMem);
+	if (err!=noErr) return err;
+	
+	pmh=GetGWorldPixMap(cursGWorld);
+	LockPixels(pmh);
+	baseAddr=MyGetPixBaseAddr(pmh);
+	rowBytes=MyGetPixRowBytes(pmh) & 0x3fff;
+	
+	/* GWorld„Å´„Ç´„Éº„ÇΩ„É´„Å´„Åô„ÇãÁµµ„ÇíÊèèÁîª */
+	SetGWorld(cursGWorld,0);
+	EraseRect(&cursRect);
+	SetRect(&r,0,0,width,height);
+	PaintRect(&r);
+	
+	/* „Ç´„Éº„ÇΩ„É´„Å´„Ç≥„Éî„Éº */
+	for (i=0; i<16; i++)
+	{
+		curs.data[i]=*(short *)baseAddr;
+		baseAddr+=rowBytes;
+		
+		curs.mask[i]=0;
+	}
+	
+	SetGWorld(cPort,cDevice);
+	UnlockPixels(pmh);
+	DisposeGWorld(cursGWorld);
+	
+	if (gToolPrefs.useColorCursor) /* „Ç´„É©„Éº„Ç´„Éº„ÇΩ„É´ */
+	{
+		CCrsrHandle		ccurs;
+		short			j;
+		UInt32			*ul;
+		
+		ccurs=GetCCursor(128);
+		(**(**(**ccurs).crsrMap).pmTable).ctTable[1].rgb=*crsrColor;
+		CTabChanged((**(**ccurs).crsrMap).pmTable);
+		HLock((**ccurs).crsrData);
+		ul=(UInt32 *)*(**ccurs).crsrData;
+		
+		for (i=0; i<16; i++)
+		{
+			*ul=0;
+			for (j=0; j<16; j++)
+				*ul+=((UInt32)((curs.data[i] >> j) & 1)) << (j*2);
+			ul++;
+		}
+		
+		HUnlock((**ccurs).crsrData);
+		BlockMoveData(&curs.data[0],&(**ccurs).crsr1Data[0],16*16/8);
+		BlockMoveData(&curs.data[0],&(**ccurs).crsrMask[0],16*16/8);
+		SetPt(&(**ccurs).crsrHotSpot,width/2,height/2);
+		SetCCursor(ccurs);
+		DisposeCCursor(ccurs);
+	}
+	else
+	{
+		/* „Ç´„Éº„ÇΩ„É´„ÅÆ‰∏≠ÂøÉ */
+		SetPt(&curs.hotSpot,width/2,height/2);
+		
+		SetCursor(&curs);
+	}
+	
+	return noErr;
+}
+
+/* „Ç´„Éº„ÇΩ„É´„ÅÆÂ§âÊõ¥ */
+void MySetCursor(short id)
+{
+	CursHandle	curs;
+	
+	if (id==gCrsrID) return;
+	
+	gCrsrID=id;
+	
+	switch (id)
+	{
+		case 0:
+			InitCursor();
+			break;
+		
+		case -1:
+			break;
+		
+		default:
+			curs=GetCursor(id);
+			SetCursor(*curs);
+	}
+}

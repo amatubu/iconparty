@@ -1,1 +1,115 @@
-/* ------------------------------------------------------------ *//*  DebugMode.c                                                 *//*     ƒoƒO‚ÌŒ´ˆö‚ğ’T‚é‚½‚ß‚ÉƒƒO‚ğ‘‚«o‚·                     *//*                                                              *//*                 1999.11.29 - 1999.11.29  naoki iimura       	*//* ------------------------------------------------------------ */#include	"debugMode.h"#include	<MacTypes.h>#include	<Files.h>#include	<Processes.h>#include	<Script.h>#include	<TextUtils.h>#ifdef DEBUG_MODE/* prototypes */void	CreateDebugFile(void);void	WriteStrToDebugFile(Str255 str);void	WriteNumToDebugFile(short num);void	CloseDebugFile(void);// #define	BACKUP_LOG#ifndef		kDebugFileName#define		kDebugFileName		"\pdebug.txt"#ifdef	BACKUP_LOG	#define		kBDebugFileName		"\p~debug.txt"#endif#endif#define		kDebugFileType		'TEXT'#define		kDebugFileCreator	'ttxt'#define	PStrCpy(s, d)	{ BlockMove((s), (d), *(s) +1); }#define	CatChar(c, d)	{ ((d)[*(d) +1]) = (c); *(d) += 1; }static short	debugFileRefNum=0;/* ƒfƒoƒbƒOƒtƒ@ƒCƒ‹‚ğì¬‚µAŠJ‚­ */void CreateDebugFile(void){	OSErr	err;	FSSpec	spec;	ProcessSerialNumber	psn;	ProcessInfoRec		processInfo;		/* ƒAƒvƒŠƒP[ƒVƒ‡ƒ“‚ÌˆÊ’u‚ğ‹L˜^ */	err=GetCurrentProcess(&psn);	processInfo.processInfoLength=sizeof(ProcessInfoRec);	processInfo.processName=nil;	processInfo.processAppSpec=&spec;	err=GetProcessInformation(&psn,&processInfo);		if (err!=noErr) return;		PStrCpy(kDebugFileName,spec.name);		#ifdef BACKUP_LOG	{		/* ƒoƒbƒNƒAƒbƒv‚·‚é */		FSSpec	bSpec=spec;		PStrCpy(kBDebugFileName,bSpec.name);				err=FSpCreate(&bSpec,kDebugFileCreator,kDebugFileType,smSystemScript);				err=FSpExchangeFiles(&spec,&bSpec);	}	#endif		/* ‚Ü‚¸Á‚· */	err=FSpDelete(&spec);		err=FSpCreate(&spec,kDebugFileCreator,kDebugFileType,smSystemScript);	if (err!=noErr) return;		err=FSpOpenDF(&spec,fsWrPerm,&debugFileRefNum);	if (err!=noErr) return;}/* ƒfƒoƒbƒOƒtƒ@ƒCƒ‹‚É•¶š—ñ‚ğo—Í */void WriteStrToDebugFile(Str255 str){	OSErr	err;	long	count;		if (debugFileRefNum<=0) return;		count=*str;	err=FSWrite(debugFileRefNum,&count,str+1);}/* ƒfƒoƒbƒOƒtƒ@ƒCƒ‹‚É”š‚ğo—Í */void WriteNumToDebugFile(short num){	Str255	str;		NumToString(num,str);	WriteStrToDebugFile(str);}/* ƒfƒoƒbƒOƒtƒ@ƒCƒ‹‚ğ•Â‚¶‚é */void CloseDebugFile(void){	OSErr	err;		if (debugFileRefNum<=0) return;		err=FSClose(debugFileRefNum);}#endif /* #ifdef DEBUG_MODE */
+/* ------------------------------------------------------------ */
+/*  DebugMode.c                                                 */
+/*     ãƒã‚°ã®åŸå› ã‚’æ¢ã‚‹ãŸã‚ã«ãƒ­ã‚°ã‚’æ›¸ãå‡ºã™                     */
+/*                                                              */
+/*                 1999.11.29 - 1999.11.29  naoki iimura       	*/
+/* ------------------------------------------------------------ */
+
+#include	"debugMode.h"
+
+#include	<MacTypes.h>
+#include	<Files.h>
+#include	<Processes.h>
+#include	<Script.h>
+#include	<TextUtils.h>
+
+#ifdef DEBUG_MODE
+
+/* prototypes */
+void	CreateDebugFile(void);
+void	WriteStrToDebugFile(Str255 str);
+void	WriteNumToDebugFile(short num);
+void	CloseDebugFile(void);
+
+
+// #define	BACKUP_LOG
+
+#ifndef		kDebugFileName
+#define		kDebugFileName		"\pdebug.txt"
+#ifdef	BACKUP_LOG
+	#define		kBDebugFileName		"\p~debug.txt"
+#endif
+#endif
+
+#define		kDebugFileType		'TEXT'
+#define		kDebugFileCreator	'ttxt'
+
+#define	PStrCpy(s, d)	{ BlockMove((s), (d), *(s) +1); }
+#define	CatChar(c, d)	{ ((d)[*(d) +1]) = (c); *(d) += 1; }
+
+
+static short	debugFileRefNum=0;
+
+/* ãƒ‡ãƒãƒƒã‚°ãƒ•ã‚¡ã‚¤ãƒ«ã‚’ä½œæˆã—ã€é–‹ã */
+void CreateDebugFile(void)
+{
+	OSErr	err;
+	FSSpec	spec;
+	ProcessSerialNumber	psn;
+	ProcessInfoRec		processInfo;
+	
+	/* ã‚¢ãƒ—ãƒªã‚±ãƒ¼ã‚·ãƒ§ãƒ³ã®ä½ç½®ã‚’è¨˜éŒ² */
+	err=GetCurrentProcess(&psn);
+	processInfo.processInfoLength=sizeof(ProcessInfoRec);
+	processInfo.processName=nil;
+	processInfo.processAppSpec=&spec;
+	err=GetProcessInformation(&psn,&processInfo);
+	
+	if (err!=noErr) return;
+	
+	PStrCpy(kDebugFileName,spec.name);
+	
+	#ifdef BACKUP_LOG
+	{
+		/* ãƒãƒƒã‚¯ã‚¢ãƒƒãƒ—ã™ã‚‹ */
+		FSSpec	bSpec=spec;
+		PStrCpy(kBDebugFileName,bSpec.name);
+		
+		err=FSpCreate(&bSpec,kDebugFileCreator,kDebugFileType,smSystemScript);
+		
+		err=FSpExchangeFiles(&spec,&bSpec);
+	}
+	#endif
+	
+	/* ã¾ãšæ¶ˆã™ */
+	err=FSpDelete(&spec);
+	
+	err=FSpCreate(&spec,kDebugFileCreator,kDebugFileType,smSystemScript);
+	if (err!=noErr) return;
+	
+	err=FSpOpenDF(&spec,fsWrPerm,&debugFileRefNum);
+	if (err!=noErr) return;
+}
+
+/* ãƒ‡ãƒãƒƒã‚°ãƒ•ã‚¡ã‚¤ãƒ«ã«æ–‡å­—åˆ—ã‚’å‡ºåŠ› */
+void WriteStrToDebugFile(Str255 str)
+{
+	OSErr	err;
+	long	count;
+	
+	if (debugFileRefNum<=0) return;
+	
+	count=*str;
+	err=FSWrite(debugFileRefNum,&count,str+1);
+}
+
+/* ãƒ‡ãƒãƒƒã‚°ãƒ•ã‚¡ã‚¤ãƒ«ã«æ•°å­—ã‚’å‡ºåŠ› */
+void WriteNumToDebugFile(short num)
+{
+	Str255	str;
+	
+	NumToString(num,str);
+	WriteStrToDebugFile(str);
+}
+
+/* ãƒ‡ãƒãƒƒã‚°ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‰ã˜ã‚‹ */
+void CloseDebugFile(void)
+{
+	OSErr	err;
+	
+	if (debugFileRefNum<=0) return;
+	
+	err=FSClose(debugFileRefNum);
+}
+
+#endif /* #ifdef DEBUG_MODE */

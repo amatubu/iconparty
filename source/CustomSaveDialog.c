@@ -1,1 +1,523 @@
-/* ------------------------------------------------------------ *//*  CustomSaveDialog.c                                          *//*     •Û‘¶ƒ_ƒCƒAƒƒO‚Ìˆ—                                     *//*                                                              *//*                 1997.1.28 - 2001.1.27  naoki iimura        	*//* ------------------------------------------------------------ */#include	<StandardFile.h>#include	<TextUtils.h>#include	<Controls.h>#ifndef PopupPrivateData#include	<ControlDefinitions.h>#endif#include	"MoreFilesExtras.h"#include	"Globals.h"#include	"UsefulRoutines.h"#include	"CustomSaveDialog.h"#include	"PreCarbonSupport.h"#if !TARGET_API_MAC_CARBON/* structures */typedef struct {	OSType	selType;	Boolean	splitFlag;	long	splitNum;	Str15	numStr;	Boolean	bodySelected;} SFData,*SFDataPtr;/* definitions */#define	dPutFileDialog	134#define	diFileType		13#define	diSplitCheck	14enum {	kFileTypePICT=1,	kFileTypePNG,	kFileTypeIcon,	kFileTypeWinIcon,};/* prototypes */static pascal short	DialogHook(short item,DialogPtr dlg,Ptr userData);static pascal Boolean	ModalFilter(DialogPtr theDialog,EventRecord *theEvent,short *itemHit,Ptr userData);static pascal short	ExportIconDialogHook(short item,DialogPtr dlg,Ptr userData);static pascal Boolean	ExportIconModalFilter(DialogPtr theDialog,EventRecord *theEvent,short *itemHit,Ptr userData);extern pascal void	MyActivate(DialogPtr theDialog,short item,Boolean activating,void *userData);extern void	DoUpdate(EventRecord *theEvent);extern OSType	gFileTypeList[];/* •Û‘¶ */Boolean StandardSaveAs(FSSpec *spec,OSType *fType,long splitNum){	StandardFileReply	rep;	SFData	sfUserData;	OSErr	err;	Point	where={-1,-1};	DlgHookYDUPP	dlUPP=NewDlgHookYDProc(DialogHook);	ModalFilterYDUPP	mfUPP=NewModalFilterYDProc(ModalFilter);	ActivateYDUPP	aUPP=NewActivateYDProc(MyActivate);	Str255	prompt;	short	i;		GetIndString(prompt,138,1);		/* \‘¢‘Ì‰Šú‰» */	sfUserData.splitFlag=false;	if (*fType == 'IcoS')	{		sfUserData.selType='Icon';		sfUserData.splitFlag=true;	}	else if (*fType == 'wIcS')	{		sfUserData.selType='wIco';		sfUserData.splitFlag=true;	}	else	{		sfUserData.selType=*fType;	}	sfUserData.splitNum=splitNum;	NumToString(splitNum,sfUserData.numStr);	for (i=1; i<sfUserData.numStr[0]; i++) sfUserData.numStr[i]='0';	sfUserData.numStr[i]='1';	sfUserData.bodySelected=false;		CustomPutFile(prompt,spec->name,&rep,dPutFileDialog,where,		dlUPP,mfUPP,nil,aUPP,&sfUserData);		DisposeRoutineDescriptor(dlUPP);	DisposeRoutineDescriptor(mfUPP);	DisposeRoutineDescriptor(aUPP);		if (rep.sfGood)	{		*spec=rep.sfFile;		*fType=sfUserData.selType;		if (sfUserData.splitFlag)			if (*fType == 'Icon')				*fType = 'IcoS';			else if (*fType == 'wIco')				*fType = 'wIcS';			else				sfUserData.splitFlag = false;				if (sfUserData.splitFlag)		{			/* ƒtƒ@ƒCƒ‹–¼‚©‚ç”Ô†‚ğæ‚èœ‚­ */			if (spec->name[0] >= sfUserData.numStr[0]+1)			{				if (*fType == 'IcoS')				{					if (spec->name[spec->name[0]-sfUserData.numStr[0]] == '.')					{						Boolean	b=true;						UInt8	*p1=&spec->name[spec->name[0]-sfUserData.numStr[0]+1],								*p2=&sfUserData.numStr[1];						short	k;												for (k=sfUserData.numStr[0]; k>0; k--)							if (*p1++ != *p2++) b=false;						if (b) spec->name[0]-=sfUserData.numStr[0]+1;					}				}				else /* WinƒAƒCƒRƒ“‚Ìê‡‚Í”Ô†‚ÆŠg’£q‚ğæ‚èœ‚­ */				{					Boolean	b=true;					Str15	suffix;					short	k;					UInt8	*p1,*p2;										GetIndString(suffix,131,kFileTypeWinIcon);					p1=&spec->name[spec->name[0]-suffix[0]+1];					p2=&suffix[1];										for (k=suffix[0]; k>0; k--)						if (*p1++ != *p2++) b=false;					if (b)					{						spec->name[0]-=suffix[0];												if (spec->name[0] >= sfUserData.numStr[0]+1 && spec->name[spec->name[0]-sfUserData.numStr[0]] == '.')						{							p1=&spec->name[spec->name[0]-sfUserData.numStr[0]+1];							p2=&sfUserData.numStr[1];														for (k=sfUserData.numStr[0]; k>0; k--)								if (*p1++ != *p2++) b=false;							if (b) spec->name[0]-=sfUserData.numStr[0]+1;						}					}				}			}		}				if (rep.sfReplacing && !sfUserData.splitFlag)			err=FSpDelete(spec);	}		return rep.sfGood;}/* •Û‘¶ƒ_ƒCƒAƒƒO‚ÌƒtƒbƒN */pascal short DialogHook(short item,DialogPtr dlg,Ptr userData){	SFDataPtr	sfUserData;	Handle	rbControlHandle;	Str255	filename;	short	bodyLength;	short	selType;	Str15	suffix;	short	selItem,i;		if (GetWRefCon(dlg)!=sfMainDialogRefCon)		return item;		sfUserData=(SFDataPtr)userData;		switch (item)	{		case sfHookFirstCall:			rbControlHandle=GetDialogItemHandle(dlg,diFileType);						#if 0			/* ƒ|ƒbƒvƒAƒbƒvƒƒjƒ…[‚ÌGIF•”•ª‚ğ‚¢‚¶‚é */			{				PopupPrivateDataHandle	ppdh=							(PopupPrivateDataHandle)(**(ControlHandle)rbControlHandle).contrlData;				MenuHandle		menu;				Str255			string;								menu=(**ppdh).mHandle;				GetIndString(string,151,(gPNGFilePrefs.useClip2gif ? 2 : 1));				SetMenuItemText(menu,2,string);			}			#endif						/* ƒtƒ@ƒCƒ‹ƒ^ƒCƒv‚É‚æ‚Á‚Äƒ|ƒbƒvƒAƒbƒvƒƒjƒ…[‚Ì‰Šú’l‚ğ•ÏX */			selItem=1;			for (i=0; i<4; i++)				if (sfUserData->selType == gFileTypeList[i])				{					selItem=i+1;					break;				}						SetControlValue((ControlHandle)rbControlHandle,selItem);						/* •ªŠ„‚·‚éƒ`ƒFƒbƒN‚Ì‰Šú’l‚ğ•ÏX */			SetDialogControlValue(dlg,diSplitCheck,sfUserData->splitFlag);						if (sfUserData->splitNum>1 && (selItem == kFileTypeIcon || selItem == kFileTypeWinIcon))				SetDialogControlHilite(dlg,diSplitCheck,0);			else				SetDialogControlHilite(dlg,diSplitCheck,255);			break;				case sfHookNullEvent:			if (!sfUserData->bodySelected)			{				GetDialogItemText2(dlg,sfItemFileNameTextEdit,filename);				bodyLength=GetBodyLength(filename);				SelectDialogItemText(dlg,sfItemFileNameTextEdit,0,bodyLength);								sfUserData->bodySelected=true;			}			break;				case sfItemOpenButton:			selItem=GetDialogControlValue(dlg,diFileType);			sfUserData->selType=gFileTypeList[selItem-1];			break;				case sfItemCancelButton:			break;				case diFileType:			selType=GetDialogControlValue(dlg,diFileType);						GetDialogItemText2(dlg,sfItemFileNameTextEdit,filename);						GetIndString(suffix,131,selType);			ChangeSuffix(filename,suffix);			SetDialogItemText2(dlg,sfItemFileNameTextEdit,filename);						/* •ªŠ„‚Å‚«‚é‚Íƒ`ƒFƒbƒNƒ{ƒbƒNƒX‚ğ—LŒø‚É */			if (sfUserData->splitNum > 1)			{				if (selType == kFileTypeIcon)				{					SetDialogControlHilite(dlg,diSplitCheck,0);					if (sfUserData->splitFlag)					{						TruncPString(filename,filename,31-1-sfUserData->numStr[0]);						CatChar('.',filename);						PStrCat(sfUserData->numStr,filename);						SetDialogItemText2(dlg,sfItemFileNameTextEdit,filename);					}				}				else if (selType == kFileTypeWinIcon)				{					SetDialogControlHilite(dlg,diSplitCheck,0);					if (sfUserData->splitFlag)					{						TruncPString(filename,filename,31-1-sfUserData->numStr[0]);						filename[0]=GetBodyLength(filename);						CatChar('.',filename);						PStrCat(sfUserData->numStr,filename);						PStrCat(suffix,filename);						SetDialogItemText2(dlg,sfItemFileNameTextEdit,filename);					}				}				else					SetDialogControlHilite(dlg,diSplitCheck,255);			}			else				SetDialogControlHilite(dlg,diSplitCheck,255);						/* ƒtƒ@ƒCƒ‹–¼‚ª‘I‘ğ‚³‚ê‚Ä‚¢‚È‚¢ó‘Ô‚É‚·‚é¨Ÿ‚ÌNull Evt‚Å‘I‘ğ‚³‚¹‚é */			sfUserData->bodySelected=false;			break;				case diSplitCheck:			sfUserData->splitFlag=!sfUserData->splitFlag;			SetDialogControlValue(dlg,diSplitCheck,sfUserData->splitFlag);			GetDialogItemText2(dlg,sfItemFileNameTextEdit,filename);			selType=GetDialogControlValue(dlg,diFileType);			if (sfUserData->splitFlag)			{				if (selType == kFileTypeIcon)				{					TruncPString(filename,filename,31-1-sfUserData->numStr[0]);					CatChar('.',filename);					PStrCat(sfUserData->numStr,filename);				}				else				{					TruncPString(filename,filename,31-1-sfUserData->numStr[0]-4);					filename[0]=GetBodyLength(filename);					CatChar('.',filename);					PStrCat(sfUserData->numStr,filename);					GetIndString(suffix,131,selType);					PStrCat(suffix,filename);				}			}			else			{				if (selType == kFileTypeIcon)				{					GetIndString(suffix,131,selType);					ChangeSuffix(filename,suffix);				}				else				{					filename[0]=GetBodyLength(filename);					filename[0]=GetBodyLength2(filename);					GetIndString(suffix,131,selType);					PStrCat(suffix,filename);				}			}			SetDialogItemText2(dlg,sfItemFileNameTextEdit,filename);			sfUserData->bodySelected=false;			break;	}		return item;}/* ƒ‚[ƒ_ƒ‹ƒtƒBƒ‹ƒ^iƒVƒ‡[ƒgƒJƒbƒg‚É‚æ‚èƒtƒ@ƒCƒ‹ƒ^ƒCƒv‚ğ‘I‘ğj */pascal Boolean ModalFilter(DialogPtr theDialog,EventRecord *theEvent,short *itemHit,Ptr userData){	#pragma unused (userData)	Boolean	eventHandled=false;	WindowPtr	theWindow;		if (GetWRefCon(theDialog) != sfMainDialogRefCon)		return false;		switch (theEvent->what)	{		case updateEvt:			theWindow=(WindowPtr)theEvent->message;			if (theWindow!=nil && theWindow!=GetDialogWindow(theDialog))				DoUpdate(theEvent);			break;				case keyDown:		case autoKey:			if ((theEvent->modifiers & cmdKey)!=0)			{				char	theChar;								theChar=theEvent->message & charCodeMask;				if (theChar >= '1' && theChar <= '4')				{					SetDialogControlValue(theDialog,diFileType,theChar-'1'+1);					*itemHit=diFileType;					eventHandled=true;				}			}			break;	}		return eventHandled;}/* ƒAƒCƒRƒ“‘‚«o‚µ */void ExportIconDialog(Str31 iconName,StandardFileReply *reply,OSType *fType){	SFData	sfUserData;	OSErr	err;	Point	where={-1,-1};	DlgHookYDUPP	dlUPP=NewDlgHookYDProc(ExportIconDialogHook);	ModalFilterYDUPP	mfUPP=NewModalFilterYDProc(ExportIconModalFilter);	ActivateYDUPP	aUPP=NewActivateYDProc(MyActivate);	Str255	prompt;		GetIndString(prompt,140,1);		/* \‘¢‘Ì‰Šú‰» */	sfUserData.selType = *fType;	sfUserData.bodySelected=false;		CustomPutFile(prompt,iconName,reply,148,where,		dlUPP,mfUPP,nil,aUPP,&sfUserData);		DisposeRoutineDescriptor(dlUPP);	DisposeRoutineDescriptor(mfUPP);	DisposeRoutineDescriptor(aUPP);		if (reply->sfGood)	{		*fType=sfUserData.selType;				if (reply->sfReplacing)			err=FSpDelete(&reply->sfFile);	}}static OSType	lIconTypeList[] = {'Icon','wIco','icns'};pascal short ExportIconDialogHook(short item,DialogPtr dlg,Ptr userData){	SFDataPtr	sfUserData;	Handle	rbControlHandle;	Str255	filename;	short	bodyLength;	short	selType;	Str15	suffix;	short	selItem,i;		if (GetWRefCon(dlg)!=sfMainDialogRefCon)		return item;		sfUserData=(SFDataPtr)userData;		switch (item)	{		case sfHookFirstCall:			rbControlHandle=GetDialogItemHandle(dlg,diFileType);						/* ƒtƒ@ƒCƒ‹ƒ^ƒCƒv‚É‚æ‚Á‚Äƒ|ƒbƒvƒAƒbƒvƒƒjƒ…[‚Ì‰Šú’l‚ğ•ÏX */			selItem=1;			for (i=0; i<3; i++)				if (sfUserData->selType == lIconTypeList[i])				{					selItem=i+1;					break;				}						{				MenuHandle		menu;								menu=GetControlPopupMenuHandle((ControlHandle)rbControlHandle);				if (gSystemVersion < 0x0850)					MyDisableMenuItem(menu,3);			}			SetControlValue((ControlHandle)rbControlHandle,selItem);			break;				case sfHookNullEvent:			if (!sfUserData->bodySelected)			{				GetDialogItemText2(dlg,sfItemFileNameTextEdit,filename);				bodyLength=GetBodyLength(filename);				SelectDialogItemText(dlg,sfItemFileNameTextEdit,0,bodyLength);								sfUserData->bodySelected=true;			}			break;				case sfItemOpenButton:			selItem=GetDialogControlValue(dlg,diFileType);			sfUserData->selType=lIconTypeList[selItem-1];			break;				case sfItemCancelButton:			break;				case diFileType:			selType=GetDialogControlValue(dlg,diFileType);						GetDialogItemText2(dlg,sfItemFileNameTextEdit,filename);						GetIndString(suffix,161,selType);			ChangeSuffix(filename,suffix);			SetDialogItemText2(dlg,sfItemFileNameTextEdit,filename);						/* ƒtƒ@ƒCƒ‹–¼‚ª‘I‘ğ‚³‚ê‚Ä‚¢‚È‚¢ó‘Ô‚É‚·‚é¨Ÿ‚ÌNull Evt‚Å‘I‘ğ‚³‚¹‚é */			sfUserData->selType=selType;			sfUserData->bodySelected=false;			break;	}		return item;}/* ƒ‚[ƒ_ƒ‹ƒtƒBƒ‹ƒ^iƒVƒ‡[ƒgƒJƒbƒg‚É‚æ‚èƒtƒ@ƒCƒ‹ƒ^ƒCƒv‚ğ‘I‘ğj */pascal Boolean ExportIconModalFilter(DialogPtr theDialog,EventRecord *theEvent,short *itemHit,Ptr userData){	#pragma unused (userData)	Boolean	eventHandled=false;	WindowPtr	theWindow;		if (GetWRefCon(theDialog) != sfMainDialogRefCon)		return false;		switch (theEvent->what)	{		case updateEvt:			theWindow=(WindowPtr)theEvent->message;			if (theWindow!=nil && theWindow!=GetDialogWindow(theDialog))				DoUpdate(theEvent);			break;				case keyDown:		case autoKey:			if ((theEvent->modifiers & cmdKey)!=0)			{				char	theChar;								theChar=theEvent->message & charCodeMask;				if (theChar >= '1' && theChar <= '3')				{					SetDialogControlValue(theDialog,diFileType,theChar-'1'+1);					*itemHit=diFileType;					eventHandled=true;				}			}			break;	}		return eventHandled;}#endif
+/* ------------------------------------------------------------ */
+/*  CustomSaveDialog.c                                          */
+/*     ä¿å­˜ãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã®å‡¦ç†                                     */
+/*                                                              */
+/*                 1997.1.28 - 2001.1.27  naoki iimura        	*/
+/* ------------------------------------------------------------ */
+
+#include	<StandardFile.h>
+#include	<TextUtils.h>
+#include	<Controls.h>
+#ifndef PopupPrivateData
+#include	<ControlDefinitions.h>
+#endif
+
+#include	"MoreFilesExtras.h"
+#include	"Globals.h"
+#include	"UsefulRoutines.h"
+#include	"CustomSaveDialog.h"
+#include	"PreCarbonSupport.h"
+
+
+#if !TARGET_API_MAC_CARBON
+
+/* structures */
+typedef struct {
+	OSType	selType;
+	Boolean	splitFlag;
+	long	splitNum;
+	Str15	numStr;
+	Boolean	bodySelected;
+} SFData,*SFDataPtr;
+
+/* definitions */
+#define	dPutFileDialog	134
+#define	diFileType		13
+#define	diSplitCheck	14
+enum {
+	kFileTypePICT=1,
+	kFileTypePNG,
+	kFileTypeIcon,
+	kFileTypeWinIcon,
+};
+
+/* prototypes */
+static pascal short	DialogHook(short item,DialogPtr dlg,Ptr userData);
+static pascal Boolean	ModalFilter(DialogPtr theDialog,EventRecord *theEvent,short *itemHit,Ptr userData);
+static pascal short	ExportIconDialogHook(short item,DialogPtr dlg,Ptr userData);
+static pascal Boolean	ExportIconModalFilter(DialogPtr theDialog,EventRecord *theEvent,short *itemHit,Ptr userData);
+extern pascal void	MyActivate(DialogPtr theDialog,short item,Boolean activating,void *userData);
+
+extern void	DoUpdate(EventRecord *theEvent);
+
+
+extern OSType	gFileTypeList[];
+
+
+/* ä¿å­˜ */
+Boolean StandardSaveAs(FSSpec *spec,OSType *fType,long splitNum)
+{
+	StandardFileReply	rep;
+	SFData	sfUserData;
+	OSErr	err;
+	Point	where={-1,-1};
+	DlgHookYDUPP	dlUPP=NewDlgHookYDProc(DialogHook);
+	ModalFilterYDUPP	mfUPP=NewModalFilterYDProc(ModalFilter);
+	ActivateYDUPP	aUPP=NewActivateYDProc(MyActivate);
+	Str255	prompt;
+	short	i;
+	
+	GetIndString(prompt,138,1);
+	
+	/* æ§‹é€ ä½“åˆæœŸåŒ– */
+	sfUserData.splitFlag=false;
+	if (*fType == 'IcoS')
+	{
+		sfUserData.selType='Icon';
+		sfUserData.splitFlag=true;
+	}
+	else if (*fType == 'wIcS')
+	{
+		sfUserData.selType='wIco';
+		sfUserData.splitFlag=true;
+	}
+	else
+	{
+		sfUserData.selType=*fType;
+	}
+	sfUserData.splitNum=splitNum;
+	NumToString(splitNum,sfUserData.numStr);
+	for (i=1; i<sfUserData.numStr[0]; i++) sfUserData.numStr[i]='0';
+	sfUserData.numStr[i]='1';
+	sfUserData.bodySelected=false;
+	
+	CustomPutFile(prompt,spec->name,&rep,dPutFileDialog,where,
+		dlUPP,mfUPP,nil,aUPP,&sfUserData);
+	
+	DisposeRoutineDescriptor(dlUPP);
+	DisposeRoutineDescriptor(mfUPP);
+	DisposeRoutineDescriptor(aUPP);
+	
+	if (rep.sfGood)
+	{
+		*spec=rep.sfFile;
+		*fType=sfUserData.selType;
+		if (sfUserData.splitFlag)
+			if (*fType == 'Icon')
+				*fType = 'IcoS';
+			else if (*fType == 'wIco')
+				*fType = 'wIcS';
+			else
+				sfUserData.splitFlag = false;
+		
+		if (sfUserData.splitFlag)
+		{
+			/* ãƒ•ã‚¡ã‚¤ãƒ«åã‹ã‚‰ç•ªå·ã‚’å–ã‚Šé™¤ã */
+			if (spec->name[0] >= sfUserData.numStr[0]+1)
+			{
+				if (*fType == 'IcoS')
+				{
+					if (spec->name[spec->name[0]-sfUserData.numStr[0]] == '.')
+					{
+						Boolean	b=true;
+						UInt8	*p1=&spec->name[spec->name[0]-sfUserData.numStr[0]+1],
+								*p2=&sfUserData.numStr[1];
+						short	k;
+						
+						for (k=sfUserData.numStr[0]; k>0; k--)
+							if (*p1++ != *p2++) b=false;
+						if (b) spec->name[0]-=sfUserData.numStr[0]+1;
+					}
+				}
+				else /* Winã‚¢ã‚¤ã‚³ãƒ³ã®å ´åˆã¯ç•ªå·ã¨æ‹¡å¼µå­ã‚’å–ã‚Šé™¤ã */
+				{
+					Boolean	b=true;
+					Str15	suffix;
+					short	k;
+					UInt8	*p1,*p2;
+					
+					GetIndString(suffix,131,kFileTypeWinIcon);
+					p1=&spec->name[spec->name[0]-suffix[0]+1];
+					p2=&suffix[1];
+					
+					for (k=suffix[0]; k>0; k--)
+						if (*p1++ != *p2++) b=false;
+					if (b)
+					{
+						spec->name[0]-=suffix[0];
+						
+						if (spec->name[0] >= sfUserData.numStr[0]+1 && spec->name[spec->name[0]-sfUserData.numStr[0]] == '.')
+						{
+							p1=&spec->name[spec->name[0]-sfUserData.numStr[0]+1];
+							p2=&sfUserData.numStr[1];
+							
+							for (k=sfUserData.numStr[0]; k>0; k--)
+								if (*p1++ != *p2++) b=false;
+							if (b) spec->name[0]-=sfUserData.numStr[0]+1;
+						}
+					}
+				}
+			}
+		}
+		
+		if (rep.sfReplacing && !sfUserData.splitFlag)
+			err=FSpDelete(spec);
+	}
+	
+	return rep.sfGood;
+}
+
+/* ä¿å­˜ãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã®ãƒ•ãƒƒã‚¯ */
+pascal short DialogHook(short item,DialogPtr dlg,Ptr userData)
+{
+	SFDataPtr	sfUserData;
+	Handle	rbControlHandle;
+	Str255	filename;
+	short	bodyLength;
+	short	selType;
+	Str15	suffix;
+	short	selItem,i;
+	
+	if (GetWRefCon(dlg)!=sfMainDialogRefCon)
+		return item;
+	
+	sfUserData=(SFDataPtr)userData;
+	
+	switch (item)
+	{
+		case sfHookFirstCall:
+			rbControlHandle=GetDialogItemHandle(dlg,diFileType);
+			
+			#if 0
+			/* ãƒãƒƒãƒ—ã‚¢ãƒƒãƒ—ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã®GIFéƒ¨åˆ†ã‚’ã„ã˜ã‚‹ */
+			{
+				PopupPrivateDataHandle	ppdh=
+							(PopupPrivateDataHandle)(**(ControlHandle)rbControlHandle).contrlData;
+				MenuHandle		menu;
+				Str255			string;
+				
+				menu=(**ppdh).mHandle;
+				GetIndString(string,151,(gPNGFilePrefs.useClip2gif ? 2 : 1));
+				SetMenuItemText(menu,2,string);
+			}
+			#endif
+			
+			/* ãƒ•ã‚¡ã‚¤ãƒ«ã‚¿ã‚¤ãƒ—ã«ã‚ˆã£ã¦ãƒãƒƒãƒ—ã‚¢ãƒƒãƒ—ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã®åˆæœŸå€¤ã‚’å¤‰æ›´ */
+			selItem=1;
+			for (i=0; i<4; i++)
+				if (sfUserData->selType == gFileTypeList[i])
+				{
+					selItem=i+1;
+					break;
+				}
+			
+			SetControlValue((ControlHandle)rbControlHandle,selItem);
+			
+			/* åˆ†å‰²ã™ã‚‹ãƒã‚§ãƒƒã‚¯ã®åˆæœŸå€¤ã‚’å¤‰æ›´ */
+			SetDialogControlValue(dlg,diSplitCheck,sfUserData->splitFlag);
+			
+			if (sfUserData->splitNum>1 && (selItem == kFileTypeIcon || selItem == kFileTypeWinIcon))
+				SetDialogControlHilite(dlg,diSplitCheck,0);
+			else
+				SetDialogControlHilite(dlg,diSplitCheck,255);
+			break;
+		
+		case sfHookNullEvent:
+			if (!sfUserData->bodySelected)
+			{
+				GetDialogItemText2(dlg,sfItemFileNameTextEdit,filename);
+				bodyLength=GetBodyLength(filename);
+				SelectDialogItemText(dlg,sfItemFileNameTextEdit,0,bodyLength);
+				
+				sfUserData->bodySelected=true;
+			}
+			break;
+		
+		case sfItemOpenButton:
+			selItem=GetDialogControlValue(dlg,diFileType);
+			sfUserData->selType=gFileTypeList[selItem-1];
+			break;
+		
+		case sfItemCancelButton:
+			break;
+		
+		case diFileType:
+			selType=GetDialogControlValue(dlg,diFileType);
+			
+			GetDialogItemText2(dlg,sfItemFileNameTextEdit,filename);
+			
+			GetIndString(suffix,131,selType);
+			ChangeSuffix(filename,suffix);
+			SetDialogItemText2(dlg,sfItemFileNameTextEdit,filename);
+			
+			/* åˆ†å‰²ã§ãã‚‹æ™‚ã¯ãƒã‚§ãƒƒã‚¯ãƒœãƒƒã‚¯ã‚¹ã‚’æœ‰åŠ¹ã« */
+			if (sfUserData->splitNum > 1)
+			{
+				if (selType == kFileTypeIcon)
+				{
+					SetDialogControlHilite(dlg,diSplitCheck,0);
+					if (sfUserData->splitFlag)
+					{
+						TruncPString(filename,filename,31-1-sfUserData->numStr[0]);
+						CatChar('.',filename);
+						PStrCat(sfUserData->numStr,filename);
+						SetDialogItemText2(dlg,sfItemFileNameTextEdit,filename);
+					}
+				}
+				else if (selType == kFileTypeWinIcon)
+				{
+					SetDialogControlHilite(dlg,diSplitCheck,0);
+					if (sfUserData->splitFlag)
+					{
+						TruncPString(filename,filename,31-1-sfUserData->numStr[0]);
+						filename[0]=GetBodyLength(filename);
+						CatChar('.',filename);
+						PStrCat(sfUserData->numStr,filename);
+						PStrCat(suffix,filename);
+						SetDialogItemText2(dlg,sfItemFileNameTextEdit,filename);
+					}
+				}
+				else
+					SetDialogControlHilite(dlg,diSplitCheck,255);
+			}
+			else
+				SetDialogControlHilite(dlg,diSplitCheck,255);
+			
+			/* ãƒ•ã‚¡ã‚¤ãƒ«åãŒé¸æŠã•ã‚Œã¦ã„ãªã„çŠ¶æ…‹ã«ã™ã‚‹â†’æ¬¡ã®Null Evtã§é¸æŠã•ã›ã‚‹ */
+			sfUserData->bodySelected=false;
+			break;
+		
+		case diSplitCheck:
+			sfUserData->splitFlag=!sfUserData->splitFlag;
+			SetDialogControlValue(dlg,diSplitCheck,sfUserData->splitFlag);
+			GetDialogItemText2(dlg,sfItemFileNameTextEdit,filename);
+			selType=GetDialogControlValue(dlg,diFileType);
+			if (sfUserData->splitFlag)
+			{
+				if (selType == kFileTypeIcon)
+				{
+					TruncPString(filename,filename,31-1-sfUserData->numStr[0]);
+					CatChar('.',filename);
+					PStrCat(sfUserData->numStr,filename);
+				}
+				else
+				{
+					TruncPString(filename,filename,31-1-sfUserData->numStr[0]-4);
+					filename[0]=GetBodyLength(filename);
+					CatChar('.',filename);
+					PStrCat(sfUserData->numStr,filename);
+					GetIndString(suffix,131,selType);
+					PStrCat(suffix,filename);
+				}
+			}
+			else
+			{
+				if (selType == kFileTypeIcon)
+				{
+					GetIndString(suffix,131,selType);
+					ChangeSuffix(filename,suffix);
+				}
+				else
+				{
+					filename[0]=GetBodyLength(filename);
+					filename[0]=GetBodyLength2(filename);
+					GetIndString(suffix,131,selType);
+					PStrCat(suffix,filename);
+				}
+			}
+			SetDialogItemText2(dlg,sfItemFileNameTextEdit,filename);
+			sfUserData->bodySelected=false;
+			break;
+	}
+	
+	return item;
+}
+
+/* ãƒ¢ãƒ¼ãƒ€ãƒ«ãƒ•ã‚£ãƒ«ã‚¿ï¼ˆã‚·ãƒ§ãƒ¼ãƒˆã‚«ãƒƒãƒˆã«ã‚ˆã‚Šãƒ•ã‚¡ã‚¤ãƒ«ã‚¿ã‚¤ãƒ—ã‚’é¸æŠï¼‰ */
+pascal Boolean ModalFilter(DialogPtr theDialog,EventRecord *theEvent,short *itemHit,Ptr userData)
+{
+	#pragma unused (userData)
+	Boolean	eventHandled=false;
+	WindowPtr	theWindow;
+	
+	if (GetWRefCon(theDialog) != sfMainDialogRefCon)
+		return false;
+	
+	switch (theEvent->what)
+	{
+		case updateEvt:
+			theWindow=(WindowPtr)theEvent->message;
+			if (theWindow!=nil && theWindow!=GetDialogWindow(theDialog))
+				DoUpdate(theEvent);
+			break;
+		
+		case keyDown:
+		case autoKey:
+			if ((theEvent->modifiers & cmdKey)!=0)
+			{
+				char	theChar;
+				
+				theChar=theEvent->message & charCodeMask;
+				if (theChar >= '1' && theChar <= '4')
+				{
+					SetDialogControlValue(theDialog,diFileType,theChar-'1'+1);
+					*itemHit=diFileType;
+					eventHandled=true;
+				}
+			}
+			break;
+	}
+	
+	return eventHandled;
+}
+
+/* ã‚¢ã‚¤ã‚³ãƒ³æ›¸ãå‡ºã— */
+void ExportIconDialog(Str31 iconName,StandardFileReply *reply,OSType *fType)
+{
+	SFData	sfUserData;
+	OSErr	err;
+	Point	where={-1,-1};
+	DlgHookYDUPP	dlUPP=NewDlgHookYDProc(ExportIconDialogHook);
+	ModalFilterYDUPP	mfUPP=NewModalFilterYDProc(ExportIconModalFilter);
+	ActivateYDUPP	aUPP=NewActivateYDProc(MyActivate);
+	Str255	prompt;
+	
+	GetIndString(prompt,140,1);
+	
+	/* æ§‹é€ ä½“åˆæœŸåŒ– */
+	sfUserData.selType = *fType;
+	sfUserData.bodySelected=false;
+	
+	CustomPutFile(prompt,iconName,reply,148,where,
+		dlUPP,mfUPP,nil,aUPP,&sfUserData);
+	
+	DisposeRoutineDescriptor(dlUPP);
+	DisposeRoutineDescriptor(mfUPP);
+	DisposeRoutineDescriptor(aUPP);
+	
+	if (reply->sfGood)
+	{
+		*fType=sfUserData.selType;
+		
+		if (reply->sfReplacing)
+			err=FSpDelete(&reply->sfFile);
+	}
+}
+
+static OSType	lIconTypeList[] = {'Icon','wIco','icns'};
+
+pascal short ExportIconDialogHook(short item,DialogPtr dlg,Ptr userData)
+{
+	SFDataPtr	sfUserData;
+	Handle	rbControlHandle;
+	Str255	filename;
+	short	bodyLength;
+	short	selType;
+	Str15	suffix;
+	short	selItem,i;
+	
+	if (GetWRefCon(dlg)!=sfMainDialogRefCon)
+		return item;
+	
+	sfUserData=(SFDataPtr)userData;
+	
+	switch (item)
+	{
+		case sfHookFirstCall:
+			rbControlHandle=GetDialogItemHandle(dlg,diFileType);
+			
+			/* ãƒ•ã‚¡ã‚¤ãƒ«ã‚¿ã‚¤ãƒ—ã«ã‚ˆã£ã¦ãƒãƒƒãƒ—ã‚¢ãƒƒãƒ—ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã®åˆæœŸå€¤ã‚’å¤‰æ›´ */
+			selItem=1;
+			for (i=0; i<3; i++)
+				if (sfUserData->selType == lIconTypeList[i])
+				{
+					selItem=i+1;
+					break;
+				}
+			
+			{
+				MenuHandle		menu;
+				
+				menu=GetControlPopupMenuHandle((ControlHandle)rbControlHandle);
+				if (gSystemVersion < 0x0850)
+					MyDisableMenuItem(menu,3);
+			}
+			SetControlValue((ControlHandle)rbControlHandle,selItem);
+			break;
+		
+		case sfHookNullEvent:
+			if (!sfUserData->bodySelected)
+			{
+				GetDialogItemText2(dlg,sfItemFileNameTextEdit,filename);
+				bodyLength=GetBodyLength(filename);
+				SelectDialogItemText(dlg,sfItemFileNameTextEdit,0,bodyLength);
+				
+				sfUserData->bodySelected=true;
+			}
+			break;
+		
+		case sfItemOpenButton:
+			selItem=GetDialogControlValue(dlg,diFileType);
+			sfUserData->selType=lIconTypeList[selItem-1];
+			break;
+		
+		case sfItemCancelButton:
+			break;
+		
+		case diFileType:
+			selType=GetDialogControlValue(dlg,diFileType);
+			
+			GetDialogItemText2(dlg,sfItemFileNameTextEdit,filename);
+			
+			GetIndString(suffix,161,selType);
+			ChangeSuffix(filename,suffix);
+			SetDialogItemText2(dlg,sfItemFileNameTextEdit,filename);
+			
+			/* ãƒ•ã‚¡ã‚¤ãƒ«åãŒé¸æŠã•ã‚Œã¦ã„ãªã„çŠ¶æ…‹ã«ã™ã‚‹â†’æ¬¡ã®Null Evtã§é¸æŠã•ã›ã‚‹ */
+			sfUserData->selType=selType;
+			sfUserData->bodySelected=false;
+			break;
+	}
+	
+	return item;
+}
+
+/* ãƒ¢ãƒ¼ãƒ€ãƒ«ãƒ•ã‚£ãƒ«ã‚¿ï¼ˆã‚·ãƒ§ãƒ¼ãƒˆã‚«ãƒƒãƒˆã«ã‚ˆã‚Šãƒ•ã‚¡ã‚¤ãƒ«ã‚¿ã‚¤ãƒ—ã‚’é¸æŠï¼‰ */
+pascal Boolean ExportIconModalFilter(DialogPtr theDialog,EventRecord *theEvent,short *itemHit,Ptr userData)
+{
+	#pragma unused (userData)
+	Boolean	eventHandled=false;
+	WindowPtr	theWindow;
+	
+	if (GetWRefCon(theDialog) != sfMainDialogRefCon)
+		return false;
+	
+	switch (theEvent->what)
+	{
+		case updateEvt:
+			theWindow=(WindowPtr)theEvent->message;
+			if (theWindow!=nil && theWindow!=GetDialogWindow(theDialog))
+				DoUpdate(theEvent);
+			break;
+		
+		case keyDown:
+		case autoKey:
+			if ((theEvent->modifiers & cmdKey)!=0)
+			{
+				char	theChar;
+				
+				theChar=theEvent->message & charCodeMask;
+				if (theChar >= '1' && theChar <= '3')
+				{
+					SetDialogControlValue(theDialog,diFileType,theChar-'1'+1);
+					*itemHit=diFileType;
+					eventHandled=true;
+				}
+			}
+			break;
+	}
+	
+	return eventHandled;
+}
+#endif
+

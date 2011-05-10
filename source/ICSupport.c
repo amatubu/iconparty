@@ -1,1 +1,67 @@
-/* ------------------------------------------------------------ *//*  ICSupport.c                                                 *//*     InternetConfigÇÃÉTÉ|Å[Ég                                 *//*                                                              *//*                 1999.11.25 - 1999.11.25  naoki iimura       	*//* ------------------------------------------------------------ *//* includes */#ifdef __APPLE_CC__#include	<Carbon/Carbon.h>#else#if !TARGET_API_MAC_CARBON#include	"ICTypes.h"#include	"ICKeys.h"#include	"ICAPI.h"#include	"ICComponentSelectors.h"#else#include	<InternetConfig.h>#endif#include	<Gestalt.h>#endif#include	"Definition.h"extern Boolean	IsICInstalled(void);extern OSErr	ICLaunchURLString(Str255 urlStr);/* InternetConfigÇ™ÉCÉìÉXÉgÅ[ÉãÇ≥ÇÍÇƒÇ¢ÇÈÇ©Ç«Ç§Ç©Çí≤Ç◊ÇÈ */extern Boolean IsICInstalled(void){	long	response;		return (Gestalt(gestaltComponentMgr,&response) == noErr);}extern OSErr	ICLaunchURLString(Str255 urlStr){	#if !TARGET_API_MAC_CARBON	ICError		err,igErr;	#else	OSErr		err,igErr;	#endif	ICInstance	inst;	long		selStart,selEnd;		if (!IsICInstalled()) return -1;		err=ICStart(&inst,kIconPartyCreator);	if (err!=noErr) return err;		#if !TARGET_API_MAC_CARBON	err=ICFindConfigFile(inst,0,nil);	if (err!=noErr)		goto errExit;	#endif		selStart=0;	selEnd=urlStr[0];	err=ICLaunchURL(inst,"\p",(char *)&urlStr[1],urlStr[0],&selStart,&selEnd);		#if !TARGET_API_MAC_CARBONerrExit:	#endif	igErr=ICStop(inst);		return err;}
+/* ------------------------------------------------------------ */
+/*  ICSupport.c                                                 */
+/*     InternetConfig„ÅÆ„Çµ„Éù„Éº„Éà                                 */
+/*                                                              */
+/*                 1999.11.25 - 1999.11.25  naoki iimura       	*/
+/* ------------------------------------------------------------ */
+
+/* includes */
+#ifdef __APPLE_CC__
+#include	<Carbon/Carbon.h>
+#else
+#if !TARGET_API_MAC_CARBON
+#include	"ICTypes.h"
+#include	"ICKeys.h"
+#include	"ICAPI.h"
+#include	"ICComponentSelectors.h"
+#else
+#include	<InternetConfig.h>
+#endif
+#include	<Gestalt.h>
+#endif
+
+#include	"Definition.h"
+
+extern Boolean	IsICInstalled(void);
+extern OSErr	ICLaunchURLString(Str255 urlStr);
+
+/* InternetConfig„Åå„Ç§„É≥„Çπ„Éà„Éº„É´„Åï„Çå„Å¶„ÅÑ„Çã„Åã„Å©„ÅÜ„Åã„ÇíË™ø„Åπ„Çã */
+extern Boolean IsICInstalled(void)
+{
+	long	response;
+	
+	return (Gestalt(gestaltComponentMgr,&response) == noErr);
+}
+
+extern OSErr	ICLaunchURLString(Str255 urlStr)
+{
+	#if !TARGET_API_MAC_CARBON
+	ICError		err,igErr;
+	#else
+	OSErr		err,igErr;
+	#endif
+	ICInstance	inst;
+	long		selStart,selEnd;
+	
+	if (!IsICInstalled()) return -1;
+	
+	err=ICStart(&inst,kIconPartyCreator);
+	if (err!=noErr) return err;
+	
+	#if !TARGET_API_MAC_CARBON
+	err=ICFindConfigFile(inst,0,nil);
+	if (err!=noErr)
+		goto errExit;
+	#endif
+	
+	selStart=0;
+	selEnd=urlStr[0];
+	err=ICLaunchURL(inst,"\p",(char *)&urlStr[1],urlStr[0],&selStart,&selEnd);
+	
+	#if !TARGET_API_MAC_CARBON
+errExit:
+	#endif
+	igErr=ICStop(inst);
+	
+	return err;
+}

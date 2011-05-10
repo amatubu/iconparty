@@ -1,6 +1,6 @@
 /* ------------------------------------------------------------ */
 /*  NavigationServicesSupport.c                                 */
-/*     NavigationServiceŠÖ˜Aƒ‹[ƒ`ƒ“                            */
+/*     NavigationServiceé–¢é€£ãƒ«ãƒ¼ãƒãƒ³                            */
 /*                                                              */
 /*                 1998.12.5 - 2001.1.27  naoki iimura        	*/
 /* ------------------------------------------------------------ */
@@ -55,7 +55,7 @@ enum {
 	kFileTypeWinIcon,
 };
 
-/* ƒtƒ@ƒCƒ‹ƒI[ƒvƒ“ƒ_ƒCƒAƒƒO */
+/* ãƒ•ã‚¡ã‚¤ãƒ«ã‚ªãƒ¼ãƒ—ãƒ³ãƒ€ã‚¤ã‚¢ãƒ­ã‚° */
 OSErr OpenFileWithNav(void)
 {
 	NavReplyRecord		theReply;
@@ -71,14 +71,14 @@ OSErr OpenFileWithNav(void)
 	
 	InitCursor();
 	
-	/* ƒfƒtƒHƒ‹ƒg‚ÌÝ’è‚ð“Ç‚Ýž‚Þ */
+	/* ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆã®è¨­å®šã‚’èª­ã¿è¾¼ã‚€ */
 	err=NavGetDefaultDialogOptions(&dialogOptions);
 	dialogOptions.dialogOptionFlags |= kNavSelectAllReadableItem+kNavNoTypePopup;
 	
-	/* ƒAƒvƒŠƒP[ƒVƒ‡ƒ“‚Ì–¼‘O‚ðÝ’è‚·‚é */
+	/* ã‚¢ãƒ—ãƒªã‚±ãƒ¼ã‚·ãƒ§ãƒ³ã®åå‰ã‚’è¨­å®šã™ã‚‹ */
 	BlockMoveData(LMGetCurApName(),dialogOptions.clientName,LMGetCurApName()[0]+1);
 	
-	/* ƒtƒ@ƒCƒ‹ƒ^ƒCƒv‚ÌƒŠƒXƒg */
+	/* ãƒ•ã‚¡ã‚¤ãƒ«ã‚¿ã‚¤ãƒ—ã®ãƒªã‚¹ãƒˆ */
 	numTypes=(gQTVersion >= 0x03000000 ? 8 : 5);
 	numTypes ++;
 	typeList=(NavTypeListHandle)NewOpenHandle(kIconPartyCreator,numTypes,fileType);
@@ -101,7 +101,7 @@ OSErr OpenFileWithNav(void)
 	return err;
 }
 
-/* ƒtƒ@ƒCƒ‹‘I‘ðƒ_ƒCƒAƒƒO */
+/* ãƒ•ã‚¡ã‚¤ãƒ«é¸æŠžãƒ€ã‚¤ã‚¢ãƒ­ã‚° */
 OSErr ChooseFileWithNav(short numTypes,OSType *typeList,Str255 prompt,FSSpec *theFile)
 {
 	NavReplyRecord		theReply;
@@ -113,19 +113,19 @@ OSErr ChooseFileWithNav(short numTypes,OSType *typeList,Str255 prompt,FSSpec *th
 	
 	InitCursor();
 	
-	/* ƒfƒtƒHƒ‹ƒg‚ÌÝ’è‚ð“Ç‚Ýž‚Þ */
+	/* ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆã®è¨­å®šã‚’èª­ã¿è¾¼ã‚€ */
 	err=NavGetDefaultDialogOptions(&dialogOptions);
 	
 	dialogOptions.dialogOptionFlags &= ~kNavAllowMultipleFiles;
 	if ( gNavLibraryVersion >= 0x02008000 )
 		dialogOptions.dialogOptionFlags += kNavSupportPackages;
 	
-	/* ƒAƒvƒŠƒP[ƒVƒ‡ƒ“‚Ì–¼‘O‚ðÝ’è */
+	/* ã‚¢ãƒ—ãƒªã‚±ãƒ¼ã‚·ãƒ§ãƒ³ã®åå‰ã‚’è¨­å®š */
 	BlockMoveData(LMGetCurApName(),dialogOptions.clientName,LMGetCurApName()[0]+1);
 	if (prompt)
 		BlockMoveData(prompt,dialogOptions.message,*prompt+1);
 	
-	/* ƒtƒ@ƒCƒ‹ƒ^ƒCƒv‚ÌƒŠƒXƒg */
+	/* ãƒ•ã‚¡ã‚¤ãƒ«ã‚¿ã‚¤ãƒ—ã®ãƒªã‚¹ãƒˆ */
 	if (numTypes)
 	{
 		if (typeList[0] == 'APPL')
@@ -214,12 +214,12 @@ OSErr ExportIconWithNav(Str255 filename,FSSpec *theFile,NavReplyRecord *theReply
 	
 	if (theReply->validRecord)
 	{
-		/* •Û‘¶ */
+		/* ä¿å­˜ */
 		AEKeyword	keyword;
 		DescType	typeCode;
 		Size		actualSize;
 		
-		/* •Û‘¶ƒtƒ@ƒCƒ‹‚ÌFSSpec‚ð“¾‚é */
+		/* ä¿å­˜ãƒ•ã‚¡ã‚¤ãƒ«ã®FSSpecã‚’å¾—ã‚‹ */
 		err=AEGetNthPtr(&theReply->selection,1,typeFSS,&keyword,&typeCode,
 						theFile,sizeof(FSSpec),&actualSize);
 		
@@ -256,12 +256,12 @@ OSErr NewIconFileWithNav(FSSpec *theFile,NavReplyRecord *theReply)
 	
 	if (theReply->validRecord)
 	{
-		/* •Û‘¶ */
+		/* ä¿å­˜ */
 		AEKeyword	keyword;
 		DescType	typeCode;
 		Size		actualSize;
 		
-		/* •Û‘¶ƒtƒ@ƒCƒ‹‚ÌFSSpec‚ð“¾‚é */
+		/* ä¿å­˜ãƒ•ã‚¡ã‚¤ãƒ«ã®FSSpecã‚’å¾—ã‚‹ */
 		err=AEGetNthPtr(&theReply->selection,1,typeFSS,&keyword,&typeCode,
 						theFile,sizeof(FSSpec),&actualSize);
 		
@@ -298,12 +298,12 @@ OSErr SaveBlendPaletteWithNav(FSSpec *theFile,NavReplyRecord *theReply,Str255 pr
 	
 	if (theReply->validRecord)
 	{
-		/* •Û‘¶ */
+		/* ä¿å­˜ */
 		AEKeyword	keyword;
 		DescType	typeCode;
 		Size		actualSize;
 		
-		/* •Û‘¶ƒtƒ@ƒCƒ‹‚ÌFSSpec‚ð“¾‚é */
+		/* ä¿å­˜ãƒ•ã‚¡ã‚¤ãƒ«ã®FSSpecã‚’å¾—ã‚‹ */
 		err=AEGetNthPtr(&theReply->selection,1,typeFSS,&keyword,&typeCode,
 						theFile,sizeof(FSSpec),&actualSize);
 		
@@ -316,7 +316,7 @@ OSErr SaveBlendPaletteWithNav(FSSpec *theFile,NavReplyRecord *theReply,Str255 pr
 	return err;
 }
 
-/* ƒƒCƒ“‚Ì•Û‘¶ƒ_ƒCƒAƒƒO */
+/* ãƒ¡ã‚¤ãƒ³ã®ä¿å­˜ãƒ€ã‚¤ã‚¢ãƒ­ã‚° */
 OSErr SaveFileWithNav(FSSpec *theFile,OSType *fileType,NavReplyRecord *theReply,long splitNum)
 {
 	OSErr	err=noErr;
@@ -362,7 +362,7 @@ OSErr SaveFileWithNav(FSSpec *theFile,OSType *fileType,NavReplyRecord *theReply,
 	
 	if (err==noErr && theReply->validRecord)
 	{
-		/* •Û‘¶ */
+		/* ä¿å­˜ */
 		AEKeyword	keyword;
 		DescType	typeCode;
 		Size		actualSize;
@@ -376,12 +376,12 @@ OSErr SaveFileWithNav(FSSpec *theFile,OSType *fileType,NavReplyRecord *theReply,
 			else
 				saveData.splitFlag = false;
 		
-		/* •Û‘¶‚³‚ê‚éƒtƒ@ƒCƒ‹‚ÌFSSpec‚ð“¾‚é */
+		/* ä¿å­˜ã•ã‚Œã‚‹ãƒ•ã‚¡ã‚¤ãƒ«ã®FSSpecã‚’å¾—ã‚‹ */
 		err=AEGetNthPtr(&theReply->selection,1,typeFSS,&keyword,&typeCode,
 						theFile,sizeof(FSSpec),&actualSize);
 		if (saveData.splitFlag)
 		{
-			/* ƒtƒ@ƒCƒ‹–¼‚©‚ç”Ô†‚ðŽæ‚èœ‚­ */
+			/* ãƒ•ã‚¡ã‚¤ãƒ«åã‹ã‚‰ç•ªå·ã‚’å–ã‚Šé™¤ã */
 			if (theFile->name[0] >= saveData.numStr[0]+1)
 			{
 				if (*fileType == 'IcoS')
@@ -398,7 +398,7 @@ OSErr SaveFileWithNav(FSSpec *theFile,OSType *fileType,NavReplyRecord *theReply,
 						if (b) theFile->name[0]-=saveData.numStr[0]+1;
 					}
 				}
-				else /* WinƒAƒCƒRƒ“‚Ìê‡‚Í”Ô†‚ÆŠg’£Žq‚ðŽæ‚èœ‚­ */
+				else /* Winã‚¢ã‚¤ã‚³ãƒ³ã®å ´åˆã¯ç•ªå·ã¨æ‹¡å¼µå­ã‚’å–ã‚Šé™¤ã */
 				{
 					Boolean	b=true;
 					Str15	suffix;
@@ -431,7 +431,7 @@ OSErr SaveFileWithNav(FSSpec *theFile,OSType *fileType,NavReplyRecord *theReply,
 		
 		if (theReply->replacing && !saveData.splitFlag)
 		{
-			/* ƒtƒ@ƒCƒ‹‚ðíœ */
+			/* ãƒ•ã‚¡ã‚¤ãƒ«ã‚’å‰Šé™¤ */
 			err=FSpDelete(theFile);
 		}
 	}
@@ -441,7 +441,7 @@ OSErr SaveFileWithNav(FSSpec *theFile,OSType *fileType,NavReplyRecord *theReply,
 	return err;
 }
 
-/* •Û‘¶Šm”F‚Ìƒ_ƒCƒAƒƒO */
+/* ä¿å­˜ç¢ºèªã®ãƒ€ã‚¤ã‚¢ãƒ­ã‚° */
 short AskSaveWithNav(Str255 fileName,short action)
 {
 	OSErr	err=noErr;
@@ -454,14 +454,14 @@ short AskSaveWithNav(Str255 fileName,short action)
 	
 	NavGetDefaultDialogOptions(&dialogOptions);
 	
-	/* ƒAƒvƒŠƒP[ƒVƒ‡ƒ“‚Ì–¼‘O‚ðÝ’è */
+	/* ã‚¢ãƒ—ãƒªã‚±ãƒ¼ã‚·ãƒ§ãƒ³ã®åå‰ã‚’è¨­å®š */
 	BlockMoveData(LMGetCurApName(),dialogOptions.clientName,LMGetCurApName()[0]+1);
 	
-	/* ƒ^ƒCƒgƒ‹ */
+	/* ã‚¿ã‚¤ãƒˆãƒ« */
 	GetIndString(title,158,1);
 	BlockMoveData(title,dialogOptions.windowTitle,title[0]+1);
 	
-	/* •Û‘¶‚·‚éƒtƒ@ƒCƒ‹‚Ì–¼‘O */
+	/* ä¿å­˜ã™ã‚‹ãƒ•ã‚¡ã‚¤ãƒ«ã®åå‰ */
 	BlockMoveData(fileName,dialogOptions.savedFileName,fileName[0]+1);
 	
 	err=NavAskSaveChanges(&dialogOptions,action,&reply,eventUPP,nil);
@@ -474,7 +474,7 @@ short AskSaveWithNav(Str255 fileName,short action)
 	else return err;
 }
 
-/* ”jŠüŠm”F‚Ìƒ_ƒCƒAƒƒO */
+/* ç ´æ£„ç¢ºèªã®ãƒ€ã‚¤ã‚¢ãƒ­ã‚° */
 short AskRevertWithNav(Str255 fileName)
 {
 	OSErr	err=noErr;
@@ -486,10 +486,10 @@ short AskRevertWithNav(Str255 fileName)
 	
 	NavGetDefaultDialogOptions(&dialogOptions);
 	
-	/* ƒAƒvƒŠƒP[ƒVƒ‡ƒ“–¼ */
+	/* ã‚¢ãƒ—ãƒªã‚±ãƒ¼ã‚·ãƒ§ãƒ³å */
 	BlockMoveData(LMGetCurApName(),dialogOptions.clientName,LMGetCurApName()[0]+1);
 	
-	/* ƒtƒ@ƒCƒ‹–¼ */
+	/* ãƒ•ã‚¡ã‚¤ãƒ«å */
 	BlockMoveData(fileName,dialogOptions.savedFileName,fileName[0]+1);
 	
 	err=NavAskDiscardChanges(&dialogOptions,&reply,eventUPP,nil);
@@ -501,7 +501,7 @@ short AskRevertWithNav(Str255 fileName)
 	else return err;
 }
 
-/* StandardGetFileŒ`Ž®‚Ìƒtƒ@ƒCƒ‹ƒŠƒXƒg‚É•ÏŠ· */
+/* StandardGetFileå½¢å¼ã®ãƒ•ã‚¡ã‚¤ãƒ«ãƒªã‚¹ãƒˆã«å¤‰æ› */
 static Handle NewOpenHandle(OSType applicationSignature, short numTypes, OSType typeList[])
 {
 	Handle hdl = NULL;
@@ -524,7 +524,7 @@ static Handle NewOpenHandle(OSType applicationSignature, short numTypes, OSType 
 	return hdl;
 }
 
-/* ‘I‚Î‚ê‚½ƒtƒ@ƒCƒ‹‚ðŠJ‚­ */
+/* é¸ã°ã‚ŒãŸãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ã */
 static OSStatus SendOpenAE(AEDescList list)
 {
 	OSStatus		err;
@@ -568,7 +568,7 @@ static OSStatus SendOpenAE(AEDescList list)
 	return err;
 }
 
-/* ƒIƒuƒWƒFƒNƒg‘I‘ðƒ_ƒCƒAƒƒO */
+/* ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆé¸æŠžãƒ€ã‚¤ã‚¢ãƒ­ã‚° */
 OSErr	SelectObjectDialog(NavEventUPP eventProc,Str255 str,NavReplyRecord *theReply)
 {
 	NavDialogOptions	dialogOptions;
@@ -587,7 +587,7 @@ OSErr	SelectObjectDialog(NavEventUPP eventProc,Str255 str,NavReplyRecord *theRep
 	return theErr;
 }
 
-/* ƒtƒHƒ‹ƒ_‘I‘ðƒ_ƒCƒAƒƒO */
+/* ãƒ•ã‚©ãƒ«ãƒ€é¸æŠžãƒ€ã‚¤ã‚¢ãƒ­ã‚° */
 OSErr	SelectFolderDialog(NavEventUPP eventProc,Str255 str,FSSpec *folderSpec)
 {
 	NavReplyRecord		theReply;
@@ -619,8 +619,8 @@ OSErr	SelectFolderDialog(NavEventUPP eventProc,Str255 str,FSSpec *folderSpec)
 	return theErr;
 }
 
-/* ƒCƒxƒ“ƒgˆ— */
-/* ƒAƒbƒvƒf[ƒgˆ—‚Ì‚Ý */
+/* ã‚¤ãƒ™ãƒ³ãƒˆå‡¦ç† */
+/* ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆå‡¦ç†ã®ã¿ */
 pascal void MyEventProc(const NavEventCallbackMessage callBackSelector, 
 						NavCBRecPtr callBackParms, 
 						NavCallBackUserData callBackUD)
@@ -691,7 +691,7 @@ pascal void MySaveEventProc(const NavEventCallbackMessage callBackSelector,
 							{
 								userData->selItem=newSelItem;
 								
-								/* ƒtƒ@ƒCƒ‹–¼‚ðXV */
+								/* ãƒ•ã‚¡ã‚¤ãƒ«åã‚’æ›´æ–° */
 								err=NavCustomControl(callBackParms->context,kNavCtlGetEditFileName,fileName);
 								GetIndString(suffix,131,newSelItem);
 								selection.selStart=0;
@@ -699,7 +699,7 @@ pascal void MySaveEventProc(const NavEventCallbackMessage callBackSelector,
 								
 								err=NavCustomControl(callBackParms->context,kNavCtlSetEditFileName,fileName);
 								
-								/* •ªŠ„‚Å‚«‚éŽž‚Íƒ`ƒFƒbƒNƒ{ƒbƒNƒX‚ð—LŒø‚É */
+								/* åˆ†å‰²ã§ãã‚‹æ™‚ã¯ãƒã‚§ãƒƒã‚¯ãƒœãƒƒã‚¯ã‚¹ã‚’æœ‰åŠ¹ã« */
 								if (userData->splitNum > 1)
 								{
 									if  (newSelItem == kFileTypeIcon)
@@ -794,15 +794,15 @@ pascal void MySaveEventProc(const NavEventCallbackMessage callBackSelector,
 			break;
 		
 		case kNavCBStart:
-			/* ƒ_ƒCƒAƒƒOì¬Žž */
-			/* ƒtƒ@ƒCƒ‹–¼‚Ì‘I‘ð */
+			/* ãƒ€ã‚¤ã‚¢ãƒ­ã‚°ä½œæˆæ™‚ */
+			/* ãƒ•ã‚¡ã‚¤ãƒ«åã®é¸æŠž */
 			err=NavCustomControl(callBackParms->context,kNavCtlGetEditFileName,fileName);
 			selection.selStart=0;
 			selection.selEnd=GetBodyLength(fileName);
 			if (gNavLibraryVersion >= 0x0110)
 				err=NavCustomControl(callBackParms->context,kNavCtlSelectEditFileName,&selection);
 			
-			/* DITL‚ð’Ç‰Á */
+			/* DITLã‚’è¿½åŠ  */
 			gDitlList=GetResource('DITL',500);
 			HNoPurge(gDitlList);
 			err=NavCustomControl(callBackParms->context,kNavCtlAddControlList,gDitlList);
@@ -812,7 +812,7 @@ pascal void MySaveEventProc(const NavEventCallbackMessage callBackSelector,
 			h=GetDialogItemHandle(GetDialogFromWindow(callBackParms->window),diNavFileType+firstControl);
 			
 			#if 0
-			/* ƒ|ƒbƒvƒAƒbƒvƒƒjƒ…[‚ÌGIF•”•ª‚ð‚¢‚¶‚é */
+			/* ãƒãƒƒãƒ—ã‚¢ãƒƒãƒ—ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã®GIFéƒ¨åˆ†ã‚’ã„ã˜ã‚‹ */
 			{
 				MenuHandle		menu;
 				Str255			string;
@@ -823,10 +823,10 @@ pascal void MySaveEventProc(const NavEventCallbackMessage callBackSelector,
 			}
 			#endif
 			
-			/* ƒƒjƒ…[‚ð‘I‘ð */
+			/* ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã‚’é¸æŠž */
 			SetControlValue((ControlHandle)h,userData->selItem);
 			
-			/* •ªŠ„‚·‚éƒ`ƒFƒbƒN‚Ì‰Šú’l‚ð•ÏX */
+			/* åˆ†å‰²ã™ã‚‹ãƒã‚§ãƒƒã‚¯ã®åˆæœŸå€¤ã‚’å¤‰æ›´ */
 			SetDialogControlValue(GetDialogFromWindow(callBackParms->window),diNavSplitCheck+firstControl,userData->splitFlag);
 			
 			if (userData->splitNum>1 && (userData->selItem == kFileTypeIcon || userData->selItem == kFileTypeWinIcon))
@@ -836,7 +836,7 @@ pascal void MySaveEventProc(const NavEventCallbackMessage callBackSelector,
 			break;
 		
 		case kNavCBCustomize:
-			/* ƒJƒXƒ^ƒ€ƒRƒ“ƒgƒ[ƒ‹—Ìˆæ‚ÌŠm•Û */
+			/* ã‚«ã‚¹ã‚¿ãƒ ã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ«é ˜åŸŸã®ç¢ºä¿ */
 			customRect=callBackParms->customRect;
 			if (customRect.right - customRect.left < 400 && customRect.bottom - customRect.top < 40)
 			{
@@ -894,7 +894,7 @@ pascal void MyExportIconEventProc(const NavEventCallbackMessage callBackSelector
 							{
 								userData->selItem=newSelItem;
 								
-								/* ƒtƒ@ƒCƒ‹–¼‚ðXV */
+								/* ãƒ•ã‚¡ã‚¤ãƒ«åã‚’æ›´æ–° */
 								err=NavCustomControl(callBackParms->context,kNavCtlGetEditFileName,fileName);
 								GetIndString(suffix,161,newSelItem);
 								selection.selStart=0;
@@ -911,8 +911,8 @@ pascal void MyExportIconEventProc(const NavEventCallbackMessage callBackSelector
 			break;
 		
 		case kNavCBStart:
-			/* ƒ_ƒCƒAƒƒOì¬Žž */
-			/* ƒtƒ@ƒCƒ‹–¼‚Ì‘I‘ð */
+			/* ãƒ€ã‚¤ã‚¢ãƒ­ã‚°ä½œæˆæ™‚ */
+			/* ãƒ•ã‚¡ã‚¤ãƒ«åã®é¸æŠž */
 			userData=(NavExportIconDataRec *)callBackUD;
 			err=NavCustomControl(callBackParms->context,kNavCtlGetEditFileName,fileName);
 			selection.selStart=0;
@@ -920,12 +920,12 @@ pascal void MyExportIconEventProc(const NavEventCallbackMessage callBackSelector
 			if (gNavLibraryVersion > 0x0110)
 				err=NavCustomControl(callBackParms->context,kNavCtlSelectEditFileName,&selection);
 			
-			/* DITL‚ð’Ç‰Á */
+			/* DITLã‚’è¿½åŠ  */
 			gDitlList=GetResource('DITL',501);
 			HNoPurge(gDitlList);
 			err=NavCustomControl(callBackParms->context,kNavCtlAddControlList,gDitlList);
 			
-			/* ƒƒjƒ…[‚ð‘I‘ð */
+			/* ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã‚’é¸æŠž */
 			err=NavCustomControl(callBackParms->context,kNavCtlGetFirstControlID,&firstControl);
 			h=GetDialogItemHandle(GetDialogFromWindow(callBackParms->window),diNavFileType+firstControl);
 			SetControlValue((ControlHandle)h,userData->selItem);
@@ -939,7 +939,7 @@ pascal void MyExportIconEventProc(const NavEventCallbackMessage callBackSelector
 			break;
 		
 		case kNavCBCustomize:
-			/* ƒJƒXƒ^ƒ€ƒRƒ“ƒgƒ[ƒ‹—Ìˆæ‚ÌŠm•Û */
+			/* ã‚«ã‚¹ã‚¿ãƒ ã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ«é ˜åŸŸã®ç¢ºä¿ */
 			customRect=callBackParms->customRect;
 			if (customRect.right - customRect.left < 400 && customRect.bottom - customRect.top < 40)
 			{

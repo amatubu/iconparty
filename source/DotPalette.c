@@ -1,1 +1,1612 @@
-/* ------------------------------------------------------------ *//*  DotPalette.c                                                *//*     •`‰æ“_ƒpƒŒƒbƒgˆ—                                       *//*                                                              *//*                 2001.11.4 - 2001.11.4  naoki iimura        	*//* ------------------------------------------------------------ *//* includes */#ifdef __APPLE_CC__#include	<Carbon/Carbon.h>#else#endif#include	"Globals.h"#include	"MenuRoutines.h"#include	"UsefulRoutines.h"#include	"IconParty.h"#include	"WindowRoutines.h"#include	"Preferences.h"#include	"PaintRoutines.h"#include	"DotPalette.h"#include	"PreCarbonSupport.h"#include	"UpdateCursor.h"static void	DoDotLibPop(short h,short v);static void	DoDotCmdPop(short h,short v);static void	DoRecDotPop(short h,short v);static void	DoInputDotPop(short h,short v);static void	DoLibNamePop(short h,short v);static void	AddCmdToLib(void);static short	AddNewDotLib(FSSpec *theFile);static void	AddNewDotLibMain(FSSpec *theFile);static void	DoEditLibrary(void);static pascal Boolean	EditLibDialogFilter(DialogPtr theDialog,EventRecord *theEvent,short *theItemHit);static Boolean	MyLClick(Point localPt,UInt32 time,ListHandle theList);static void	DoEditSelectedCommand(ListHandle theList);static short	DoEditDotCommand(Str255 command,ListHandle theList);static pascal Boolean	EditCmdDialogFilter(DialogPtr theDialog,EventRecord *theEvent,short *theItemHit);static OSErr	CheckCommandStr(Str255 command);static void	DoDeleteSelectedCommand(ListHandle theList);static OSErr	DoDeleteDotCommand(Str255 command,ListHandle theList);static pascal Boolean	DeleteCmdDialogFilter(DialogPtr theDialog,EventRecord *theEvent,short *theItemHit);static void	UpdateSelectedLib(Str31 libName);static void	UpdateDotCmdPop(void);static short	CountCmdNum(void);static long	PopUpMenuSelectDotFont(MenuHandle menu,short v,short h,short item);#define	DOTERR_RESID	4002#define	DOTERR1	1#define	DOTERR2	2#define	DOTERR3	3extern WindowPtr	DotModePalette;/* •`‰æ“_ƒpƒŒƒbƒg‚ÌƒNƒŠƒbƒN */void ClickDotModePalette(Point localPt){	Rect	r;		/* ƒ‰ƒCƒuƒ‰ƒŠƒ|ƒbƒvƒAƒbƒv */	SetRect(&r,0x55,0x03,0x60,0x0e);	if (PtInRect(localPt,&r))		DoDotLibPop(0x55,0x03);	else	{		/* ƒRƒ}ƒ“ƒhƒ|ƒbƒvƒAƒbƒv */		SetRect(&r,0x55,0x12,0x60,0x1d);		if (PtInRect(localPt,&r))			DoDotCmdPop(0x55,0x12);		else		{			/* ‹L˜^ƒRƒ}ƒ“ƒhƒ|ƒbƒvƒAƒbƒv */			SetRect(&r,0x05,19,0x4f,0x1b);			if (PtInRect(localPt,&r))				DoRecDotPop(localPt.h,localPt.v);			else			{				/* “ü—Í’†ƒRƒ}ƒ“ƒhƒ|ƒbƒvƒAƒbƒv */				SetRect(&r,0x05,0x22,0x60,0x3f);				if (PtInRect(localPt,&r))					DoInputDotPop(localPt.h,localPt.v);				else				{					/* ƒ‰ƒCƒuƒ‰ƒŠ–¼ */					SetRect(&r,0x05,0x03,0x4f,0x0e);					if (PtInRect(localPt,&r))						DoLibNamePop(localPt.h,localPt.v);				}			}		}	}}/* ƒ‰ƒCƒuƒ‰ƒŠƒ|ƒbƒvƒAƒbƒv */void DoDotLibPop(short h,short v){	MenuHandle	menu;	FSSpec		theSpec;	long		index=1;	Boolean		isDirectory;	long		selItem;	OSErr		err;	FInfo	fileInfo;	short		itemNum=0;	Point		popPt;	short		item,checkItem=1;	Boolean	cmdDown;	KeyMap	theKeys;		/* ƒ‰ƒCƒuƒ‰ƒŠƒtƒHƒ‹ƒ_‚ª‘¶İ‚µ‚È‚¢ê‡‚Í‚È‚É‚à‚µ‚È‚¢ */	if (!isDotLibAvailable) return;		/* ƒ‰ƒCƒuƒ‰ƒŠƒtƒHƒ‹ƒ_‚É‚ ‚éƒ‰ƒCƒuƒ‰ƒŠƒtƒ@ƒCƒ‹‚ÌƒŠƒXƒg‚ğì‚èAƒƒjƒ…[‰» */	menu=GetMenu(mDotLibPop);		theSpec.vRefNum=gDotLibVRefNum;	theSpec.parID=gDotLibFolderID;		while (GetFile(&theSpec,index++,&isDirectory)==noErr)	{		if (!isDirectory)		{			err=FSpGetFInfo(&theSpec,&fileInfo);			if (fileInfo.fdType==kDotModeLibFileType)			{				InsertMenuItem(menu,"\p ",itemNum++);				SetMenuItemText(menu,itemNum,theSpec.name);				if (EqualString(theSpec.name,gDotLibName,false,true))				{					CheckMenuItem(menu,itemNum,true);					checkItem=itemNum;				}			}		}	}		SetPt(&popPt,h,v);	LocalToGlobal(&popPt);		InsertMenu(menu,-1);	selItem=PopUpMenuSelectWFontSize(menu,popPt.v,popPt.h,checkItem,9);		GetKeys(theKeys);	cmdDown=BitTst(theKeys,48);		item=LoWord(selItem);	if (item>0)	{		Str255	name;				if (item > itemNum)		{			if (AddNewDotLib(&theSpec)==ok)				AddNewDotLibMain(&theSpec);		}		else		{			/* ƒ‰ƒCƒuƒ‰ƒŠƒtƒ@ƒCƒ‹‚Ìspec‚ğ“¾‚é */			GetMenuItemText(menu,item,name);			err=FSMakeFSSpec(gDotLibVRefNum,gDotLibFolderID,name,&theSpec);			if (err==noErr)				SetDotLibMain(&theSpec);		}	}	DeleteMenu(mDotLibPop);	ReleaseResource((Handle)menu);}/* •`‰æ“_ƒ‰ƒCƒuƒ‰ƒŠ‚Ìì¬ */short AddNewDotLib(FSSpec *theFile){	Str255		name;	DialogPtr	theDialog;	short		item=3;	ModalFilterUPP	mfUPP=NewModalFilterUPP(MyModalDialogFilter);	OSErr		err;		MySetCursor(0);	DeactivateFloatersAndFirstDocumentWindow();	theDialog=GetNewDialog(142,nil,kFirstWindowOfClass);	SetDialogDefaultItem(theDialog,ok);	SetDialogCancelItem(theDialog,cancel);	SelectDialogItemText(theDialog,3,0,255);	ShowWindow(GetDialogWindow(theDialog));		while (item!=ok && item!=cancel)	{		ModalDialog(mfUPP,&item);				if (item==ok)		{			GetDialogItemText2(theDialog,3,name);			if (name[0]>31)			{				ErrorAlertFromResource(DOTERR_RESID,DOTERR1);				item=3;				continue;			}			ReplaceString(name,"\p:","\p-");			err=FSMakeFSSpec(gDotLibVRefNum,gDotLibFolderID,name,theFile);			if (err==noErr)			{				ErrorAlertFromResource(DOTERR_RESID,DOTERR2);				item=3;				continue;			}			else if (err!=fnfErr)			{				ErrorAlertFromResource(DOTERR_RESID,DOTERR3);				item=cancel;			}		}	}		DisposeDialog(theDialog);	DisposeModalFilterUPP(mfUPP);	ActivateFloatersAndFirstDocumentWindow();		return item;}/* •`‰æ“_ƒ‰ƒCƒuƒ‰ƒŠ‚Ìì¬iƒƒCƒ“j */void AddNewDotLibMain(FSSpec *theFile){	short	num=0;	short	refNum;		FSpCreateResFile(theFile,kIconPartyCreator,kDotModeLibFileType,smSystemScript);	if (ResError())	{		ErrorAlertFromResource(DOTERR_RESID,DOTERR3);		return;	}		/* ’†g‚ª‹ó‚Ì'STR#'ƒŠƒ\[ƒX‚ğì‚é */	refNum=FSpOpenResFile(theFile,fsWrPerm);	if (refNum>0)	{		UseResFile(refNum);		AddDataToPrefs(&num,sizeof(num),'STR#',128,"\p");		CloseResFile(refNum);	}		SetDotLibMain(theFile);}/* •`‰æ“_ƒ‰ƒCƒuƒ‰ƒŠ‚Ìw’è */void SetDotLibMain(FSSpec *theFile){	short	refNum;	GrafPtr	port;		refNum=FSpOpenResFile(theFile,fsRdWrPerm);		if (refNum > 0)	{		if (refNum == gDotLibRefNum) return;				/* ƒ‰ƒCƒuƒ‰ƒŠƒtƒ@ƒCƒ‹‚ªŠJ‚©‚ê‚Ä‚¢‚ê‚Î•Â‚¶‚é */		if (gDotLibRefNum > 0) CloseResFile(gDotLibRefNum);		gDotLibRefNum=refNum;				UseResFile(gApplRefNum);		PStrCpy(theFile->name,gDotLibName);				GetPort(&port);		SetPortWindowPort(DotModePalette);		UpdateSelectedLib(gDotLibName);		UpdateDotCmdPop();		SetPort(port);	}	else		SysBeep(0);}/* ƒRƒ}ƒ“ƒhƒ|ƒbƒvƒAƒbƒv */void DoDotCmdPop(short h,short v){	MenuHandle	menu;	short		cmdNum;	short		i;	Str255		command;	Point		popPt;	long		selItem;	short		item,checkItem=0;	KeyMap		theKeys;	Boolean		cmdDown;		/* ƒ‰ƒCƒuƒ‰ƒŠƒtƒ@ƒCƒ‹‚ªŠJ‚©‚ê‚Ä‚¢‚È‚¢A‚ ‚é‚¢‚Í’†g‚ª‹ó‚Ìê‡‚Í‰½‚à‚µ‚È‚¢ */	if ((cmdNum=CountCmdNum())<=0) return;		/* ƒ‰ƒCƒuƒ‰ƒŠƒtƒ@ƒCƒ‹‚ÉŠÜ‚Ü‚ê‚éƒRƒ}ƒ“ƒh—ñ‚ğæ‚èo‚µAƒƒjƒ…[‰» */	UseResFile(gDotLibRefNum);		menu=GetMenu(mDotCmdPop);		for (i=1; i<=cmdNum; i++)	{		GetIndString(command,128,i);		InsertMenuItem(menu,command,i-1);		if (EqualString(command,gDotCommand,true,true))		{			CheckMenuItem(menu,i,true);			checkItem=i;		}	}		UseResFile(gApplRefNum);	SetPt(&popPt,h,v);	LocalToGlobal(&popPt);		InsertMenu(menu,-1);	selItem=PopUpMenuSelectDotFont(menu,popPt.v,popPt.h,checkItem);		GetKeys(theKeys);	cmdDown=BitTst(theKeys,48);		item=LoWord(selItem);		if (item>0)	{		if (cmdDown)		{			/* ƒRƒ}ƒ“ƒhíœ */			Handle	h;			Size	s;			Ptr		p,p2;						UseResFile(gDotLibRefNum);			h=Get1Resource('STR#',128);			s=GetHandleSize(h);			HLock(h);			p=(*h)+sizeof(short);			for (i=1; i<=cmdNum; i++)			{				p2=p+p[0]+1;				if (i==item)				{					BlockMoveData(p2,p,s+(*h)-p2);					break;				}				p=p2;			}			(**(short **)h)--;			HUnlock(h);			SetHandleSize(h,s-p[0]-1);			ChangedResource(h);			WriteResource(h);			UseResFile(gApplRefNum);						if (cmdNum==1) UpdateDotCmdPop();		}		else		{			/* ‘I‚Î‚ê‚½ƒRƒ}ƒ“ƒh‚ğ“¾‚é */			Str255	cmd;			GrafPtr	port;						GetMenuItemText(menu,item,cmd);			if (cmd[0]>30)			{				cmd[0]=30; /* ’·‚·‚¬‚é‚Í’Z‚­‚·‚é */				SysBeep(0);			}			PStrCpy(cmd,gDotCommand);						GetPort(&port);			SetPortWindowPort(DotModePalette);			UpdateRecordedCommand(gDotCommand);			SetPort(port);		}	}		DeleteMenu(mDotCmdPop);	ReleaseResource((Handle)menu);}/* ‹L˜^ƒRƒ}ƒ“ƒhƒ|ƒbƒvƒAƒbƒv */void DoRecDotPop(short h,short v){	MenuHandle	menu;	long		selItem;	short		item;	Point		popPt;	WindowPtr	theWindow=MyFrontNonFloatingWindow();		/* ƒRƒ}ƒ“ƒh‚ª‚È‚É‚à‹L˜^‚³‚ê‚Ä‚¢‚È‚¢‚Í‚È‚É‚à‚µ‚È‚¢ */	if (gDotCommand[0]==0) return;	if (theWindow==nil) return;	if (GetExtWindowKind(theWindow) != kWindowTypePaintWindow) return;		menu=GetMenu(mDotRecPop);	SetPt(&popPt,h,v);	LocalToGlobal(&popPt);		if (CountCmdNum()<0)		MyDisableMenuItem(menu,iAddCmdToLib);		InsertMenu(menu,-1);	selItem=PopUpMenuSelectWFontSize(menu,popPt.v,popPt.h,0,9);		item=LoWord(selItem);	switch (item)	{		case iInputCmd:			ExecuteCommand(theWindow,gDotCommand);			break;				case iAddCmdToLib:			AddCmdToLib();			break;	}	DeleteMenu(mDotRecPop);	ReleaseResource((Handle)menu);}/* ‹L˜^’†ƒRƒ}ƒ“ƒh‚ğƒ‰ƒCƒuƒ‰ƒŠ‚É’Ç‰Á */void AddCmdToLib(void){	short	cmdNum;	short	i;	Boolean	dup=false;	Str255	cmd;	Handle	h;		cmdNum=CountCmdNum();	if (cmdNum<0)	{		SysBeep(0);		return;	}		UseResFile(gDotLibRefNum);		/* d•¡ƒ`ƒFƒbƒN */	for (i=1; i<=cmdNum; i++)	{		GetIndString(cmd,128,i);		if (EqualString(cmd,gDotCommand,true,true))		{			dup=true;			break;		}	}	if (dup)	{		SysBeep(0);		UseResFile(gApplRefNum);		return;	}		/* ’Ç‰Áˆ— */	h=Get1Resource('STR#',128);	if (h==nil)	{		h=NewHandleClear(sizeof(short));		AddResource(h,'STR#',128,"\p");	}	PtrAndHand(&gDotCommand[0],h,gDotCommand[0]+1);	HLock(h);	(**(short **)h)++;	HUnlock(h);		ChangedResource(h);	WriteResource(h);	UpdateResFile(gDotLibRefNum);		UseResFile(gApplRefNum);		if (cmdNum==0) UpdateDotCmdPop();}/* “ü—Í’†ƒRƒ}ƒ“ƒhƒ|ƒbƒvƒAƒbƒv */void DoInputDotPop(short h,short v){	MenuHandle	menu;	long		selItem;	short		item;	Point		popPt;	WindowPtr	theWindow=MyFrontNonFloatingWindow();	PaintWinRec	*eWinRec;		/* “ü—Í‚³‚ê‚Ä‚¢‚éƒRƒ}ƒ“ƒh‚ª‚È‚¢ê‡‚Í‚È‚É‚à‚µ‚È‚¢ */	if (theWindow==nil) return;	if (GetExtWindowKind(theWindow) != kWindowTypePaintWindow) return;	eWinRec=GetPaintWinRec(theWindow);	if (eWinRec->dotCommand[0]==0) return;		menu=GetMenu(mDotInpPop);	SetPt(&popPt,h,v);	LocalToGlobal(&popPt);		InsertMenu(menu,-1);	selItem=PopUpMenuSelectWFontSize(menu,popPt.v,popPt.h,0,9);		item=LoWord(selItem);	switch (item)	{		case iClearCmd:			HandleDotKey(keyDown,0x1b,theWindow);			break;				case iRecordCmd:			HandleDotKey(keyDown,'0',theWindow);			break;	}	DeleteMenu(mDotInpPop);	ReleaseResource((Handle)menu);}/* ƒ‰ƒCƒuƒ‰ƒŠ–¼ƒ|ƒbƒvƒAƒbƒvƒƒjƒ…[ */void DoLibNamePop(short h,short v){	MenuHandle	menu;	long		selItem;	short		item;	Point		popPt;	short		cmdNum;		/* ƒ‰ƒCƒuƒ‰ƒŠƒtƒ@ƒCƒ‹‚ªŠJ‚©‚ê‚Ä‚¢‚È‚¢A‚ ‚é‚¢‚Í’†g‚ª‹ó‚Ìê‡‚Í‰½‚à‚µ‚È‚¢ */	if ((cmdNum=CountCmdNum())<=0) return;		SetPt(&popPt,h,v);	/* ƒ_ƒuƒ‹ƒNƒŠƒbƒN”»’è */	{		Rect	box;		Point	newPt;		Boolean	isDoubleClick=false;		UInt32	clickTime=TickCount()+GetDblTime();		EventRecord	followEvent;				SetRect(&box,popPt.h-2,popPt.v-2,popPt.h+2,popPt.v+2);		while(TickCount()<clickTime && !isDoubleClick)		{			GetMouse(&newPt);			if (!PtInRect(newPt,&box)) break;			isDoubleClick=EventAvail(mDownMask,&followEvent);		}		if (isDoubleClick) /* ƒ_ƒuƒ‹ƒNƒŠƒbƒN‚Í•`‰æ“_ƒ‚[ƒh */		{			FlushEvents(mDownMask,0);			DoEditLibrary();			return;		}	}		menu=GetMenu(mDotLibNamePop);	LocalToGlobal(&popPt);		InsertMenu(menu,-1);	selItem=PopUpMenuSelectWFontSize(menu,popPt.v,popPt.h,0,9);		item=LoWord(selItem);	switch (item)	{		case iEditLib:			DoEditLibrary();			break;	}	DeleteMenu(mDotLibNamePop);	ReleaseResource((Handle)menu);}#define	kEditLibDialogID	145enum {	kDotCmdListIndex=3,	kAddDotCmdIndex=4,	kEditDotCmdIndex=5,	kDeleteDotCmdIndex=6,};/* •`‰æ“_ƒ‰ƒCƒuƒ‰ƒŠ‚Ì•ÒW */void DoEditLibrary(void){	DialogPtr	theDialog;	ListHandle	theList;	Rect		listView,dataBounds;	Point		cellSize;	short		item=3;	short		i,cmdNum;	ModalFilterUPP	mfUPP=NewModalFilterUPP(EditLibDialogFilter);	GrafPtr		port;	Str255		fontName;	short		fNum;	Str255		dotCmd;	Cell		theCell;		GetPort(&port);	MySetCursor(0);	DeactivateFloatersAndFirstDocumentWindow();	theDialog=GetNewDialog(kEditLibDialogID,nil,kFirstWindowOfClass);	SetDialogDefaultItem(theDialog,ok);	SetDialogCancelItem(theDialog,cancel);		/* ƒŠƒXƒg */	GetDialogItemRect(theDialog,kDotCmdListIndex,&listView);	listView.right-=kScrollBarWidth; /* scroll bar */	SetRect(&dataBounds,0,0,1,(cmdNum=CountCmdNum()));	SetPt(&cellSize,listView.right - listView.left,10);		SetPortDialogPort(theDialog);	GetIndString(fontName,150,1);	#if TARGET_API_MAC_CARBON	fNum=FMGetFontFamilyFromName(fontName);	#else	GetFNum(fontName,&fNum);	#endif	TextFont(fNum);	TextSize(12);		theList=LNew(&listView,&dataBounds,cellSize,0,GetDialogWindow(theDialog),false,true,false,true);	SetListSelectionFlags(theList,lOnlyOne+lNoNilHilite);	SetWRefCon(GetDialogWindow(theDialog),(long)theList);		/* ƒŠƒXƒg‚É€–Ú‚ğ’Ç‰Á */	UseResFile(gDotLibRefNum);	for (i=1; i<=cmdNum; i++)	{		GetIndString(dotCmd,128,i);		SetPt(&theCell,0,i-1);		LSetCell(&dotCmd[1],dotCmd[0],theCell,theList);	}	UseResFile(gApplRefNum);		LSetDrawingMode(true,theList);		ShowWindow(GetDialogWindow(theDialog));	SetPortDialogPort(theDialog);	MyInvalWindowPortBounds(GetDialogWindow(theDialog));		while (item != ok && item != cancel)	{		ModalDialog(mfUPP,&item);				switch (item)		{			case kAddDotCmdIndex:				dotCmd[0]=0;				if (DoEditDotCommand(dotCmd,theList) == ok)				{					/* ƒAƒCƒeƒ€‚Ì’Ç‰Á */					GetListDataBounds(theList,&dataBounds);					cmdNum = dataBounds.bottom;					LAddRow(1,cmdNum,theList);					SetPt(&theCell,0,cmdNum++);					LSetCell(&dotCmd[1],dotCmd[0],theCell,theList);					CancelSelect(theList);					LSetSelect(true,theCell,theList);					LScroll(0,cmdNum,theList);				}				break;						case kEditDotCmdIndex:				DoEditSelectedCommand(theList);				break;						case kDeleteDotCmdIndex:				DoDeleteSelectedCommand(theList);				break;		}	}		if (item == ok)	{		/* •Û‘¶‚·‚é */		Handle	resHandle;		short	dataSize;		OSErr	err;				UseResFile(gDotLibRefNum);		resHandle=Get1Resource('STR#',128);		SetHandleSize(resHandle,0);				/* ƒAƒCƒeƒ€” */		GetListDataBounds(theList,&dataBounds);		cmdNum = dataBounds.bottom;		err=PtrAndHand(&cmdNum,resHandle,sizeof(short));				/* ŠeƒAƒCƒeƒ€ */		theCell.h=0;		for (i=0; i<cmdNum; i++)		{			theCell.v=i;			dataSize=255;			LGetCell(&dotCmd[1],&dataSize,theCell,theList);			dotCmd[0]=dataSize;			err=PtrAndHand(&dotCmd[0],resHandle,dotCmd[0]+1);		}				ChangedResource(resHandle);		WriteResource(resHandle);		ReleaseResource(resHandle);				UseResFile(gApplRefNum);	}		LDispose(theList);	DisposeModalFilterUPP(mfUPP);	DisposeDialog(theDialog);	ActivateFloatersAndFirstDocumentWindow();	SetPort(port);}/* ‘I‘ğƒRƒ}ƒ“ƒh‚Ì•ÒW */void DoEditSelectedCommand(ListHandle theList){	Cell	theCell;	short	dataSize;	Str255	dotCmd;		SetPt(&theCell,0,0);	if (LGetSelect(true,&theCell,theList)) /* ‘I‘ğ‚³‚ê‚Ä‚¢‚é */	{		dataSize=255;		LGetCell(&dotCmd[1],&dataSize,theCell,theList);		dotCmd[0]=dataSize;		if (DoEditDotCommand(dotCmd,theList) == ok) /* •ÏX‚³‚ê‚½ */			LSetCell(&dotCmd[1],dotCmd[0],theCell,theList);	}	else SysBeep(0);}/* ‘I‘ğƒRƒ}ƒ“ƒh‚Ìíœ */void DoDeleteSelectedCommand(ListHandle theList){	Cell	theCell;	short	dataSize;	Str255	dotCmd;		SetPt(&theCell,0,0);	if (LGetSelect(true,&theCell,theList)) /* ‘I‘ğ‚³‚ê‚Ä‚¢‚é */	{		dataSize=255;		LGetCell(&dotCmd[1],&dataSize,theCell,theList);		dotCmd[0]=dataSize;		if (DoDeleteDotCommand(dotCmd,theList) == noErr) /* íœok */			LDelRow(1,theCell.v,theList);	}	else SysBeep(0);}/* ƒ‰ƒCƒuƒ‰ƒŠ•ÒWƒ_ƒCƒAƒƒO‚ÌƒtƒBƒ‹ƒ^ */pascal Boolean EditLibDialogFilter(DialogPtr theDialog,EventRecord *theEvent,short *theItemHit){	Boolean		eventHandled=false;	WindowPtr	theWindow;	short		part;	char		key;	ListHandle	theList;	Rect		box;		switch (theEvent->what)	{		case updateEvt:			theWindow=(WindowPtr)theEvent->message;			if (theWindow == GetDialogWindow(theDialog))			{				Boolean	active;				GrafPtr	port;				RgnHandle	rgn=NewRgn();								GetPort(&port);				theList=(ListHandle)GetWRefCon(GetDialogWindow(theDialog));				active=GetListActive(theList);								SetPortDialogPort(theDialog);				BeginUpdate(GetDialogWindow(theDialog));								DrawDialog(theDialog);				if (isAppearanceAvailable)					SetThemeWindowBackground(theWindow,kThemeBrushWhite,false);				GetPortVisibleRegion(GetWindowPort(theWindow),rgn);				LUpdate(rgn,theList);								GetDialogItemRect(theDialog,kDotCmdListIndex,&box);				if (isAppearanceAvailable)				{					SetThemeWindowBackground(theWindow,(active ? kThemeBrushModelessDialogBackgroundActive :														kThemeBrushModelessDialogBackgroundInactive),false);					//					InsetRect(&box,1,1);					DrawThemeListBoxFrame(&box,active ? kThemeStateActive : kThemeStateInactive);//					InsetRect(&box,-1,-1);					DrawThemeFocusRect(&box,active ? kThemeStateActive : kThemeStateInactive);				}				else				{					InsetRect(&box,-1,-1);					FrameRect(&box);				}				EndUpdate(GetDialogWindow(theDialog));				SetPort(port);			}			else if (theWindow!=nil && GetWindowKind(theWindow)!=kDialogWindowKind)				DoUpdate(theEvent);			break;				case keyDown:		case autoKey:			key=theEvent->message & charCodeMask;			if ((theEvent->modifiers & cmdKey)!=0)				if (key==kPeriod)					key=kEscapeKey;				else if (key == 'K')				{					*theItemHit = kAddDotCmdIndex;					HiliteButton(theDialog,*theItemHit);					eventHandled=true;				}						switch (key)			{				case kReturnKey:				case kEnterKey:					*theItemHit=ok;					HiliteButton(theDialog,ok);					eventHandled=true;					break;								case kEscapeKey:					*theItemHit=cancel;					HiliteButton(theDialog,cancel);					eventHandled=true;					break;								case kDeleteKey: /* DELETE */					*theItemHit=kDeleteDotCmdIndex;					HiliteButton(theDialog,*theItemHit);					eventHandled=true;					break;			}			break;				case mouseDown:			part=FindWindow(theEvent->where,&theWindow);			if (theWindow==GetDialogWindow(theDialog))			{				if (part==inDrag)				{					Rect	myScreenRect;										GetRegionBounds(GetGrayRgn(),&myScreenRect);					DragWindow(theWindow,theEvent->where,&myScreenRect);					eventHandled=true;				}				else if (part == inContent)				{					Point	localPt;										GetDialogItemRect(theDialog,kDotCmdListIndex,&box);					localPt=theEvent->where;					GlobalToLocal(&localPt);					if (PtInRect(localPt,&box))					{						theList=(ListHandle)GetWRefCon(GetDialogWindow(theDialog));						GetListViewBounds(theList,&box);						if (PtInRect(localPt,&box)) /* ƒŠƒXƒg—Ìˆæ */						{							Boolean	doubleClicked;														doubleClicked=MyLClick(localPt,theEvent->when,theList);							FlushEvents(mDownMask,0);							if (doubleClicked)							{								*theItemHit = kEditDotCmdIndex; /* •ÒW */								HiliteButton(theDialog,*theItemHit);							}						}						else /* ƒXƒNƒ[ƒ‹ƒo[—Ìˆæ */						{							if (isAppearanceAvailable)								SetThemeWindowBackground(theWindow,kThemeBrushWhite,false);							LClick(localPt,0,theList);							if (isAppearanceAvailable)								SetThemeWindowBackground(theWindow,kThemeBrushModelessDialogBackgroundActive,false);						}						eventHandled=true;					}				}			}			break;	}		return eventHandled;}/* •`‰æƒRƒ}ƒ“ƒhƒŠƒXƒgƒNƒŠƒbƒNˆ—iƒhƒ‰ƒbƒOAƒ_ƒuƒ‹ƒNƒŠƒbƒNƒTƒ|[ƒgj */Boolean MyLClick(Point localPt,UInt32 time,ListHandle theList){	Cell	theCell;	Rect	listRect,dataBounds,visible;	Rect	upScrollRect,downScrollRect;	Point	pt,cellSize;	Rect	dRect;	short	v,h1,h2,pv;	Handle	dataHandle;	short	size;	short	dataNum;	UInt32	ticks;	short	cellHeight;	WindowPtr	theWindow=GetWindowFromPort(GetListPort(theList));	Pattern	pat;		GetListViewBounds(theList,&listRect);	GetListDataBounds(theList,&dataBounds);	GetListCellSize(theList,&cellSize);	GetListVisibleCells(theList,&visible);	dataNum=dataBounds.bottom;	cellHeight=cellSize.v;		SetPt(&theCell,0,(localPt.v-listRect.top)/cellHeight+visible.top);	if (theCell.v >= dataNum) /* ƒf[ƒ^‚ª‘¶İ‚µ‚È‚¢—Ìˆæ */	{		if (isAppearanceAvailable)			SetThemeWindowBackground(theWindow,kThemeBrushWhite,false);		CancelSelect(theList);		if (isAppearanceAvailable)			SetThemeWindowBackground(theWindow,kThemeBrushModelessDialogBackgroundActive,false);		return false;	}	if (!LGetSelect(false,&theCell,theList)) /* ‘I‘ğ‚³‚ê‚Ä‚¢‚È‚¯‚ê‚Î‘I‘ğ */	{		if (isAppearanceAvailable)			SetThemeWindowBackground(theWindow,kThemeBrushWhite,false);		CancelSelect(theList);		LSetSelect(true,theCell,theList);		if (isAppearanceAvailable)			SetThemeWindowBackground(theWindow,kThemeBrushModelessDialogBackgroundActive,false);	}		#if TARGET_API_MAC_CARBON	GetQDGlobalsGray(&pat);	#else	pat=qd.gray;	#endif		/* ƒ_ƒuƒ‹ƒNƒŠƒbƒN”»’è */	ticks=time+GetDblTime();	SetRect(&dRect,localPt.h-2,localPt.v-2,localPt.h+3,localPt.v+3);	pt=localPt;	while (StillDown() && PtInRect(pt,&dRect) && TickCount()<ticks)		GetMouse(&pt);	if (StillDown())	{		/* ƒhƒ‰ƒbƒO */		upScrollRect=listRect;		upScrollRect.bottom=upScrollRect.top;		upScrollRect.top-=cellHeight;		downScrollRect=listRect;		downScrollRect.top=downScrollRect.bottom;		downScrollRect.bottom+=cellHeight;				PenPat(&pat);		PenMode(srcXor);		h1=listRect.left+1;		h2=listRect.right-1;		pv=-1;				while (StillDown())		{			GetMouse(&pt);			if (PtInRect(pt,&listRect))			{				/* ƒŠƒXƒg—Ìˆæ */				v=(pt.v-listRect.top+cellHeight/2)/cellHeight;				if (v>dataNum) v=dataNum;				v=v*cellHeight+listRect.top-1;				if (pv != v)				{					PenPat(&pat);					PenMode(srcXor);					MoveTo(h1,v);					LineTo(h2,v);					MoveTo(h1,pv);					LineTo(h2,pv);					pv=v;				}			}			else			{				/* ‚»‚Ì‘¼‚Ì—Ìˆæ‚Ìê‡A‘O‚Ìü‚ğÁ‚· */				PenPat(&pat);				PenMode(srcXor);				MoveTo(h1,pv);				LineTo(h2,pv);				pv=-1;								if (PtInRect(pt,&upScrollRect))				{					if (isAppearanceAvailable)						SetThemeWindowBackground(theWindow,kThemeBrushWhite,false);					LScroll(0,-1,theList);					if (isAppearanceAvailable)						SetThemeWindowBackground(theWindow,kThemeBrushModelessDialogBackgroundActive,false);					Delay(5,&ticks);				}				else if (PtInRect(pt,&downScrollRect))				{					if (isAppearanceAvailable)						SetThemeWindowBackground(theWindow,kThemeBrushWhite,false);					LScroll(0,1,theList);					if (isAppearanceAvailable)						SetThemeWindowBackground(theWindow,kThemeBrushModelessDialogBackgroundActive,false);					Delay(5,&ticks);				}			}		}		/* ÅŒã‚ÉAü‚ğÁ‚· */		MoveTo(h1,pv);		LineTo(h2,pv);				if (pv >= 0)		{			/* ƒf[ƒ^‚ğˆÚ“®‚·‚é•K—v‚ª‚ ‚é */			v=(pv+1-listRect.top)/cellHeight+visible.top;						/* ˆÚ“®‚µ‚Ä‚È‚¯‚ê‚Î‚È‚É‚à‚µ‚È‚¢ */			if (v==theCell.v || v==theCell.v+1)			{				PenNormal();				return false;			}						LSetDrawingMode(false,theList);						/* ƒŠƒXƒg‚ÌŒğŠ· */			size=255;			LGetCell(&dataHandle,&size,theCell,theList);			LDelRow(1,theCell.v,theList);			if (theCell.v<v) v--;						LAddRow(1,v,theList);			theCell.v=v;			LSetCell(&dataHandle,size,theCell,theList);			LSetSelect(true,theCell,theList);						LSetDrawingMode(true,theList);			MyInvalWindowRect(theWindow,&listRect);		}				PenNormal();		return false;	}	else	{		EventRecord	followEvent;				/* ƒ_ƒuƒ‹ƒNƒŠƒbƒN”»’è */		ticks=TickCount();		while (TickCount()-ticks<GetDblTime() && PtInRect(pt,&dRect))		{			GetMouse(&pt);			if (EventAvail(mDownMask,&followEvent)) return true;		}		return false;	}}#define	kEditCmdDialogID	146enum {	kDotCmdInputBoxIndex=3,	kDotCmdDisplayBoxIndex=4};/* •`‰æ“_ƒRƒ}ƒ“ƒh‚Ì•ÒWA’Ç‰Á */short DoEditDotCommand(Str255 command,ListHandle theList){	Str255	newCommand;	DialogPtr	theDialog;	short		item;	Str255		tempStr;	GrafPtr	port;	Str255		fontName;	short		fNum;	Rect		box;	ModalFilterUPP	mfUPP=NewModalFilterUPP(EditCmdDialogFilter);	WindowPtr	theWindow=GetWindowFromPort(GetListPort(theList));		GetPort(&port);	{		LActivate(false,theList);		DeactivateWindowControl(theWindow);		MyInvalWindowPortBounds(theWindow);	}	PStrCpy(command,newCommand);	theDialog=GetNewDialog(kEditCmdDialogID,nil,kFirstWindowOfClass);	SetDialogDefaultItem(theDialog,ok);	SetDialogCancelItem(theDialog,cancel);		/* ƒRƒ}ƒ“ƒh */	SetDialogItemText2(theDialog,kDotCmdInputBoxIndex,newCommand);	SelectDialogItemText(theDialog,kDotCmdInputBoxIndex,0,newCommand[0]);	SetPortDialogPort(theDialog);	GetIndString(fontName,150,1);	#if TARGET_API_MAC_CARBON	fNum=FMGetFontFamilyFromName(fontName);	#else	GetFNum(fontName,&fNum);	#endif	TextFont(fNum);	TextSize(12);	GetDialogItemRect(theDialog,kDotCmdDisplayBoxIndex,&box);	TETextBox(&newCommand[1],newCommand[0],&box,teJustLeft);	TextFont(0);		/* ƒ^ƒCƒgƒ‹ */	GetIndString(tempStr,157,(newCommand[0] ? 2 : 1));	SetWTitle(GetDialogWindow(theDialog),tempStr);	ShowWindow(GetDialogWindow(theDialog));		item=3;	while (item != ok && item != cancel)	{		ModalDialog(mfUPP,&item);				switch (item)		{			case kDotCmdInputBoxIndex:				GetDialogItemText2(theDialog,kDotCmdInputBoxIndex,tempStr);				if (!EqualString(tempStr,newCommand,true,true))				{					if (CheckCommandStr(tempStr)==noErr)					{						PStrCpy(tempStr,newCommand);						MyInvalWindowRect(GetDialogWindow(theDialog),&box);					}					else					{						SysBeep(0);						PStrCpy(newCommand,tempStr);						SetDialogItemText2(theDialog,kDotCmdInputBoxIndex,tempStr);					}				}				break;						case ok:				if (!EqualString(newCommand,command,true,true)) /* •ÏX‚³‚ê‚Ä‚¢‚é */				{					Cell	theCell={0,0};										if (LSearch(&newCommand[1],newCommand[0],nil,&theCell,theList)) /* “¯‚¶‚à‚Ì‚ª‚ ‚é */					{						SysBeep(0);						item = 3;					}					else PStrCpy(newCommand,command);				}				else item = cancel;				break;		}	}		DisposeDialog(theDialog);	DisposeModalFilterUPP(mfUPP);	{		LActivate(true,theList);		ActivateWindowControl(theWindow);		MyInvalWindowPortBounds(theWindow);	}		SetPort(port);	return item;}/* ƒRƒ}ƒ“ƒh•ÒWƒ_ƒCƒAƒƒO‚ÌƒtƒBƒ‹ƒ^ */pascal Boolean EditCmdDialogFilter(DialogPtr theDialog,EventRecord *theEvent,short *theItemHit){	Boolean		eventHandled=false;	WindowPtr	theWindow;	short		part;	char		key;	Rect		box;		switch (theEvent->what)	{		case updateEvt:			theWindow=(WindowPtr)theEvent->message;			if (theWindow == GetDialogWindow(theDialog))			{				Str255	dotCmd,fontName;				short	fNum;				GrafPtr	port;								GetPort(&port);				SetPortDialogPort(theDialog);				BeginUpdate(GetDialogWindow(theDialog));								DrawDialog(theDialog);								GetDialogItemText2(theDialog,kDotCmdInputBoxIndex,dotCmd);//				SetPort(theDialog);				GetIndString(fontName,150,1);				#if TARGET_API_MAC_CARBON				fNum=FMGetFontFamilyFromName(fontName);				#else				GetFNum(fontName,&fNum);				#endif				TextFont(fNum);				TextSize(12);				GetDialogItemRect(theDialog,kDotCmdDisplayBoxIndex,&box);				TETextBox(&dotCmd[1],dotCmd[0],&box,teJustLeft);				TextFont(0);				EndUpdate(GetDialogWindow(theDialog));				SetPort(port);			}			else if (theWindow == GetNextWindow(GetDialogWindow(theDialog)))				eventHandled=EditLibDialogFilter(GetDialogFromWindow(theWindow),theEvent,theItemHit);			else if (theWindow!=nil && GetWindowKind(theWindow)!=kDialogWindowKind)				DoUpdate(theEvent);			break;				case keyDown:		case autoKey:			key=theEvent->message & charCodeMask;			if ((theEvent->modifiers & cmdKey)!=0)				if (key==kPeriod)					key=kEscapeKey;						switch (key)			{				case kReturnKey:				case kEnterKey:					*theItemHit=ok;					HiliteButton(theDialog,ok);					eventHandled=true;					break;								case kEscapeKey:					*theItemHit=cancel;					HiliteButton(theDialog,cancel);					eventHandled=true;					break;			}			break;				case mouseDown:			part=FindWindow(theEvent->where,&theWindow);			if (theWindow==GetDialogWindow(theDialog))			{				if (part==inDrag)				{					Rect	myScreenRect;										GetRegionBounds(GetGrayRgn(),&myScreenRect);					DragWindow(theWindow,theEvent->where,&myScreenRect);					eventHandled=true;				}			}			break;	}		return eventHandled;}/* ƒRƒ}ƒ“ƒh•¶š—ñ‚Ìƒ`ƒFƒbƒN */OSErr CheckCommandStr(Str255 command){	short	i;		if (command[0] > 31) return paramErr; /* 31•¶šˆÈ“à */		for (i=1; i<= command[0]; i++)	{		switch (command[i])		{			case '1':			case '2':			case '3':			case '4':			case '5':			case '6':			case '7':			case '8':			case '9':			case 'q':			case 'w':			case 'e':			case 'a':			case 'd':			case 'z':			case 'x':			case 'c':				break;						default:				return paramErr;		}	}	return noErr;}#define kDeleteCmdDialogID	147/* •`‰æ“_ƒRƒ}ƒ“ƒh‚Ì•ÒWA’Ç‰Á */OSErr DoDeleteDotCommand(Str255 command,ListHandle theList){	GrafPtr		port;	ModalFilterUPP	mfUPP=NewModalFilterUPP(DeleteCmdDialogFilter);	WindowPtr	theWindow=GetWindowFromPort(GetListPort(theList));	Str255		prompt;	DialogPtr	theDialog;	short		item;		GetPort(&port);	{		LActivate(false,theList);		DeactivateWindowControl(theWindow);		MyInvalWindowPortBounds(theWindow);	}		GetIndString(prompt,150,4);	ReplaceString(prompt,command,"\p^0");		ParamText(prompt,"\p","\p","\p");	theDialog=GetNewDialog(150,nil,kFirstWindowOfClass);	SetDialogDefaultItem(theDialog,ok);	SetDialogCancelItem(theDialog,cancel);		ShowWindow(GetDialogWindow(theDialog));		item=3;	while (item != ok && item != cancel)		ModalDialog(mfUPP,&item);		DisposeDialog(theDialog);	DisposeModalFilterUPP(mfUPP);		{		LActivate(true,theList);		ActivateWindowControl(theWindow);		MyInvalWindowPortBounds(theWindow);	}		SetPort(port);	return (item == ok ? noErr : userCanceledErr);}/* ƒRƒ}ƒ“ƒhíœƒ_ƒCƒAƒƒO‚ÌƒtƒBƒ‹ƒ^ */pascal Boolean DeleteCmdDialogFilter(DialogPtr theDialog,EventRecord *theEvent,short *theItemHit){	Boolean		eventHandled=false;	WindowPtr	theWindow;	short		part;	char		key;		switch (theEvent->what)	{		case updateEvt:			theWindow=(WindowPtr)theEvent->message;			if (theWindow == GetNextWindow(GetDialogWindow(theDialog)))				eventHandled=EditLibDialogFilter(GetDialogFromWindow(theWindow),theEvent,theItemHit);			else if (GetWindowKind(theWindow)!=kDialogWindowKind && theWindow!=nil)				DoUpdate(theEvent);			break;				case keyDown:		case autoKey:			key=theEvent->message & charCodeMask;			if ((theEvent->modifiers & cmdKey)!=0)				if (key==kPeriod)					key=kEscapeKey;						switch (key)			{				case kReturnKey:				case kEnterKey:					*theItemHit=ok;					HiliteButton(theDialog,ok);					eventHandled=true;					break;								case kEscapeKey:					*theItemHit=cancel;					HiliteButton(theDialog,cancel);					eventHandled=true;					break;			}			break;				case mouseDown:			part=FindWindow(theEvent->where,&theWindow);			if (theWindow==GetDialogWindow(theDialog))			{				if (part==inDrag)				{					Rect	myScreenRect;										GetRegionBounds(GetGrayRgn(),&myScreenRect);					DragWindow(theWindow,theEvent->where,&myScreenRect);					eventHandled=true;				}			}			break;	}		return eventHandled;}/* ƒhƒbƒgƒtƒHƒ“ƒg‚Åƒ|ƒbƒvƒAƒbƒvƒƒjƒ…[‚ğ•\¦ */long PopUpMenuSelectDotFont(MenuHandle menu,short v,short h,short item){	Str255	fontName;	short	fontID;	#if !TARGET_API_MAC_CARBON	short	sysFontSize;	short	sysFontID;	#endif	long	result;		GetIndString(fontName,150,1);	#if TARGET_API_MAC_CARBON	fontID=FMGetFontFamilyFromName(fontName);	#else	GetFNum(fontName,&fontID);	#endif		#if !TARGET_API_MAC_CARBON	#if TARGET_RT_MAC_CFM	if (gSystemVersion < 0x0850)	#endif	{		/* ƒVƒXƒeƒ€ƒtƒHƒ“ƒg‚ğ•ÏX‚·‚é */		sysFontSize=LMGetSysFontSize();		sysFontID=LMGetSysFontFam();		LMSetSysFontSize(12);		LMSetSysFontFam(fontID);		LMSetLastSPExtra(-1);	}	#if TARGET_RT_MAC_CFM	else	#endif /* TARGET_RT_MAC_CFM */	#endif /* !TARGET_API_MAC_CARBON */	#if TARGET_API_MAC_CARBON || TARGET_RT_MAC_CFM		SetMenuFont(menu,fontID,12);	#endif		/* ƒ|ƒbƒvƒAƒbƒvƒƒjƒ…[‚ğ•\¦‚·‚é */	result=PopUpMenuSelect(menu,v,h,item);		/* ƒVƒXƒeƒ€ƒtƒHƒ“ƒg‚ğŒ³‚É–ß‚· */	#if !TARGET_API_MAC_CARBON	#if TARGET_RT_MAC_CFM	if (gSystemVersion < 0x0850)	#endif	{		LMSetSysFontSize(sysFontSize);		LMSetSysFontFam(sysFontID);		LMSetLastSPExtra(-1);	}	#endif		return result;}const static Rect	gDotLibCmdPopRect={0x12,0x54,0x1e,0x61};/* •`‰æ“_ƒpƒŒƒbƒg‚ÌÄ•`‰æ */void UpdateDotModePalette(void){	WindowPtr	theWindow;	PaintWinRec	*eWinRec;	PicHandle	backPic;		theWindow=MyFrontNonFloatingWindow();	if (theWindow==nil || GetExtWindowKind(theWindow)!=kWindowTypePaintWindow)	{		HideReferencedWindow(DotModePalette);		return;	}		eWinRec=GetPaintWinRec(theWindow);	if (!eWinRec->isDotMode)	{		HideReferencedWindow(DotModePalette);		return;	}		backPic=GetPicture(148);	DrawPicture(backPic,&(**backPic).picFrame);		if (CountCmdNum()<=0) /* ƒf[ƒ^‚ª‚È‚¢ */	{		PicHandle	nPic;				nPic=GetPicture(133);		DrawPicture(nPic,&gDotLibCmdPopRect);	}		UpdateSelectedLib(gDotLibName);	UpdateRecordedCommand(gDotCommand);	UpdateInputCommand(eWinRec->dotCommand);}/* ƒRƒ}ƒ“ƒh”‚ğƒ`ƒFƒbƒN‚·‚é */short CountCmdNum(void){	Handle	hand;	short	cmdNum;		if (gDotLibRefNum <= 0) return -1;		UseResFile(gDotLibRefNum);	hand=Get1Resource('STR#',128);	if (hand==nil)	{		UseResFile(gApplRefNum);		return -1;	}	if (GetHandleSize(hand)<sizeof(short))	{		ReleaseResource(hand);		UseResFile(gApplRefNum);		return -1;	}	cmdNum=**(short **)hand;	ReleaseResource(hand);	UseResFile(gApplRefNum);		return cmdNum;}/* ƒRƒ}ƒ“ƒhƒ|ƒbƒvƒAƒbƒv‚ğƒAƒbƒvƒf[ƒg‚³‚¹‚é */void UpdateDotCmdPop(void){	GrafPtr	port;		GetPort(&port);	SetPortWindowPort(DotModePalette);	MyInvalWindowRect(DotModePalette,&gDotLibCmdPopRect);	SetPort(port);}/* ƒ‰ƒCƒuƒ‰ƒŠ–¼‚ğƒAƒbƒvƒf[ƒg‚³‚¹‚é */void UpdateSelectedLib(Str31 libName){	Str31	temp;	Rect	r;	RgnHandle	clipRgn=NewRgn();		GetClip(clipRgn);		TextMode(srcCopy);	TextFont(applFont);	TextSize(9);		SetRect(&r,0x05,0x03,0x4f,0x0E);	ClipRect(&r);	PStrCpy(libName,temp);	TruncString(0x4f-0x05,temp,truncEnd);	OffsetRect(&r,0,-1);	TETextBox(&temp[1],temp[0],&r,teJustLeft);		SetClip(clipRgn);	DisposeRgn(clipRgn);}/* ‹L˜^ƒRƒ}ƒ“ƒh‚ğƒAƒbƒvƒf[ƒg‚³‚¹‚é */void UpdateRecordedCommand(Str31 command){	Str255	fontName;	short	fNum;	Rect	r;	Str31	temp;		GetIndString(fontName,150,1);	#if TARGET_API_MAC_CARBON	fNum=FMGetFontFamilyFromName(fontName);	#else	GetFNum(fontName,&fNum);	#endif		TextMode(srcCopy);	TextFont(fNum);	TextSize(12);		SetRect(&r,0x05,19,0x4f,0x1b);	PStrCpy(command,temp);	TruncString(0x4f-0x05,temp,truncEnd);	TETextBox(&temp[1],temp[0],&r,teJustLeft);}/* “ü—Í’†ƒRƒ}ƒ“ƒh‚¾‚¯‚ğƒAƒbƒvƒf[ƒg‚³‚¹‚é */void UpdateInputCommand(Str31 command){	Str255	fontName;	short	fNum;	Rect	r;		GetIndString(fontName,150,1);	#if TARGET_API_MAC_CARBON	fNum=FMGetFontFamilyFromName(fontName);	#else	GetFNum(fontName,&fNum);	#endif		TextMode(srcCopy);	TextFont(fNum);	TextSize(12);		SetRect(&r,0x05,0x22,0x60,0x3f);	TETextBox(&command[1],command[0],&r,teJustLeft);}
+/* ------------------------------------------------------------ */
+/*  DotPalette.c                                                */
+/*     æç”»ç‚¹ãƒ‘ãƒ¬ãƒƒãƒˆå‡¦ç†                                       */
+/*                                                              */
+/*                 2001.11.4 - 2001.11.4  naoki iimura        	*/
+/* ------------------------------------------------------------ */
+
+/* includes */
+#ifdef __APPLE_CC__
+#include	<Carbon/Carbon.h>
+#else
+#endif
+
+#include	"Globals.h"
+#include	"MenuRoutines.h"
+#include	"UsefulRoutines.h"
+#include	"IconParty.h"
+#include	"WindowRoutines.h"
+#include	"Preferences.h"
+#include	"PaintRoutines.h"
+#include	"DotPalette.h"
+#include	"PreCarbonSupport.h"
+#include	"UpdateCursor.h"
+
+
+static void	DoDotLibPop(short h,short v);
+static void	DoDotCmdPop(short h,short v);
+static void	DoRecDotPop(short h,short v);
+static void	DoInputDotPop(short h,short v);
+static void	DoLibNamePop(short h,short v);
+
+static void	AddCmdToLib(void);
+
+static short	AddNewDotLib(FSSpec *theFile);
+static void	AddNewDotLibMain(FSSpec *theFile);
+
+static void	DoEditLibrary(void);
+static pascal Boolean	EditLibDialogFilter(DialogPtr theDialog,EventRecord *theEvent,short *theItemHit);
+static Boolean	MyLClick(Point localPt,UInt32 time,ListHandle theList);
+static void	DoEditSelectedCommand(ListHandle theList);
+static short	DoEditDotCommand(Str255 command,ListHandle theList);
+static pascal Boolean	EditCmdDialogFilter(DialogPtr theDialog,EventRecord *theEvent,short *theItemHit);
+static OSErr	CheckCommandStr(Str255 command);
+static void	DoDeleteSelectedCommand(ListHandle theList);
+static OSErr	DoDeleteDotCommand(Str255 command,ListHandle theList);
+static pascal Boolean	DeleteCmdDialogFilter(DialogPtr theDialog,EventRecord *theEvent,short *theItemHit);
+
+static void	UpdateSelectedLib(Str31 libName);
+static void	UpdateDotCmdPop(void);
+static short	CountCmdNum(void);
+
+static long	PopUpMenuSelectDotFont(MenuHandle menu,short v,short h,short item);
+
+
+#define	DOTERR_RESID	4002
+#define	DOTERR1	1
+#define	DOTERR2	2
+#define	DOTERR3	3
+
+
+extern WindowPtr	DotModePalette;
+
+
+/* æç”»ç‚¹ãƒ‘ãƒ¬ãƒƒãƒˆã®ã‚¯ãƒªãƒƒã‚¯ */
+void ClickDotModePalette(Point localPt)
+{
+	Rect	r;
+	
+	/* ãƒ©ã‚¤ãƒ–ãƒ©ãƒªãƒãƒƒãƒ—ã‚¢ãƒƒãƒ— */
+	SetRect(&r,0x55,0x03,0x60,0x0e);
+	if (PtInRect(localPt,&r))
+		DoDotLibPop(0x55,0x03);
+	else
+	{
+		/* ã‚³ãƒãƒ³ãƒ‰ãƒãƒƒãƒ—ã‚¢ãƒƒãƒ— */
+		SetRect(&r,0x55,0x12,0x60,0x1d);
+		if (PtInRect(localPt,&r))
+			DoDotCmdPop(0x55,0x12);
+		else
+		{
+			/* è¨˜éŒ²ã‚³ãƒãƒ³ãƒ‰ãƒãƒƒãƒ—ã‚¢ãƒƒãƒ— */
+			SetRect(&r,0x05,19,0x4f,0x1b);
+			if (PtInRect(localPt,&r))
+				DoRecDotPop(localPt.h,localPt.v);
+			else
+			{
+				/* å…¥åŠ›ä¸­ã‚³ãƒãƒ³ãƒ‰ãƒãƒƒãƒ—ã‚¢ãƒƒãƒ— */
+				SetRect(&r,0x05,0x22,0x60,0x3f);
+				if (PtInRect(localPt,&r))
+					DoInputDotPop(localPt.h,localPt.v);
+				else
+				{
+					/* ãƒ©ã‚¤ãƒ–ãƒ©ãƒªå */
+					SetRect(&r,0x05,0x03,0x4f,0x0e);
+					if (PtInRect(localPt,&r))
+						DoLibNamePop(localPt.h,localPt.v);
+				}
+			}
+		}
+	}
+}
+
+/* ãƒ©ã‚¤ãƒ–ãƒ©ãƒªãƒãƒƒãƒ—ã‚¢ãƒƒãƒ— */
+void DoDotLibPop(short h,short v)
+{
+	MenuHandle	menu;
+	FSSpec		theSpec;
+	long		index=1;
+	Boolean		isDirectory;
+	long		selItem;
+	OSErr		err;
+	FInfo	fileInfo;
+	short		itemNum=0;
+	Point		popPt;
+	short		item,checkItem=1;
+	Boolean	cmdDown;
+	KeyMap	theKeys;
+	
+	/* ãƒ©ã‚¤ãƒ–ãƒ©ãƒªãƒ•ã‚©ãƒ«ãƒ€ãŒå­˜åœ¨ã—ãªã„å ´åˆã¯ãªã«ã‚‚ã—ãªã„ */
+	if (!isDotLibAvailable) return;
+	
+	/* ãƒ©ã‚¤ãƒ–ãƒ©ãƒªãƒ•ã‚©ãƒ«ãƒ€ã«ã‚ã‚‹ãƒ©ã‚¤ãƒ–ãƒ©ãƒªãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒªã‚¹ãƒˆã‚’ä½œã‚Šã€ãƒ¡ãƒ‹ãƒ¥ãƒ¼åŒ– */
+	menu=GetMenu(mDotLibPop);
+	
+	theSpec.vRefNum=gDotLibVRefNum;
+	theSpec.parID=gDotLibFolderID;
+	
+	while (GetFile(&theSpec,index++,&isDirectory)==noErr)
+	{
+		if (!isDirectory)
+		{
+			err=FSpGetFInfo(&theSpec,&fileInfo);
+			if (fileInfo.fdType==kDotModeLibFileType)
+			{
+				InsertMenuItem(menu,"\p ",itemNum++);
+				SetMenuItemText(menu,itemNum,theSpec.name);
+				if (EqualString(theSpec.name,gDotLibName,false,true))
+				{
+					CheckMenuItem(menu,itemNum,true);
+					checkItem=itemNum;
+				}
+			}
+		}
+	}
+	
+	SetPt(&popPt,h,v);
+	LocalToGlobal(&popPt);
+	
+	InsertMenu(menu,-1);
+	selItem=PopUpMenuSelectWFontSize(menu,popPt.v,popPt.h,checkItem,9);
+	
+	GetKeys(theKeys);
+	cmdDown=BitTst(theKeys,48);
+	
+	item=LoWord(selItem);
+	if (item>0)
+	{
+		Str255	name;
+		
+		if (item > itemNum)
+		{
+			if (AddNewDotLib(&theSpec)==ok)
+				AddNewDotLibMain(&theSpec);
+		}
+		else
+		{
+			/* ãƒ©ã‚¤ãƒ–ãƒ©ãƒªãƒ•ã‚¡ã‚¤ãƒ«ã®specã‚’å¾—ã‚‹ */
+			GetMenuItemText(menu,item,name);
+			err=FSMakeFSSpec(gDotLibVRefNum,gDotLibFolderID,name,&theSpec);
+			if (err==noErr)
+				SetDotLibMain(&theSpec);
+		}
+	}
+	DeleteMenu(mDotLibPop);
+	ReleaseResource((Handle)menu);
+}
+
+/* æç”»ç‚¹ãƒ©ã‚¤ãƒ–ãƒ©ãƒªã®ä½œæˆ */
+short AddNewDotLib(FSSpec *theFile)
+{
+	Str255		name;
+	DialogPtr	theDialog;
+	short		item=3;
+	ModalFilterUPP	mfUPP=NewModalFilterUPP(MyModalDialogFilter);
+	OSErr		err;
+	
+	MySetCursor(0);
+	DeactivateFloatersAndFirstDocumentWindow();
+	theDialog=GetNewDialog(142,nil,kFirstWindowOfClass);
+	SetDialogDefaultItem(theDialog,ok);
+	SetDialogCancelItem(theDialog,cancel);
+	SelectDialogItemText(theDialog,3,0,255);
+	ShowWindow(GetDialogWindow(theDialog));
+	
+	while (item!=ok && item!=cancel)
+	{
+		ModalDialog(mfUPP,&item);
+		
+		if (item==ok)
+		{
+			GetDialogItemText2(theDialog,3,name);
+			if (name[0]>31)
+			{
+				ErrorAlertFromResource(DOTERR_RESID,DOTERR1);
+				item=3;
+				continue;
+			}
+			ReplaceString(name,"\p:","\p-");
+			err=FSMakeFSSpec(gDotLibVRefNum,gDotLibFolderID,name,theFile);
+			if (err==noErr)
+			{
+				ErrorAlertFromResource(DOTERR_RESID,DOTERR2);
+				item=3;
+				continue;
+			}
+			else if (err!=fnfErr)
+			{
+				ErrorAlertFromResource(DOTERR_RESID,DOTERR3);
+				item=cancel;
+			}
+		}
+	}
+	
+	DisposeDialog(theDialog);
+	DisposeModalFilterUPP(mfUPP);
+	ActivateFloatersAndFirstDocumentWindow();
+	
+	return item;
+}
+
+/* æç”»ç‚¹ãƒ©ã‚¤ãƒ–ãƒ©ãƒªã®ä½œæˆï¼ˆãƒ¡ã‚¤ãƒ³ï¼‰ */
+void AddNewDotLibMain(FSSpec *theFile)
+{
+	short	num=0;
+	short	refNum;
+	
+	FSpCreateResFile(theFile,kIconPartyCreator,kDotModeLibFileType,smSystemScript);
+	if (ResError())
+	{
+		ErrorAlertFromResource(DOTERR_RESID,DOTERR3);
+		return;
+	}
+	
+	/* ä¸­èº«ãŒç©ºã®'STR#'ãƒªã‚½ãƒ¼ã‚¹ã‚’ä½œã‚‹ */
+	refNum=FSpOpenResFile(theFile,fsWrPerm);
+	if (refNum>0)
+	{
+		UseResFile(refNum);
+		AddDataToPrefs(&num,sizeof(num),'STR#',128,"\p");
+		CloseResFile(refNum);
+	}
+	
+	SetDotLibMain(theFile);
+}
+
+/* æç”»ç‚¹ãƒ©ã‚¤ãƒ–ãƒ©ãƒªã®æŒ‡å®š */
+void SetDotLibMain(FSSpec *theFile)
+{
+	short	refNum;
+	GrafPtr	port;
+	
+	refNum=FSpOpenResFile(theFile,fsRdWrPerm);
+	
+	if (refNum > 0)
+	{
+		if (refNum == gDotLibRefNum) return;
+		
+		/* ãƒ©ã‚¤ãƒ–ãƒ©ãƒªãƒ•ã‚¡ã‚¤ãƒ«ãŒé–‹ã‹ã‚Œã¦ã„ã‚Œã°é–‰ã˜ã‚‹ */
+		if (gDotLibRefNum > 0) CloseResFile(gDotLibRefNum);
+		gDotLibRefNum=refNum;
+		
+		UseResFile(gApplRefNum);
+		PStrCpy(theFile->name,gDotLibName);
+		
+		GetPort(&port);
+		SetPortWindowPort(DotModePalette);
+		UpdateSelectedLib(gDotLibName);
+		UpdateDotCmdPop();
+		SetPort(port);
+	}
+	else
+		SysBeep(0);
+}
+
+/* ã‚³ãƒãƒ³ãƒ‰ãƒãƒƒãƒ—ã‚¢ãƒƒãƒ— */
+void DoDotCmdPop(short h,short v)
+{
+	MenuHandle	menu;
+	short		cmdNum;
+	short		i;
+	Str255		command;
+	Point		popPt;
+	long		selItem;
+	short		item,checkItem=0;
+	KeyMap		theKeys;
+	Boolean		cmdDown;
+	
+	/* ãƒ©ã‚¤ãƒ–ãƒ©ãƒªãƒ•ã‚¡ã‚¤ãƒ«ãŒé–‹ã‹ã‚Œã¦ã„ãªã„ã€ã‚ã‚‹ã„ã¯ä¸­èº«ãŒç©ºã®å ´åˆã¯ä½•ã‚‚ã—ãªã„ */
+	if ((cmdNum=CountCmdNum())<=0) return;
+	
+	/* ãƒ©ã‚¤ãƒ–ãƒ©ãƒªãƒ•ã‚¡ã‚¤ãƒ«ã«å«ã¾ã‚Œã‚‹ã‚³ãƒãƒ³ãƒ‰åˆ—ã‚’å–ã‚Šå‡ºã—ã€ãƒ¡ãƒ‹ãƒ¥ãƒ¼åŒ– */
+	UseResFile(gDotLibRefNum);
+	
+	menu=GetMenu(mDotCmdPop);
+	
+	for (i=1; i<=cmdNum; i++)
+	{
+		GetIndString(command,128,i);
+		InsertMenuItem(menu,command,i-1);
+		if (EqualString(command,gDotCommand,true,true))
+		{
+			CheckMenuItem(menu,i,true);
+			checkItem=i;
+		}
+	}
+	
+	UseResFile(gApplRefNum);
+	SetPt(&popPt,h,v);
+	LocalToGlobal(&popPt);
+	
+	InsertMenu(menu,-1);
+	selItem=PopUpMenuSelectDotFont(menu,popPt.v,popPt.h,checkItem);
+	
+	GetKeys(theKeys);
+	cmdDown=BitTst(theKeys,48);
+	
+	item=LoWord(selItem);
+	
+	if (item>0)
+	{
+		if (cmdDown)
+		{
+			/* ã‚³ãƒãƒ³ãƒ‰å‰Šé™¤ */
+			Handle	h;
+			Size	s;
+			Ptr		p,p2;
+			
+			UseResFile(gDotLibRefNum);
+			h=Get1Resource('STR#',128);
+			s=GetHandleSize(h);
+			HLock(h);
+			p=(*h)+sizeof(short);
+			for (i=1; i<=cmdNum; i++)
+			{
+				p2=p+p[0]+1;
+				if (i==item)
+				{
+					BlockMoveData(p2,p,s+(*h)-p2);
+					break;
+				}
+				p=p2;
+			}
+			(**(short **)h)--;
+			HUnlock(h);
+			SetHandleSize(h,s-p[0]-1);
+			ChangedResource(h);
+			WriteResource(h);
+			UseResFile(gApplRefNum);
+			
+			if (cmdNum==1) UpdateDotCmdPop();
+		}
+		else
+		{
+			/* é¸ã°ã‚ŒãŸã‚³ãƒãƒ³ãƒ‰ã‚’å¾—ã‚‹ */
+			Str255	cmd;
+			GrafPtr	port;
+			
+			GetMenuItemText(menu,item,cmd);
+			if (cmd[0]>30)
+			{
+				cmd[0]=30; /* é•·ã™ãã‚‹æ™‚ã¯çŸ­ãã™ã‚‹ */
+				SysBeep(0);
+			}
+			PStrCpy(cmd,gDotCommand);
+			
+			GetPort(&port);
+			SetPortWindowPort(DotModePalette);
+			UpdateRecordedCommand(gDotCommand);
+			SetPort(port);
+		}
+	}
+	
+	DeleteMenu(mDotCmdPop);
+	ReleaseResource((Handle)menu);
+}
+
+/* è¨˜éŒ²ã‚³ãƒãƒ³ãƒ‰ãƒãƒƒãƒ—ã‚¢ãƒƒãƒ— */
+void DoRecDotPop(short h,short v)
+{
+	MenuHandle	menu;
+	long		selItem;
+	short		item;
+	Point		popPt;
+	WindowPtr	theWindow=MyFrontNonFloatingWindow();
+	
+	/* ã‚³ãƒãƒ³ãƒ‰ãŒãªã«ã‚‚è¨˜éŒ²ã•ã‚Œã¦ã„ãªã„æ™‚ã¯ãªã«ã‚‚ã—ãªã„ */
+	if (gDotCommand[0]==0) return;
+	if (theWindow==nil) return;
+	if (GetExtWindowKind(theWindow) != kWindowTypePaintWindow) return;
+	
+	menu=GetMenu(mDotRecPop);
+	SetPt(&popPt,h,v);
+	LocalToGlobal(&popPt);
+	
+	if (CountCmdNum()<0)
+		MyDisableMenuItem(menu,iAddCmdToLib);
+	
+	InsertMenu(menu,-1);
+	selItem=PopUpMenuSelectWFontSize(menu,popPt.v,popPt.h,0,9);
+	
+	item=LoWord(selItem);
+	switch (item)
+	{
+		case iInputCmd:
+			ExecuteCommand(theWindow,gDotCommand);
+			break;
+		
+		case iAddCmdToLib:
+			AddCmdToLib();
+			break;
+	}
+	DeleteMenu(mDotRecPop);
+	ReleaseResource((Handle)menu);
+}
+
+/* è¨˜éŒ²ä¸­ã‚³ãƒãƒ³ãƒ‰ã‚’ãƒ©ã‚¤ãƒ–ãƒ©ãƒªã«è¿½åŠ  */
+void AddCmdToLib(void)
+{
+	short	cmdNum;
+	short	i;
+	Boolean	dup=false;
+	Str255	cmd;
+	Handle	h;
+	
+	cmdNum=CountCmdNum();
+	if (cmdNum<0)
+	{
+		SysBeep(0);
+		return;
+	}
+	
+	UseResFile(gDotLibRefNum);
+	
+	/* é‡è¤‡ãƒã‚§ãƒƒã‚¯ */
+	for (i=1; i<=cmdNum; i++)
+	{
+		GetIndString(cmd,128,i);
+		if (EqualString(cmd,gDotCommand,true,true))
+		{
+			dup=true;
+			break;
+		}
+	}
+	if (dup)
+	{
+		SysBeep(0);
+		UseResFile(gApplRefNum);
+		return;
+	}
+	
+	/* è¿½åŠ å‡¦ç† */
+	h=Get1Resource('STR#',128);
+	if (h==nil)
+	{
+		h=NewHandleClear(sizeof(short));
+		AddResource(h,'STR#',128,"\p");
+	}
+	PtrAndHand(&gDotCommand[0],h,gDotCommand[0]+1);
+	HLock(h);
+	(**(short **)h)++;
+	HUnlock(h);
+	
+	ChangedResource(h);
+	WriteResource(h);
+	UpdateResFile(gDotLibRefNum);
+	
+	UseResFile(gApplRefNum);
+	
+	if (cmdNum==0) UpdateDotCmdPop();
+}
+
+/* å…¥åŠ›ä¸­ã‚³ãƒãƒ³ãƒ‰ãƒãƒƒãƒ—ã‚¢ãƒƒãƒ— */
+void DoInputDotPop(short h,short v)
+{
+	MenuHandle	menu;
+	long		selItem;
+	short		item;
+	Point		popPt;
+	WindowPtr	theWindow=MyFrontNonFloatingWindow();
+	PaintWinRec	*eWinRec;
+	
+	/* å…¥åŠ›ã•ã‚Œã¦ã„ã‚‹ã‚³ãƒãƒ³ãƒ‰ãŒãªã„å ´åˆã¯ãªã«ã‚‚ã—ãªã„ */
+	if (theWindow==nil) return;
+	if (GetExtWindowKind(theWindow) != kWindowTypePaintWindow) return;
+	eWinRec=GetPaintWinRec(theWindow);
+	if (eWinRec->dotCommand[0]==0) return;
+	
+	menu=GetMenu(mDotInpPop);
+	SetPt(&popPt,h,v);
+	LocalToGlobal(&popPt);
+	
+	InsertMenu(menu,-1);
+	selItem=PopUpMenuSelectWFontSize(menu,popPt.v,popPt.h,0,9);
+	
+	item=LoWord(selItem);
+	switch (item)
+	{
+		case iClearCmd:
+			HandleDotKey(keyDown,0x1b,theWindow);
+			break;
+		
+		case iRecordCmd:
+			HandleDotKey(keyDown,'0',theWindow);
+			break;
+	}
+	DeleteMenu(mDotInpPop);
+	ReleaseResource((Handle)menu);
+}
+
+/* ãƒ©ã‚¤ãƒ–ãƒ©ãƒªåãƒãƒƒãƒ—ã‚¢ãƒƒãƒ—ãƒ¡ãƒ‹ãƒ¥ãƒ¼ */
+void DoLibNamePop(short h,short v)
+{
+	MenuHandle	menu;
+	long		selItem;
+	short		item;
+	Point		popPt;
+	short		cmdNum;
+	
+	/* ãƒ©ã‚¤ãƒ–ãƒ©ãƒªãƒ•ã‚¡ã‚¤ãƒ«ãŒé–‹ã‹ã‚Œã¦ã„ãªã„ã€ã‚ã‚‹ã„ã¯ä¸­èº«ãŒç©ºã®å ´åˆã¯ä½•ã‚‚ã—ãªã„ */
+	if ((cmdNum=CountCmdNum())<=0) return;
+	
+	SetPt(&popPt,h,v);
+	/* ãƒ€ãƒ–ãƒ«ã‚¯ãƒªãƒƒã‚¯åˆ¤å®š */
+	{
+		Rect	box;
+		Point	newPt;
+		Boolean	isDoubleClick=false;
+		UInt32	clickTime=TickCount()+GetDblTime();
+		EventRecord	followEvent;
+		
+		SetRect(&box,popPt.h-2,popPt.v-2,popPt.h+2,popPt.v+2);
+		while(TickCount()<clickTime && !isDoubleClick)
+		{
+			GetMouse(&newPt);
+			if (!PtInRect(newPt,&box)) break;
+			isDoubleClick=EventAvail(mDownMask,&followEvent);
+		}
+		if (isDoubleClick) /* ãƒ€ãƒ–ãƒ«ã‚¯ãƒªãƒƒã‚¯ã¯æç”»ç‚¹ãƒ¢ãƒ¼ãƒ‰ */
+		{
+			FlushEvents(mDownMask,0);
+			DoEditLibrary();
+			return;
+		}
+	}
+	
+	menu=GetMenu(mDotLibNamePop);
+	LocalToGlobal(&popPt);
+	
+	InsertMenu(menu,-1);
+	selItem=PopUpMenuSelectWFontSize(menu,popPt.v,popPt.h,0,9);
+	
+	item=LoWord(selItem);
+	switch (item)
+	{
+		case iEditLib:
+			DoEditLibrary();
+			break;
+	}
+	DeleteMenu(mDotLibNamePop);
+	ReleaseResource((Handle)menu);
+}
+
+#define	kEditLibDialogID	145
+enum {
+	kDotCmdListIndex=3,
+	kAddDotCmdIndex=4,
+	kEditDotCmdIndex=5,
+	kDeleteDotCmdIndex=6,
+};
+
+/* æç”»ç‚¹ãƒ©ã‚¤ãƒ–ãƒ©ãƒªã®ç·¨é›† */
+void DoEditLibrary(void)
+{
+	DialogPtr	theDialog;
+	ListHandle	theList;
+	Rect		listView,dataBounds;
+	Point		cellSize;
+	short		item=3;
+	short		i,cmdNum;
+	ModalFilterUPP	mfUPP=NewModalFilterUPP(EditLibDialogFilter);
+	GrafPtr		port;
+	Str255		fontName;
+	short		fNum;
+	Str255		dotCmd;
+	Cell		theCell;
+	
+	GetPort(&port);
+	MySetCursor(0);
+	DeactivateFloatersAndFirstDocumentWindow();
+	theDialog=GetNewDialog(kEditLibDialogID,nil,kFirstWindowOfClass);
+	SetDialogDefaultItem(theDialog,ok);
+	SetDialogCancelItem(theDialog,cancel);
+	
+	/* ãƒªã‚¹ãƒˆ */
+	GetDialogItemRect(theDialog,kDotCmdListIndex,&listView);
+	listView.right-=kScrollBarWidth; /* scroll bar */
+	SetRect(&dataBounds,0,0,1,(cmdNum=CountCmdNum()));
+	SetPt(&cellSize,listView.right - listView.left,10);
+	
+	SetPortDialogPort(theDialog);
+	GetIndString(fontName,150,1);
+	#if TARGET_API_MAC_CARBON
+	fNum=FMGetFontFamilyFromName(fontName);
+	#else
+	GetFNum(fontName,&fNum);
+	#endif
+	TextFont(fNum);
+	TextSize(12);
+	
+	theList=LNew(&listView,&dataBounds,cellSize,0,GetDialogWindow(theDialog),false,true,false,true);
+	SetListSelectionFlags(theList,lOnlyOne+lNoNilHilite);
+	SetWRefCon(GetDialogWindow(theDialog),(long)theList);
+	
+	/* ãƒªã‚¹ãƒˆã«é …ç›®ã‚’è¿½åŠ  */
+	UseResFile(gDotLibRefNum);
+	for (i=1; i<=cmdNum; i++)
+	{
+		GetIndString(dotCmd,128,i);
+		SetPt(&theCell,0,i-1);
+		LSetCell(&dotCmd[1],dotCmd[0],theCell,theList);
+	}
+	UseResFile(gApplRefNum);
+	
+	LSetDrawingMode(true,theList);
+	
+	ShowWindow(GetDialogWindow(theDialog));
+	SetPortDialogPort(theDialog);
+	MyInvalWindowPortBounds(GetDialogWindow(theDialog));
+	
+	while (item != ok && item != cancel)
+	{
+		ModalDialog(mfUPP,&item);
+		
+		switch (item)
+		{
+			case kAddDotCmdIndex:
+				dotCmd[0]=0;
+				if (DoEditDotCommand(dotCmd,theList) == ok)
+				{
+					/* ã‚¢ã‚¤ãƒ†ãƒ ã®è¿½åŠ  */
+					GetListDataBounds(theList,&dataBounds);
+					cmdNum = dataBounds.bottom;
+					LAddRow(1,cmdNum,theList);
+					SetPt(&theCell,0,cmdNum++);
+					LSetCell(&dotCmd[1],dotCmd[0],theCell,theList);
+					CancelSelect(theList);
+					LSetSelect(true,theCell,theList);
+					LScroll(0,cmdNum,theList);
+				}
+				break;
+			
+			case kEditDotCmdIndex:
+				DoEditSelectedCommand(theList);
+				break;
+			
+			case kDeleteDotCmdIndex:
+				DoDeleteSelectedCommand(theList);
+				break;
+		}
+	}
+	
+	if (item == ok)
+	{
+		/* ä¿å­˜ã™ã‚‹ */
+		Handle	resHandle;
+		short	dataSize;
+		OSErr	err;
+		
+		UseResFile(gDotLibRefNum);
+		resHandle=Get1Resource('STR#',128);
+		SetHandleSize(resHandle,0);
+		
+		/* ã‚¢ã‚¤ãƒ†ãƒ æ•° */
+		GetListDataBounds(theList,&dataBounds);
+		cmdNum = dataBounds.bottom;
+		err=PtrAndHand(&cmdNum,resHandle,sizeof(short));
+		
+		/* å„ã‚¢ã‚¤ãƒ†ãƒ  */
+		theCell.h=0;
+		for (i=0; i<cmdNum; i++)
+		{
+			theCell.v=i;
+			dataSize=255;
+			LGetCell(&dotCmd[1],&dataSize,theCell,theList);
+			dotCmd[0]=dataSize;
+			err=PtrAndHand(&dotCmd[0],resHandle,dotCmd[0]+1);
+		}
+		
+		ChangedResource(resHandle);
+		WriteResource(resHandle);
+		ReleaseResource(resHandle);
+		
+		UseResFile(gApplRefNum);
+	}
+	
+	LDispose(theList);
+	DisposeModalFilterUPP(mfUPP);
+	DisposeDialog(theDialog);
+	ActivateFloatersAndFirstDocumentWindow();
+	SetPort(port);
+}
+
+/* é¸æŠã‚³ãƒãƒ³ãƒ‰ã®ç·¨é›† */
+void DoEditSelectedCommand(ListHandle theList)
+{
+	Cell	theCell;
+	short	dataSize;
+	Str255	dotCmd;
+	
+	SetPt(&theCell,0,0);
+	if (LGetSelect(true,&theCell,theList)) /* é¸æŠã•ã‚Œã¦ã„ã‚‹ */
+	{
+		dataSize=255;
+		LGetCell(&dotCmd[1],&dataSize,theCell,theList);
+		dotCmd[0]=dataSize;
+		if (DoEditDotCommand(dotCmd,theList) == ok) /* å¤‰æ›´ã•ã‚ŒãŸ */
+			LSetCell(&dotCmd[1],dotCmd[0],theCell,theList);
+	}
+	else SysBeep(0);
+}
+
+/* é¸æŠã‚³ãƒãƒ³ãƒ‰ã®å‰Šé™¤ */
+void DoDeleteSelectedCommand(ListHandle theList)
+{
+	Cell	theCell;
+	short	dataSize;
+	Str255	dotCmd;
+	
+	SetPt(&theCell,0,0);
+	if (LGetSelect(true,&theCell,theList)) /* é¸æŠã•ã‚Œã¦ã„ã‚‹ */
+	{
+		dataSize=255;
+		LGetCell(&dotCmd[1],&dataSize,theCell,theList);
+		dotCmd[0]=dataSize;
+		if (DoDeleteDotCommand(dotCmd,theList) == noErr) /* å‰Šé™¤ok */
+			LDelRow(1,theCell.v,theList);
+	}
+	else SysBeep(0);
+}
+
+/* ãƒ©ã‚¤ãƒ–ãƒ©ãƒªç·¨é›†ãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã®ãƒ•ã‚£ãƒ«ã‚¿ */
+pascal Boolean EditLibDialogFilter(DialogPtr theDialog,EventRecord *theEvent,short *theItemHit)
+{
+	Boolean		eventHandled=false;
+	WindowPtr	theWindow;
+	short		part;
+	char		key;
+	ListHandle	theList;
+	Rect		box;
+	
+	switch (theEvent->what)
+	{
+		case updateEvt:
+			theWindow=(WindowPtr)theEvent->message;
+			if (theWindow == GetDialogWindow(theDialog))
+			{
+				Boolean	active;
+				GrafPtr	port;
+				RgnHandle	rgn=NewRgn();
+				
+				GetPort(&port);
+				theList=(ListHandle)GetWRefCon(GetDialogWindow(theDialog));
+				active=GetListActive(theList);
+				
+				SetPortDialogPort(theDialog);
+				BeginUpdate(GetDialogWindow(theDialog));
+				
+				DrawDialog(theDialog);
+				if (isAppearanceAvailable)
+					SetThemeWindowBackground(theWindow,kThemeBrushWhite,false);
+				GetPortVisibleRegion(GetWindowPort(theWindow),rgn);
+				LUpdate(rgn,theList);
+				
+				GetDialogItemRect(theDialog,kDotCmdListIndex,&box);
+				if (isAppearanceAvailable)
+				{
+					SetThemeWindowBackground(theWindow,(active ? kThemeBrushModelessDialogBackgroundActive :
+														kThemeBrushModelessDialogBackgroundInactive),false);
+					
+//					InsetRect(&box,1,1);
+					DrawThemeListBoxFrame(&box,active ? kThemeStateActive : kThemeStateInactive);
+//					InsetRect(&box,-1,-1);
+					DrawThemeFocusRect(&box,active ? kThemeStateActive : kThemeStateInactive);
+				}
+				else
+				{
+					InsetRect(&box,-1,-1);
+					FrameRect(&box);
+				}
+				EndUpdate(GetDialogWindow(theDialog));
+				SetPort(port);
+			}
+			else if (theWindow!=nil && GetWindowKind(theWindow)!=kDialogWindowKind)
+				DoUpdate(theEvent);
+			break;
+		
+		case keyDown:
+		case autoKey:
+			key=theEvent->message & charCodeMask;
+			if ((theEvent->modifiers & cmdKey)!=0)
+				if (key==kPeriod)
+					key=kEscapeKey;
+				else if (key == 'K')
+				{
+					*theItemHit = kAddDotCmdIndex;
+					HiliteButton(theDialog,*theItemHit);
+					eventHandled=true;
+				}
+			
+			switch (key)
+			{
+				case kReturnKey:
+				case kEnterKey:
+					*theItemHit=ok;
+					HiliteButton(theDialog,ok);
+					eventHandled=true;
+					break;
+				
+				case kEscapeKey:
+					*theItemHit=cancel;
+					HiliteButton(theDialog,cancel);
+					eventHandled=true;
+					break;
+				
+				case kDeleteKey: /* DELETE */
+					*theItemHit=kDeleteDotCmdIndex;
+					HiliteButton(theDialog,*theItemHit);
+					eventHandled=true;
+					break;
+			}
+			break;
+		
+		case mouseDown:
+			part=FindWindow(theEvent->where,&theWindow);
+			if (theWindow==GetDialogWindow(theDialog))
+			{
+				if (part==inDrag)
+				{
+					Rect	myScreenRect;
+					
+					GetRegionBounds(GetGrayRgn(),&myScreenRect);
+					DragWindow(theWindow,theEvent->where,&myScreenRect);
+					eventHandled=true;
+				}
+				else if (part == inContent)
+				{
+					Point	localPt;
+					
+					GetDialogItemRect(theDialog,kDotCmdListIndex,&box);
+					localPt=theEvent->where;
+					GlobalToLocal(&localPt);
+					if (PtInRect(localPt,&box))
+					{
+						theList=(ListHandle)GetWRefCon(GetDialogWindow(theDialog));
+						GetListViewBounds(theList,&box);
+						if (PtInRect(localPt,&box)) /* ãƒªã‚¹ãƒˆé ˜åŸŸ */
+						{
+							Boolean	doubleClicked;
+							
+							doubleClicked=MyLClick(localPt,theEvent->when,theList);
+							FlushEvents(mDownMask,0);
+							if (doubleClicked)
+							{
+								*theItemHit = kEditDotCmdIndex; /* ç·¨é›† */
+								HiliteButton(theDialog,*theItemHit);
+							}
+						}
+						else /* ã‚¹ã‚¯ãƒ­ãƒ¼ãƒ«ãƒãƒ¼é ˜åŸŸ */
+						{
+							if (isAppearanceAvailable)
+								SetThemeWindowBackground(theWindow,kThemeBrushWhite,false);
+							LClick(localPt,0,theList);
+							if (isAppearanceAvailable)
+								SetThemeWindowBackground(theWindow,kThemeBrushModelessDialogBackgroundActive,false);
+						}
+						eventHandled=true;
+					}
+				}
+			}
+			break;
+	}
+	
+	return eventHandled;
+}
+
+/* æç”»ã‚³ãƒãƒ³ãƒ‰ãƒªã‚¹ãƒˆã‚¯ãƒªãƒƒã‚¯å‡¦ç†ï¼ˆãƒ‰ãƒ©ãƒƒã‚°ã€ãƒ€ãƒ–ãƒ«ã‚¯ãƒªãƒƒã‚¯ã‚µãƒãƒ¼ãƒˆï¼‰ */
+Boolean MyLClick(Point localPt,UInt32 time,ListHandle theList)
+{
+	Cell	theCell;
+	Rect	listRect,dataBounds,visible;
+	Rect	upScrollRect,downScrollRect;
+	Point	pt,cellSize;
+	Rect	dRect;
+	short	v,h1,h2,pv;
+	Handle	dataHandle;
+	short	size;
+	short	dataNum;
+	UInt32	ticks;
+	short	cellHeight;
+	WindowPtr	theWindow=GetWindowFromPort(GetListPort(theList));
+	Pattern	pat;
+	
+	GetListViewBounds(theList,&listRect);
+	GetListDataBounds(theList,&dataBounds);
+	GetListCellSize(theList,&cellSize);
+	GetListVisibleCells(theList,&visible);
+	dataNum=dataBounds.bottom;
+	cellHeight=cellSize.v;
+	
+	SetPt(&theCell,0,(localPt.v-listRect.top)/cellHeight+visible.top);
+	if (theCell.v >= dataNum) /* ãƒ‡ãƒ¼ã‚¿ãŒå­˜åœ¨ã—ãªã„é ˜åŸŸ */
+	{
+		if (isAppearanceAvailable)
+			SetThemeWindowBackground(theWindow,kThemeBrushWhite,false);
+		CancelSelect(theList);
+		if (isAppearanceAvailable)
+			SetThemeWindowBackground(theWindow,kThemeBrushModelessDialogBackgroundActive,false);
+		return false;
+	}
+	if (!LGetSelect(false,&theCell,theList)) /* é¸æŠã•ã‚Œã¦ã„ãªã‘ã‚Œã°é¸æŠ */
+	{
+		if (isAppearanceAvailable)
+			SetThemeWindowBackground(theWindow,kThemeBrushWhite,false);
+		CancelSelect(theList);
+		LSetSelect(true,theCell,theList);
+		if (isAppearanceAvailable)
+			SetThemeWindowBackground(theWindow,kThemeBrushModelessDialogBackgroundActive,false);
+	}
+	
+	#if TARGET_API_MAC_CARBON
+	GetQDGlobalsGray(&pat);
+	#else
+	pat=qd.gray;
+	#endif
+	
+	/* ãƒ€ãƒ–ãƒ«ã‚¯ãƒªãƒƒã‚¯åˆ¤å®š */
+	ticks=time+GetDblTime();
+	SetRect(&dRect,localPt.h-2,localPt.v-2,localPt.h+3,localPt.v+3);
+	pt=localPt;
+	while (StillDown() && PtInRect(pt,&dRect) && TickCount()<ticks)
+		GetMouse(&pt);
+	if (StillDown())
+	{
+		/* ãƒ‰ãƒ©ãƒƒã‚° */
+		upScrollRect=listRect;
+		upScrollRect.bottom=upScrollRect.top;
+		upScrollRect.top-=cellHeight;
+		downScrollRect=listRect;
+		downScrollRect.top=downScrollRect.bottom;
+		downScrollRect.bottom+=cellHeight;
+		
+		PenPat(&pat);
+		PenMode(srcXor);
+		h1=listRect.left+1;
+		h2=listRect.right-1;
+		pv=-1;
+		
+		while (StillDown())
+		{
+			GetMouse(&pt);
+			if (PtInRect(pt,&listRect))
+			{
+				/* ãƒªã‚¹ãƒˆé ˜åŸŸ */
+				v=(pt.v-listRect.top+cellHeight/2)/cellHeight;
+				if (v>dataNum) v=dataNum;
+				v=v*cellHeight+listRect.top-1;
+				if (pv != v)
+				{
+					PenPat(&pat);
+					PenMode(srcXor);
+					MoveTo(h1,v);
+					LineTo(h2,v);
+					MoveTo(h1,pv);
+					LineTo(h2,pv);
+					pv=v;
+				}
+			}
+			else
+			{
+				/* ãã®ä»–ã®é ˜åŸŸã®å ´åˆã€å‰ã®ç·šã‚’æ¶ˆã™ */
+				PenPat(&pat);
+				PenMode(srcXor);
+				MoveTo(h1,pv);
+				LineTo(h2,pv);
+				pv=-1;
+				
+				if (PtInRect(pt,&upScrollRect))
+				{
+					if (isAppearanceAvailable)
+						SetThemeWindowBackground(theWindow,kThemeBrushWhite,false);
+					LScroll(0,-1,theList);
+					if (isAppearanceAvailable)
+						SetThemeWindowBackground(theWindow,kThemeBrushModelessDialogBackgroundActive,false);
+					Delay(5,&ticks);
+				}
+				else if (PtInRect(pt,&downScrollRect))
+				{
+					if (isAppearanceAvailable)
+						SetThemeWindowBackground(theWindow,kThemeBrushWhite,false);
+					LScroll(0,1,theList);
+					if (isAppearanceAvailable)
+						SetThemeWindowBackground(theWindow,kThemeBrushModelessDialogBackgroundActive,false);
+					Delay(5,&ticks);
+				}
+			}
+		}
+		/* æœ€å¾Œã«ã€ç·šã‚’æ¶ˆã™ */
+		MoveTo(h1,pv);
+		LineTo(h2,pv);
+		
+		if (pv >= 0)
+		{
+			/* ãƒ‡ãƒ¼ã‚¿ã‚’ç§»å‹•ã™ã‚‹å¿…è¦ãŒã‚ã‚‹ */
+			v=(pv+1-listRect.top)/cellHeight+visible.top;
+			
+			/* ç§»å‹•ã—ã¦ãªã‘ã‚Œã°ãªã«ã‚‚ã—ãªã„ */
+			if (v==theCell.v || v==theCell.v+1)
+			{
+				PenNormal();
+				return false;
+			}
+			
+			LSetDrawingMode(false,theList);
+			
+			/* ãƒªã‚¹ãƒˆã®äº¤æ› */
+			size=255;
+			LGetCell(&dataHandle,&size,theCell,theList);
+			LDelRow(1,theCell.v,theList);
+			if (theCell.v<v) v--;
+			
+			LAddRow(1,v,theList);
+			theCell.v=v;
+			LSetCell(&dataHandle,size,theCell,theList);
+			LSetSelect(true,theCell,theList);
+			
+			LSetDrawingMode(true,theList);
+			MyInvalWindowRect(theWindow,&listRect);
+		}
+		
+		PenNormal();
+		return false;
+	}
+	else
+	{
+		EventRecord	followEvent;
+		
+		/* ãƒ€ãƒ–ãƒ«ã‚¯ãƒªãƒƒã‚¯åˆ¤å®š */
+		ticks=TickCount();
+		while (TickCount()-ticks<GetDblTime() && PtInRect(pt,&dRect))
+		{
+			GetMouse(&pt);
+			if (EventAvail(mDownMask,&followEvent)) return true;
+		}
+		return false;
+	}
+}
+
+#define	kEditCmdDialogID	146
+enum {
+	kDotCmdInputBoxIndex=3,
+	kDotCmdDisplayBoxIndex=4
+};
+
+/* æç”»ç‚¹ã‚³ãƒãƒ³ãƒ‰ã®ç·¨é›†ã€è¿½åŠ  */
+short DoEditDotCommand(Str255 command,ListHandle theList)
+{
+	Str255	newCommand;
+	DialogPtr	theDialog;
+	short		item;
+	Str255		tempStr;
+	GrafPtr	port;
+	Str255		fontName;
+	short		fNum;
+	Rect		box;
+	ModalFilterUPP	mfUPP=NewModalFilterUPP(EditCmdDialogFilter);
+	WindowPtr	theWindow=GetWindowFromPort(GetListPort(theList));
+	
+	GetPort(&port);
+	{
+		LActivate(false,theList);
+		DeactivateWindowControl(theWindow);
+		MyInvalWindowPortBounds(theWindow);
+	}
+	PStrCpy(command,newCommand);
+	theDialog=GetNewDialog(kEditCmdDialogID,nil,kFirstWindowOfClass);
+	SetDialogDefaultItem(theDialog,ok);
+	SetDialogCancelItem(theDialog,cancel);
+	
+	/* ã‚³ãƒãƒ³ãƒ‰ */
+	SetDialogItemText2(theDialog,kDotCmdInputBoxIndex,newCommand);
+	SelectDialogItemText(theDialog,kDotCmdInputBoxIndex,0,newCommand[0]);
+	SetPortDialogPort(theDialog);
+	GetIndString(fontName,150,1);
+	#if TARGET_API_MAC_CARBON
+	fNum=FMGetFontFamilyFromName(fontName);
+	#else
+	GetFNum(fontName,&fNum);
+	#endif
+	TextFont(fNum);
+	TextSize(12);
+	GetDialogItemRect(theDialog,kDotCmdDisplayBoxIndex,&box);
+	TETextBox(&newCommand[1],newCommand[0],&box,teJustLeft);
+	TextFont(0);
+	
+	/* ã‚¿ã‚¤ãƒˆãƒ« */
+	GetIndString(tempStr,157,(newCommand[0] ? 2 : 1));
+	SetWTitle(GetDialogWindow(theDialog),tempStr);
+	ShowWindow(GetDialogWindow(theDialog));
+	
+	item=3;
+	while (item != ok && item != cancel)
+	{
+		ModalDialog(mfUPP,&item);
+		
+		switch (item)
+		{
+			case kDotCmdInputBoxIndex:
+				GetDialogItemText2(theDialog,kDotCmdInputBoxIndex,tempStr);
+				if (!EqualString(tempStr,newCommand,true,true))
+				{
+					if (CheckCommandStr(tempStr)==noErr)
+					{
+						PStrCpy(tempStr,newCommand);
+						MyInvalWindowRect(GetDialogWindow(theDialog),&box);
+					}
+					else
+					{
+						SysBeep(0);
+						PStrCpy(newCommand,tempStr);
+						SetDialogItemText2(theDialog,kDotCmdInputBoxIndex,tempStr);
+					}
+				}
+				break;
+			
+			case ok:
+				if (!EqualString(newCommand,command,true,true)) /* å¤‰æ›´ã•ã‚Œã¦ã„ã‚‹ */
+				{
+					Cell	theCell={0,0};
+					
+					if (LSearch(&newCommand[1],newCommand[0],nil,&theCell,theList)) /* åŒã˜ã‚‚ã®ãŒã‚ã‚‹ */
+					{
+						SysBeep(0);
+						item = 3;
+					}
+					else PStrCpy(newCommand,command);
+				}
+				else item = cancel;
+				break;
+		}
+	}
+	
+	DisposeDialog(theDialog);
+	DisposeModalFilterUPP(mfUPP);
+	{
+		LActivate(true,theList);
+		ActivateWindowControl(theWindow);
+		MyInvalWindowPortBounds(theWindow);
+	}
+	
+	SetPort(port);
+	return item;
+}
+
+/* ã‚³ãƒãƒ³ãƒ‰ç·¨é›†ãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã®ãƒ•ã‚£ãƒ«ã‚¿ */
+pascal Boolean EditCmdDialogFilter(DialogPtr theDialog,EventRecord *theEvent,short *theItemHit)
+{
+	Boolean		eventHandled=false;
+	WindowPtr	theWindow;
+	short		part;
+	char		key;
+	Rect		box;
+	
+	switch (theEvent->what)
+	{
+		case updateEvt:
+			theWindow=(WindowPtr)theEvent->message;
+			if (theWindow == GetDialogWindow(theDialog))
+			{
+				Str255	dotCmd,fontName;
+				short	fNum;
+				GrafPtr	port;
+				
+				GetPort(&port);
+				SetPortDialogPort(theDialog);
+				BeginUpdate(GetDialogWindow(theDialog));
+				
+				DrawDialog(theDialog);
+				
+				GetDialogItemText2(theDialog,kDotCmdInputBoxIndex,dotCmd);
+//				SetPort(theDialog);
+				GetIndString(fontName,150,1);
+				#if TARGET_API_MAC_CARBON
+				fNum=FMGetFontFamilyFromName(fontName);
+				#else
+				GetFNum(fontName,&fNum);
+				#endif
+				TextFont(fNum);
+				TextSize(12);
+				GetDialogItemRect(theDialog,kDotCmdDisplayBoxIndex,&box);
+				TETextBox(&dotCmd[1],dotCmd[0],&box,teJustLeft);
+				TextFont(0);
+				EndUpdate(GetDialogWindow(theDialog));
+				SetPort(port);
+			}
+			else if (theWindow == GetNextWindow(GetDialogWindow(theDialog)))
+				eventHandled=EditLibDialogFilter(GetDialogFromWindow(theWindow),theEvent,theItemHit);
+			else if (theWindow!=nil && GetWindowKind(theWindow)!=kDialogWindowKind)
+				DoUpdate(theEvent);
+			break;
+		
+		case keyDown:
+		case autoKey:
+			key=theEvent->message & charCodeMask;
+			if ((theEvent->modifiers & cmdKey)!=0)
+				if (key==kPeriod)
+					key=kEscapeKey;
+			
+			switch (key)
+			{
+				case kReturnKey:
+				case kEnterKey:
+					*theItemHit=ok;
+					HiliteButton(theDialog,ok);
+					eventHandled=true;
+					break;
+				
+				case kEscapeKey:
+					*theItemHit=cancel;
+					HiliteButton(theDialog,cancel);
+					eventHandled=true;
+					break;
+			}
+			break;
+		
+		case mouseDown:
+			part=FindWindow(theEvent->where,&theWindow);
+			if (theWindow==GetDialogWindow(theDialog))
+			{
+				if (part==inDrag)
+				{
+					Rect	myScreenRect;
+					
+					GetRegionBounds(GetGrayRgn(),&myScreenRect);
+					DragWindow(theWindow,theEvent->where,&myScreenRect);
+					eventHandled=true;
+				}
+			}
+			break;
+	}
+	
+	return eventHandled;
+}
+
+/* ã‚³ãƒãƒ³ãƒ‰æ–‡å­—åˆ—ã®ãƒã‚§ãƒƒã‚¯ */
+OSErr CheckCommandStr(Str255 command)
+{
+	short	i;
+	
+	if (command[0] > 31) return paramErr; /* 31æ–‡å­—ä»¥å†… */
+	
+	for (i=1; i<= command[0]; i++)
+	{
+		switch (command[i])
+		{
+			case '1':
+			case '2':
+			case '3':
+			case '4':
+			case '5':
+			case '6':
+			case '7':
+			case '8':
+			case '9':
+			case 'q':
+			case 'w':
+			case 'e':
+			case 'a':
+			case 'd':
+			case 'z':
+			case 'x':
+			case 'c':
+				break;
+			
+			default:
+				return paramErr;
+		}
+	}
+	return noErr;
+}
+
+#define kDeleteCmdDialogID	147
+
+/* æç”»ç‚¹ã‚³ãƒãƒ³ãƒ‰ã®ç·¨é›†ã€è¿½åŠ  */
+OSErr DoDeleteDotCommand(Str255 command,ListHandle theList)
+{
+	GrafPtr		port;
+	ModalFilterUPP	mfUPP=NewModalFilterUPP(DeleteCmdDialogFilter);
+	WindowPtr	theWindow=GetWindowFromPort(GetListPort(theList));
+	Str255		prompt;
+	DialogPtr	theDialog;
+	short		item;
+	
+	GetPort(&port);
+	{
+		LActivate(false,theList);
+		DeactivateWindowControl(theWindow);
+		MyInvalWindowPortBounds(theWindow);
+	}
+	
+	GetIndString(prompt,150,4);
+	ReplaceString(prompt,command,"\p^0");
+	
+	ParamText(prompt,"\p","\p","\p");
+	theDialog=GetNewDialog(150,nil,kFirstWindowOfClass);
+	SetDialogDefaultItem(theDialog,ok);
+	SetDialogCancelItem(theDialog,cancel);
+	
+	ShowWindow(GetDialogWindow(theDialog));
+	
+	item=3;
+	while (item != ok && item != cancel)
+		ModalDialog(mfUPP,&item);
+	
+	DisposeDialog(theDialog);
+	DisposeModalFilterUPP(mfUPP);
+	
+	{
+		LActivate(true,theList);
+		ActivateWindowControl(theWindow);
+		MyInvalWindowPortBounds(theWindow);
+	}
+	
+	SetPort(port);
+	return (item == ok ? noErr : userCanceledErr);
+}
+
+/* ã‚³ãƒãƒ³ãƒ‰å‰Šé™¤ãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã®ãƒ•ã‚£ãƒ«ã‚¿ */
+pascal Boolean DeleteCmdDialogFilter(DialogPtr theDialog,EventRecord *theEvent,short *theItemHit)
+{
+	Boolean		eventHandled=false;
+	WindowPtr	theWindow;
+	short		part;
+	char		key;
+	
+	switch (theEvent->what)
+	{
+		case updateEvt:
+			theWindow=(WindowPtr)theEvent->message;
+			if (theWindow == GetNextWindow(GetDialogWindow(theDialog)))
+				eventHandled=EditLibDialogFilter(GetDialogFromWindow(theWindow),theEvent,theItemHit);
+			else if (GetWindowKind(theWindow)!=kDialogWindowKind && theWindow!=nil)
+				DoUpdate(theEvent);
+			break;
+		
+		case keyDown:
+		case autoKey:
+			key=theEvent->message & charCodeMask;
+			if ((theEvent->modifiers & cmdKey)!=0)
+				if (key==kPeriod)
+					key=kEscapeKey;
+			
+			switch (key)
+			{
+				case kReturnKey:
+				case kEnterKey:
+					*theItemHit=ok;
+					HiliteButton(theDialog,ok);
+					eventHandled=true;
+					break;
+				
+				case kEscapeKey:
+					*theItemHit=cancel;
+					HiliteButton(theDialog,cancel);
+					eventHandled=true;
+					break;
+			}
+			break;
+		
+		case mouseDown:
+			part=FindWindow(theEvent->where,&theWindow);
+			if (theWindow==GetDialogWindow(theDialog))
+			{
+				if (part==inDrag)
+				{
+					Rect	myScreenRect;
+					
+					GetRegionBounds(GetGrayRgn(),&myScreenRect);
+					DragWindow(theWindow,theEvent->where,&myScreenRect);
+					eventHandled=true;
+				}
+			}
+			break;
+	}
+	
+	return eventHandled;
+}
+
+/* ãƒ‰ãƒƒãƒˆãƒ•ã‚©ãƒ³ãƒˆã§ãƒãƒƒãƒ—ã‚¢ãƒƒãƒ—ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã‚’è¡¨ç¤º */
+long PopUpMenuSelectDotFont(MenuHandle menu,short v,short h,short item)
+{
+	Str255	fontName;
+	short	fontID;
+	#if !TARGET_API_MAC_CARBON
+	short	sysFontSize;
+	short	sysFontID;
+	#endif
+	long	result;
+	
+	GetIndString(fontName,150,1);
+	#if TARGET_API_MAC_CARBON
+	fontID=FMGetFontFamilyFromName(fontName);
+	#else
+	GetFNum(fontName,&fontID);
+	#endif
+	
+	#if !TARGET_API_MAC_CARBON
+	#if TARGET_RT_MAC_CFM
+	if (gSystemVersion < 0x0850)
+	#endif
+	{
+		/* ã‚·ã‚¹ãƒ†ãƒ ãƒ•ã‚©ãƒ³ãƒˆã‚’å¤‰æ›´ã™ã‚‹ */
+		sysFontSize=LMGetSysFontSize();
+		sysFontID=LMGetSysFontFam();
+		LMSetSysFontSize(12);
+		LMSetSysFontFam(fontID);
+		LMSetLastSPExtra(-1);
+	}
+	#if TARGET_RT_MAC_CFM
+	else
+	#endif /* TARGET_RT_MAC_CFM */
+	#endif /* !TARGET_API_MAC_CARBON */
+	#if TARGET_API_MAC_CARBON || TARGET_RT_MAC_CFM
+		SetMenuFont(menu,fontID,12);
+	#endif
+	
+	/* ãƒãƒƒãƒ—ã‚¢ãƒƒãƒ—ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã‚’è¡¨ç¤ºã™ã‚‹ */
+	result=PopUpMenuSelect(menu,v,h,item);
+	
+	/* ã‚·ã‚¹ãƒ†ãƒ ãƒ•ã‚©ãƒ³ãƒˆã‚’å…ƒã«æˆ»ã™ */
+	#if !TARGET_API_MAC_CARBON
+	#if TARGET_RT_MAC_CFM
+	if (gSystemVersion < 0x0850)
+	#endif
+	{
+		LMSetSysFontSize(sysFontSize);
+		LMSetSysFontFam(sysFontID);
+		LMSetLastSPExtra(-1);
+	}
+	#endif
+	
+	return result;
+}
+
+const static Rect	gDotLibCmdPopRect={0x12,0x54,0x1e,0x61};
+
+/* æç”»ç‚¹ãƒ‘ãƒ¬ãƒƒãƒˆã®å†æç”» */
+void UpdateDotModePalette(void)
+{
+	WindowPtr	theWindow;
+	PaintWinRec	*eWinRec;
+	PicHandle	backPic;
+	
+	theWindow=MyFrontNonFloatingWindow();
+	if (theWindow==nil || GetExtWindowKind(theWindow)!=kWindowTypePaintWindow)
+	{
+		HideReferencedWindow(DotModePalette);
+		return;
+	}
+	
+	eWinRec=GetPaintWinRec(theWindow);
+	if (!eWinRec->isDotMode)
+	{
+		HideReferencedWindow(DotModePalette);
+		return;
+	}
+	
+	backPic=GetPicture(148);
+	DrawPicture(backPic,&(**backPic).picFrame);
+	
+	if (CountCmdNum()<=0) /* ãƒ‡ãƒ¼ã‚¿ãŒãªã„ */
+	{
+		PicHandle	nPic;
+		
+		nPic=GetPicture(133);
+		DrawPicture(nPic,&gDotLibCmdPopRect);
+	}
+	
+	UpdateSelectedLib(gDotLibName);
+	UpdateRecordedCommand(gDotCommand);
+	UpdateInputCommand(eWinRec->dotCommand);
+}
+
+/* ã‚³ãƒãƒ³ãƒ‰æ•°ã‚’ãƒã‚§ãƒƒã‚¯ã™ã‚‹ */
+short CountCmdNum(void)
+{
+	Handle	hand;
+	short	cmdNum;
+	
+	if (gDotLibRefNum <= 0) return -1;
+	
+	UseResFile(gDotLibRefNum);
+	hand=Get1Resource('STR#',128);
+	if (hand==nil)
+	{
+		UseResFile(gApplRefNum);
+		return -1;
+	}
+	if (GetHandleSize(hand)<sizeof(short))
+	{
+		ReleaseResource(hand);
+		UseResFile(gApplRefNum);
+		return -1;
+	}
+	cmdNum=**(short **)hand;
+	ReleaseResource(hand);
+	UseResFile(gApplRefNum);
+	
+	return cmdNum;
+}
+
+/* ã‚³ãƒãƒ³ãƒ‰ãƒãƒƒãƒ—ã‚¢ãƒƒãƒ—ã‚’ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆã•ã›ã‚‹ */
+void UpdateDotCmdPop(void)
+{
+	GrafPtr	port;
+	
+	GetPort(&port);
+	SetPortWindowPort(DotModePalette);
+	MyInvalWindowRect(DotModePalette,&gDotLibCmdPopRect);
+	SetPort(port);
+}
+
+/* ãƒ©ã‚¤ãƒ–ãƒ©ãƒªåã‚’ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆã•ã›ã‚‹ */
+void UpdateSelectedLib(Str31 libName)
+{
+	Str31	temp;
+	Rect	r;
+	RgnHandle	clipRgn=NewRgn();
+	
+	GetClip(clipRgn);
+	
+	TextMode(srcCopy);
+	TextFont(applFont);
+	TextSize(9);
+	
+	SetRect(&r,0x05,0x03,0x4f,0x0E);
+	ClipRect(&r);
+	PStrCpy(libName,temp);
+	TruncString(0x4f-0x05,temp,truncEnd);
+	OffsetRect(&r,0,-1);
+	TETextBox(&temp[1],temp[0],&r,teJustLeft);
+	
+	SetClip(clipRgn);
+	DisposeRgn(clipRgn);
+}
+
+/* è¨˜éŒ²ã‚³ãƒãƒ³ãƒ‰ã‚’ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆã•ã›ã‚‹ */
+void UpdateRecordedCommand(Str31 command)
+{
+	Str255	fontName;
+	short	fNum;
+	Rect	r;
+	Str31	temp;
+	
+	GetIndString(fontName,150,1);
+	#if TARGET_API_MAC_CARBON
+	fNum=FMGetFontFamilyFromName(fontName);
+	#else
+	GetFNum(fontName,&fNum);
+	#endif
+	
+	TextMode(srcCopy);
+	TextFont(fNum);
+	TextSize(12);
+	
+	SetRect(&r,0x05,19,0x4f,0x1b);
+	PStrCpy(command,temp);
+	TruncString(0x4f-0x05,temp,truncEnd);
+	TETextBox(&temp[1],temp[0],&r,teJustLeft);
+}
+
+/* å…¥åŠ›ä¸­ã‚³ãƒãƒ³ãƒ‰ã ã‘ã‚’ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆã•ã›ã‚‹ */
+void UpdateInputCommand(Str31 command)
+{
+	Str255	fontName;
+	short	fNum;
+	Rect	r;
+	
+	GetIndString(fontName,150,1);
+	#if TARGET_API_MAC_CARBON
+	fNum=FMGetFontFamilyFromName(fontName);
+	#else
+	GetFNum(fontName,&fNum);
+	#endif
+	
+	TextMode(srcCopy);
+	TextFont(fNum);
+	TextSize(12);
+	
+	SetRect(&r,0x05,0x22,0x60,0x3f);
+	TETextBox(&command[1],command[0],&r,teJustLeft);
+}
+

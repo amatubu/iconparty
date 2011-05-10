@@ -1,1 +1,4160 @@
-/* ------------------------------------------------------------ *//*  Paint.c                                                     *//*     ÉyÉCÉìÉgèàóù                                             *//*                                                              *//*                 1997.1.28 - 2001.3.10  naoki iimura        	*//* ------------------------------------------------------------ *//* includes */#ifdef __APPLE_CC__#include	<Carbon/Carbon.h>#else#include	<sound.h>#include	<Fonts.h>#include	<NumberFormatting.h>#include	<Resources.h>#include	<ToolUtils.h>#include	<Gestalt.h>#endif#include	"Globals.h"#include	"IconParty.h"#include	"FileRoutines.h"#include	"MenuRoutines.h"#include	"UsefulRoutines.h"#include	"WindowExtensions.h"#include	"TabletUtils.h"#include	"WindowRoutines.h"#include	"PreCarbonSupport.h"#include	"Preferences.h"#include	"PaintRoutines.h"#include	"EditRoutines.h"#include	"ToolRoutines.h"#include	"UpdateCursor.h"enum {	kPencilMode=1,	kEraserMode,	kEraseMaskMode,};extern WindowPtr	DotModePalette;#pragma options align=mac68ktypedef struct {	GWorldPtr	maskGWorld;	Boolean		srcIsTransparent;} BucketDataRec;/* ÉäÉTÉCÉYópç\ë¢ëÃÇ∆ÉOÉçÅ[ÉoÉã */typedef struct {	Boolean	resizeImage;	Boolean	dither;	short	unit[2];	Boolean	constRatio;} ResizeDataRec;enum {	unitPixels=1,	unitPercent,};static ResizeDataRec gResizeData={false,false,{unitPixels,unitPixels},false};#pragma options align=reset/* prototype */static pascal Boolean	MyTransparentColorSearch(RGBColor *color,long *pos);static Boolean	DragSelection(WindowPtr theWindow,Point mousePt,Point *result,Boolean shiftDown);static pascal Boolean	SearchColorAreaProc(RGBColor *color,long *pos);/* ÉAÉCÉRÉìï‚èï */static void	ReduceRect(Rect *result,short size);/* É}ÉXÉNçÏê¨ */static pascal Boolean	MySearchProc(RGBColor *color,long *pos);static OSErr	PaintOffPort(WindowPtr theWindow,short mode,Point mousePt,Boolean shiftDown);static void	TrackMarquee(PaintWinRec *eWinRec,Rect *startRect,Boolean shiftDown);static void	SortRect(Rect *r,Boolean shiftDown);static void	FixToGrid(Point *mousePt);static void FixToGrid2(Point *mousePt);static Boolean	PtInMask(Point pt,PaintWinRec *eWinRec);static void	Pressure2Ratio(RGBColor *ratio);static void	ChangeIconSizeMain(WindowPtr theWindow,Rect *newSize,short background);static void	IsMarginExists(DialogPtr dp,short width,short height,ResizeDataRec *resizePrefs);/* BitMapä÷òA */static OSErr	NewBitMap(MyBitMapRec *bmpRec,Rect *rect);/* ÉäÅ[ÉWÉáÉì */static void	UnionRectRgn(RgnHandle dstRgn,Rect *srcRect);#define PAINTERR_RESID	4006#define	PAINTERR1	1#define	PAINTERR2	2/* âîïMÉcÅ[ÉãÇ…ÇÊÇÈï`âÊ */void DoPaint(WindowPtr theWindow,Point pt,Boolean shiftDown){	Point	mousePt;	RGBColor	newColor;	RGBColor	blendRatio2;	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);	short	ratio=eWinRec->ratio;	short	mode;	OSErr	err;	GWorldPtr	cPort;	GDHandle	cDevice;		/* ï`âÊÇ…ì¸ÇÈëOÇ…ÉJÅ[É\ÉãÇçXêV */	SetPenCursor(kPencilTool);		GetGWorld(&cPort,&cDevice);	GoOffPort(theWindow);		SetGWorld(eWinRec->editDataPtr,0);	mousePt=pt;	ToRealPos(&mousePt,ratio);	if (gCurrentColor.isTransparent)	{		mode=kEraseMaskMode; /* É}ÉXÉNÇè¡Ç∑ */		PenMode(srcCopy);	}	else	{		Boolean	usePressure=isTabletAvailable && gTabletPrefs.usePressure && IsTabletInUse();		Boolean isEraserMode = (gToolPrefs.eraseSameColor && /* ìØÇ∂êF */			 (!gToolPrefs.eraseSize11 || (gPenWidth==1 && gPenHeight==1)) && /* 1*1ÇÃèÍçáÇÃÇ› */			 !usePressure && gBlendMode == srcCopy && /* É^ÉuÉåÉbÉgÇÃïMà≥égópÅAÇ†ÇÈÇ¢ÇÕÅAïsìßñæìxÇ™100%à»äOÇ© */			 PtInMask(mousePt,eWinRec)); /* É}ÉXÉNì‡Ç© */				if (isEraserMode)		{			LockPixels(GetGWorldPixMap(eWinRec->editDataPtr));			if (eWinRec->isSelected)				GetCPixel(mousePt.h-eWinRec->selectionOffset.h,mousePt.v-eWinRec->selectionOffset.v,&newColor);			else				GetCPixel(mousePt.h,mousePt.v,&newColor);			UnlockPixels(GetGWorldPixMap(eWinRec->editDataPtr));		}		/* ï`âÊäJénÇÃì_ÇÃêFÇ™ëIëêFÇ∆ìØàÍÇ»ÇÁÇŒ... */		if (isEraserMode && EqualColor(&newColor,&gCurrentColor.rgb))		{			mode=kEraserMode; /* è¡Ç∑ */			PenMode(srcCopy);		}		else		{			mode=kPencilMode;			PenMode(gBlendMode);						if (usePressure)			{				/* É^ÉuÉåÉbÉgégópéû */				Pressure2Ratio(&blendRatio2);				OpColor(&blendRatio2);				PenMode(blend);			}			else				OpColor(&gBlendRatio);		}	}		PenSize(gPenWidth,gPenHeight); /* âîïMÉcÅ[ÉãÇÃÉTÉCÉYÇ…ÇÊÇ¡ÇƒÉyÉìÉTÉCÉYÇïœÇ¶ÇÈ */		SetGWorld(cPort,cDevice);	err=PaintOffPort(theWindow,mode,mousePt,shiftDown);	PenNormal();	SetGWorld(cPort,cDevice);		if (err==noErr)	{		UpdateTransparentMenu();		SetUndoMode(umPaint);		if (gPaletteCheck == kPaletteCheckUsed) /* ÉpÉåÉbÉgÇÃÉ`ÉFÉbÉNÇÉAÉbÉvÉfÅ[Ég */			UpdatePaletteCheck();	}}void Pressure2Ratio(RGBColor *ratio){	unsigned short	pressure;		pressure=GetPressure();	SetRGBColor(ratio,pressure,pressure,pressure);}/* è¡ÇµÉSÉÄÉcÅ[ÉãÇ≈ÇÃè¡ãé */void DoErase(WindowPtr theWindow,Point pt,Boolean shiftDown){	Point	mousePt;	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);	short	ratio=eWinRec->ratio;	RGBColor	blendRatio2;	OSErr	err;	short	mode=kEraserMode;	GWorldPtr	cPort;	GDHandle	cDevice;		/* ï`âÊÇ…ì¸ÇÈëOÇ…ÉJÅ[É\ÉãÇçXêV */	SetPenCursor(kEraserTool);		GetGWorld(&cPort,&cDevice);	GoOffPort(theWindow);		SetGWorld(eWinRec->editDataPtr,0);	mousePt=pt;	ToRealPos(&mousePt,ratio);	if (gBackColor.isTransparent)	{		mode=kEraseMaskMode;		PenMode(srcCopy);	}	else	{		if (isTabletAvailable && gTabletPrefs.useEraserPressure && IsTabletInUse() &&				(eWinRec->backgroundGWorld == nil && !eWinRec->isBackTransparent))		{			/* É^ÉuÉåÉbÉgégópéû */			Pressure2Ratio(&blendRatio2);			OpColor(&blendRatio2);			PenMode(blend);		}		else			PenMode(srcCopy);	}		PenSize(gEraserWidth,gEraserHeight); /* è¡ÇµÉSÉÄÉcÅ[ÉãÇÃÉTÉCÉYÇ…ÇÊÇ¡ÇƒÉyÉìÉTÉCÉYÇïœÇ¶ÇÈ */		SetGWorld(cPort,cDevice);	err=PaintOffPort(theWindow,mode,mousePt,shiftDown);	PenNormal();	SetGWorld(cPort,cDevice);		if (err==noErr)	{		UpdateTransparentMenu();		SetUndoMode(umPaint);		if (gPaletteCheck == kPaletteCheckUsed) /* ÉpÉåÉbÉgÇÃÉ`ÉFÉbÉNÇÉAÉbÉvÉfÅ[Ég */			UpdatePaletteCheck();	}}/* ï`âÊì_ÉcÅ[ÉãÇ≈ÇÃï`âÊ */void DoDotPaint(WindowPtr theWindow,Point pt){	Point	mousePt;	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);	short	ratio=eWinRec->ratio;	Point	offsetPt;		SetPt(&offsetPt,-gPenWidth/2,-gPenHeight/2);	mousePt=pt;	ToRealPos(&mousePt,ratio);	AddPt(offsetPt,&mousePt);		/* ï`âÊì_ÉÇÅ[ÉhÇ…à⁄çsÅAÉfÅ[É^Çèâä˙âª */	eWinRec->isDotMode=true;	eWinRec->dotPos=mousePt;	eWinRec->dotCommand[0]=0;	eWinRec->isInverted=false;	eWinRec->lastInvertedTime=TickCount();		eWinRec->firstDotPos=mousePt;	eWinRec->prevDotCommand[0]=0;		ShowReferencedWindow(DotModePalette);		UpdateEffectMenu();}/* ï`âÊì_ÉcÅ[ÉãÇ…ÇÊÇÈï`âÊÅiÉÅÉCÉìÅj */void DoDotPaintMain(WindowPtr theWindow,Point pt){	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);	RGBColor	newColor;	short		mode;	Boolean		isBackMode=(eWinRec->backgroundGWorld==nil && !eWinRec->isBackTransparent);	RgnHandle	maskRgn=NewRgn();	Rect		redrawRect;	GWorldPtr	cPort;	GDHandle	cDevice;		GetGWorld(&cPort,&cDevice);	ResetRuler();		if (eWinRec->isSelected)		SubPt(eWinRec->selectionOffset,&pt);		/* éÊÇËè¡ÇµÇÃÉÇÅ[ÉhÇ™ï`âÊì_Ç…ÇÊÇÈï`âÊÇ≈Ç»ÇØÇÍÇŒÉoÉbÉNÉAÉbÉv */	if (eWinRec->undoMode != umDotPaint)	{		GoOffPort(theWindow);		SetEmptyRgn(eWinRec->updateRgn);				eWinRec->firstDotPos=pt;		PStrCpy(eWinRec->dotCommand,eWinRec->prevDotCommand);	}		SetGWorld(eWinRec->editDataPtr,0);		if (PtInRect(pt,&eWinRec->iconSize))	{		/* ìßñæÇ©Ç«Ç§Ç© */		if (gCurrentColor.isTransparent)		{			mode=kEraseMaskMode;			ForeColor(whiteColor);			goto next;		}		else		{			Boolean isEraserMode = (gToolPrefs.eraseSameColor &&				(!gToolPrefs.eraseSize11 || (gPenWidth==1 && gPenHeight==1)) &&				gBlendMode == srcCopy && 				PtInMask(pt,eWinRec));						if (isEraserMode)			{				/* ï`âÊÇµÇÊÇ§Ç∆ÇµÇƒÇ¢ÇÈì_ÇÃêFÇí≤Ç◊ÇÈ */				LockPixels(GetGWorldPixMap(eWinRec->editDataPtr));				GetCPixel(pt.h,pt.v,&newColor);				UnlockPixels(GetGWorldPixMap(eWinRec->editDataPtr));			}			/* ï`âÊÇµÇÊÇ§Ç∆ÇµÇƒÇ¢ÇÈêFÇ∆ìØàÍÇ»ÇÁÅcÅc */			if (isEraserMode && EqualColor(&newColor,&gCurrentColor.rgb))			{				mode=kEraserMode; /* è¡Ç∑ */				if (isBackMode)					RGBForeColor(&gBackColor.rgb);				else					ForeColor(whiteColor);								PenMode(srcCopy);				goto next;			}		}	}		mode=kPencilMode;		PenMode(gBlendMode);	OpColor(&gBlendRatio);	RGBForeColor(&gCurrentColor.rgb);	next:	PenSize(gPenWidth,gPenHeight);	MoveTo(pt.h,pt.v);	Line(0,0);		ForeColor(blackColor);	PenNormal();		SetRect(&redrawRect,pt.h,pt.v,pt.h+gPenWidth,pt.v+gPenHeight);	SectRect(&redrawRect,&eWinRec->iconSize,&redrawRect);		/* É}ÉXÉNèàóù */	SetGWorld(eWinRec->currentMask,0);	LockPixels(GetGWorldPixMap(eWinRec->currentMask));	if (mode==kEraseMaskMode || (mode==kEraserMode && !isBackMode))		EraseRect(&redrawRect);	else		PaintRect(&redrawRect);		if (eWinRec->isSelected)		OffsetRect(&redrawRect,eWinRec->selectionOffset.h,eWinRec->selectionOffset.v);	RectRgn(maskRgn,&redrawRect);	UnionRgn(eWinRec->updateRgn,maskRgn,eWinRec->updateRgn);	DisposeRgn(maskRgn);		SetGWorld(cPort,cDevice);	DispOffPort(theWindow);		UpdateTransparentMenu();	SetUndoMode(umDotPaint);	if (gPaletteCheck == kPaletteCheckUsed) /* ÉpÉåÉbÉgÇÃÉ`ÉFÉbÉNÇÉAÉbÉvÉfÅ[Ég */		UpdatePaletteCheck();}/* ëIëÉcÅ[ÉãÇ…ÇÊÇÈëIë */void DoSelect(WindowPtr theWindow,Point pt,Boolean shiftDown,Boolean optDown,Boolean cmdDown){	Point	mousePt;	Point	result;	Rect	startRect;	MyBitMapRec	selectBM;	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);	short	ratio=eWinRec->ratio;	OSErr	err;	Rect	tempRect;	GWorldPtr	cPort;	GDHandle	cDevice;		mousePt=pt;	GetGWorld(&cPort,&cDevice);		if (PtInRgn(mousePt,eWinRec->eSelectedRgn)) /* ëIëîÕàÕì‡Ç≈ÇÃÉhÉâÉbÉOÇ»ÇÁÇŒ */	{		if (optDown) /* ÉIÉvÉVÉáÉìÉLÅ[Ç™âüÇ≥ÇÍÇƒÇ¢ÇÍÇŒï°êªÇ∑ÇÈ */		{			SetGWorld(eWinRec->selectedDataPtr,0);			CopyBits(GetPortBitMapForCopyBits(eWinRec->dispTempPtr),				GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),				&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,0);						/* É}ÉXÉNÇ‡ï°êªÇ∑ÇÈ */			SetGWorld(eWinRec->selectionMask,0);			GetRegionBounds(eWinRec->selectionPos,&tempRect);			CopyBits(GetPortBitMapForCopyBits(eWinRec->currentMask),				GetPortBitMapForCopyBits(eWinRec->selectionMask),				&eWinRec->selectedRect,&tempRect,srcOr,nil);			SetGWorld(cPort,cDevice);		}				/* ëIëîÕàÕÇà⁄ìÆÇ≥ÇπÇÈ */		ToRealPos(&mousePt,ratio);		if (DragSelection(theWindow,mousePt,&result,shiftDown))		{			if (result.h!=0 || result.v!=0)				MoveSelection(theWindow,result.h,result.v,false);			else				if (eWinRec->showSelection)					DispSelection(theWindow);		}		else		{			/* ÉNÉäÉbÉNÇæÇØÇ≥ÇÍÇΩéû */			RgnHandle	tempRgn=NewRgn();						if (eWinRec->showSelection)				DispSelection(theWindow);						/* ëIëóÃàÊÇ™ëSëÃÇ»ÇÁå≈íËÇ∑ÇÈ */			RectRgn(tempRgn,&eWinRec->iconSize);			if (EqualRgn(eWinRec->selectionPos,tempRgn))				FixSelection(theWindow);						DisposeRgn(tempRgn);		}	}	else /* ëIëîÕàÕì‡Ç≈Ç»ÇØÇÍÇŒëIë */	{		RgnHandle	selectRgn;				/* ÉJÅ[É\ÉãçXêV */		MySetCursor(128+kMarqueeTool);				/* ëIëîÕàÕÇ…É}Å[ÉLÅ[Çï\é¶Ç∑ÇÈèàóù */		ToRealPos(&mousePt,ratio);		if (shiftDown)			FixToGrid(&mousePt);		Pt2Rect(mousePt,mousePt,&startRect);		TrackMarquee(eWinRec,&startRect,shiftDown);				if (eWinRec->isSelected) /* Ç∑Ç≈Ç…ëIëîÕàÕÇ™Ç†ÇÍÇŒå≈íËÇ∑ÇÈ */			FixSelection(theWindow);				if (EmptyRect(&startRect)) /* Ç«Ç±Ç‡ëIëÇ≥ÇÍÇ»ÇØÇÍÇŒèIÇÌÇË */			return;				selectRgn=NewRgn();		UpdatePSRgn(eWinRec);				GoOffPort(theWindow);		if (cmdDown) /* ÉRÉ}ÉìÉhÉLÅ[ÇâüÇµÇ»Ç™ÇÁëIëÇµÇΩÇ∆Ç´ */		{			/* É}ÉXÉNÉpÉ^Å[ÉìÇÃçÏê¨ */			err=CreateMask(eWinRec->editDataPtr,&startRect,&startRect,&selectBM);			if (err==noErr)			{				err=BitMapToRegion(selectRgn,&selectBM.bmp);				DisposeBitMap(&selectBM);			}			if (err!=noErr)			{				SysBeep(0);				RectRgn(selectRgn,&startRect);			}						if (EmptyRgn(selectRgn)) /* Ç«Ç±Ç‡ëIëÇ≥ÇÍÇ»ÇØÇÍÇŒèIÇÌÇË */			{				DisposeRgn(selectRgn);				SetEmptyRgn(eWinRec->eSelectedRgn);				eWinRec->isSelected=false;				eWinRec->selectedRect=eWinRec->iconSize;				RectRgn(eWinRec->selectionPos,&eWinRec->iconSize);				DispOffPort(theWindow);				return;			}		}		else /* ïÅí ÇÃëIë */			RectRgn(selectRgn,&startRect);				DoSelectMain(theWindow,selectRgn);	}}/* ëIëèàóùÉÅÉCÉìÅiselectRgnÇÕÉãÅ[É`Éìì‡Ç≈îjä¸Åj */void DoSelectMain(WindowPtr theWindow,RgnHandle selectRgn){	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);	Boolean		isBackMode=(eWinRec->backgroundGWorld == nil && !eWinRec->isBackTransparent);	Rect		tempRect;	GWorldPtr	cPort;	GDHandle	cDevice;		GetGWorld(&cPort,&cDevice);		/* ëIëóÃàÊÉäÅ[ÉWÉáÉìèâä˙âª */	CopyRgn(selectRgn,eWinRec->selectionPos);	DisposeRgn(selectRgn);	GetRegionBounds(eWinRec->selectionPos,&eWinRec->selectedRect);	SetPt(&eWinRec->selectionOffset,0,0);	SetPt(&eWinRec->prevMovement,0,0);		CopyRgn(eWinRec->selectionPos,eWinRec->eSelectedRgn);	MapRgn(eWinRec->eSelectedRgn,&eWinRec->iconSize,&eWinRec->iconEditSize);		/* ëIëèàóù */	SetGWorld(eWinRec->selectedDataPtr,0);	MyLockPixels(selectedDataPtr);	EraseRect(&eWinRec->iconSize);	CopyBits(GetPortBitMapForCopyBits(eWinRec->editDataPtr),		GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),		&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,0);		if (isBackMode) /* îwåiÇ™Ç»Ç¢èÍçáÇÕîwåiêFÇ≈ìhÇÈ */		RGBBackColor(&gBackColor.rgb);	EraseRgn(eWinRec->selectionPos);	BackColor(whiteColor);	UnlockPixels(GetGWorldPixMap(eWinRec->selectedDataPtr));		eWinRec->isSelected=true;	eWinRec->selectionBlend=srcCopy;	eWinRec->showSelection=true;		SetGWorld(eWinRec->dispTempPtr,0);	CopyBits(GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),		GetPortBitMapForCopyBits(eWinRec->dispTempPtr),		&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);	GetRegionBounds(eWinRec->selectionPos,&tempRect);	CopyBits(GetPortBitMapForCopyBits(eWinRec->editDataPtr),		GetPortBitMapForCopyBits(eWinRec->dispTempPtr),		&tempRect,&tempRect,		eWinRec->selectionBlend,eWinRec->selectionPos);		CopyRgn(eWinRec->selectionPos,eWinRec->updateRgn);		/* É}ÉXÉNÇÃçXêV */	/* ëIëîÕàÕäO */	SetGWorld(eWinRec->selectionMask,0);	LockPixels(GetGWorldPixMap(eWinRec->selectionMask));	EraseRect(&eWinRec->iconSize);	CopyBits(GetPortBitMapForCopyBits(eWinRec->currentMask),		GetPortBitMapForCopyBits(eWinRec->selectionMask),		&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);	if (!isBackMode || gBackColor.isTransparent) /* îwåiÇ™Ç†ÇÈÅAÇ†ÇÈÇ¢ÇÕîwåiêFÇ™ìßñæÇÃéûÇÕÉ}ÉXÉNçÌèú */		EraseRgn(eWinRec->selectionPos);	else /* ÇªÇÍà»äOÇÃèÍçáÇÕÉ}ÉXÉNí«â¡ÅiÅHÅj */		PaintRgn(eWinRec->selectionPos);	UnlockPixels(GetGWorldPixMap(eWinRec->selectionMask));		/* ëIëîÕàÕì‡ */	SetGWorld(eWinRec->currentMask,0);	LockPixels(GetGWorldPixMap(eWinRec->currentMask));	EraseRect(&eWinRec->iconSize);	CopyBits(GetPortBitMapForCopyBits(eWinRec->pCurrentMask),		GetPortBitMapForCopyBits(eWinRec->currentMask),		&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,eWinRec->selectionPos);	UnlockPixels(GetGWorldPixMap(eWinRec->currentMask));		SetGWorld(cPort,cDevice);	DispSelection(theWindow);		UpdateClipMenu();	UpdateSelectionMenu();	UpdateTransparentMenu();		SetUndoMode(umSelect);}/* ÉXÉ|ÉCÉgÉcÅ[ÉãÇ…ÇÊÇÈêFëIë */void DoSpoit(WindowPtr theWindow,Point pt){	Point		mousePt=pt;	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);	RGBColor	newColor;	GWorldPtr	cPort;	GDHandle	cDevice;		/* GWorldï€ë∂ */	GetGWorld(&cPort,&cDevice);	ToRealPos(&mousePt,eWinRec->ratio);		if (PtInMask(mousePt,eWinRec) || (eWinRec->isSelected && RealPtInMask(mousePt,eWinRec->selectionMask)))	{		/* É}ÉXÉNì‡Ç»ÇÁï\é¶ópÉeÉìÉ|ÉâÉäÇ©ÇÁêFÇìæÇÈ */		MySetGWorld(dispTempPtr);		MyLockPixels(dispTempPtr);		GetCPixel(mousePt.h,mousePt.v,&newColor);		MyUnlockPixels(dispTempPtr);	}	else	{		/* É}ÉXÉNäO */		if (eWinRec->backgroundGWorld == nil)		{			/* îwåiÇ™Ç»Ç¢Å®îwåiï“èWíÜ */			newColor.red=newColor.blue=newColor.green = 0xffff;						/* Ç±Ç±Ç≈ìßñæêFÇ™Ç∆ÇÍÇÈÇÊÇ§Ç…Ç∑ÇÈÇ©Ç«Ç§Ç©ÇÕåüì¢ÇÃó]ínÇ™Ç†ÇÈ */		}		else		{			if (!eWinRec->dispBackground) return; /* îwåiîÒï\é¶éûÇÕÇ»Ç…Ç‡ÇµÇ»Ç¢ */						MySetGWorld(backgroundGWorld);			MyLockPixels(backgroundGWorld);			GetCPixel(mousePt.h,mousePt.v,&newColor);			MyUnlockPixels(backgroundGWorld);		}	}	/* GWorldïúãA */	SetGWorld(cPort,cDevice);	ChangeColor(&newColor,false);}/* ÉoÉPÉcÉcÅ[ÉãÇ…ÇÊÇÈìhÇËÇ¬Ç‘Çµ */void DoBucket(WindowPtr theWindow,Point pt,Boolean cmdDown){	Point	mousePt;	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);	short	ratio=eWinRec->ratio;	Rect	effectRect=eWinRec->selectedRect;	Boolean	srcIsTransparent;	GWorldPtr	cPort;	GDHandle	cDevice;		mousePt=pt;	GetGWorld(&cPort,&cDevice);	ToRealPos(&mousePt,ratio);	if (eWinRec->isSelected)		SubPt(eWinRec->selectionOffset,&mousePt);		if (!PtInRect(mousePt,&effectRect)) return; /* ÉNÉäÉbÉNÇ≥ÇÍÇΩÇÃÇ™ëIëîÕàÕäO */	srcIsTransparent=!RealPtInMask(mousePt,eWinRec->currentMask);		if (cmdDown) /* íuÇ´ä∑Ç¶ */	{		if (srcIsTransparent) /* ìßñæêF */		{			if (gCurrentColor.isTransparent) return;						DoReplaceColor(theWindow,&rgbWhiteColor,true,&gCurrentColor.rgb,gCurrentColor.isTransparent);		}		else /* ìßñæêFÇ≈Ç»Ç¢ */		{			RGBColor	newColor;						/* ìhÇÈèÍèäÇÃêFÇãÅÇﬂÇÈ */			SetGWorld(eWinRec->editDataPtr,0);			LockPixels(GetGWorldPixMap(eWinRec->editDataPtr));			GetCPixel(mousePt.h,mousePt.v,&newColor);			UnlockPixels(GetGWorldPixMap(eWinRec->editDataPtr));			SetGWorld(cPort,cDevice);						if (!gCurrentColor.isTransparent && EqualColor(&newColor,&gCurrentColor.rgb)) return; /* ìØÇ∂êFÇ»ÇÁâΩÇ‡ÇµÇ»Ç¢ */						DoReplaceColor(theWindow,&newColor,false,&gCurrentColor.rgb,gCurrentColor.isTransparent);		}		SetUndoMode(umEffect);	}	else /* ÉoÉPÉc */	{		OSErr	err;		RgnHandle	fillRgn;		MyBitMapRec	fillBM;		Pattern	pat;				/* ìhÇÈîÕàÕÇãÅÇﬂÇÈ */		err=NewBitMap(&fillBM,&effectRect);		if (err!=noErr)		{			ErrorAlertFromResource(PAINTERR_RESID,PAINTERR1);			return;		}				if (srcIsTransparent) /* ìßñæêF */		{			/* É}ÉXÉNÇæÇØÇçló∂ */			SetGWorld(eWinRec->currentMask,0);			MyLockPixels(currentMask);			SeedCFill(GetPortBitMapForCopyBits(eWinRec->currentMask),&fillBM.bmp,				&effectRect,&effectRect,mousePt.h,mousePt.v,nil,0);			MyUnlockPixels(currentMask);		}		else		{			RGBColor	newColor;			Boolean		isWhite;						SetGWorld(eWinRec->editDataPtr,0);			LockPixels(GetGWorldPixMap(eWinRec->editDataPtr));			GetCPixel(mousePt.h,mousePt.v,&newColor);			isWhite= (newColor.red == 0xffff && newColor.blue == 0xffff && newColor.green == 0xffff);			if (isWhite) /* îíÇÃéûÇÕÉ}ÉXÉNÇ…ÇÊÇËâÊëúÇîΩì]ÇµÅAìßñæïîï™Ç∆ãÊï Ç∑ÇÈ */			{				CopyBits(GetPortBitMapForCopyBits(eWinRec->currentMask),					GetPortBitMapForCopyBits(eWinRec->editDataPtr),					&effectRect,&effectRect,srcXor,nil);			}						SeedCFill(GetPortBitMapForCopyBits(eWinRec->editDataPtr),&fillBM.bmp,				&effectRect,&effectRect,mousePt.h,mousePt.v,nil,0);						if (isWhite) /* îí */			{				CopyBits(GetPortBitMapForCopyBits(eWinRec->currentMask),					GetPortBitMapForCopyBits(eWinRec->editDataPtr),					&effectRect,&effectRect,srcXor,nil);			}						UnlockPixels(GetGWorldPixMap(eWinRec->editDataPtr));		}		SetGWorld(cPort,cDevice);				/* Ç‡Ç∆Ç‹Ç¡ÇΩîÕàÕÇÉäÅ[ÉWÉáÉìÇ…Ç∑ÇÈ */		fillRgn=NewRgn();		err=BitMapToRegion(fillRgn,&fillBM.bmp);		if (err!=noErr)		{			ErrorAlertFromResource(PAINTERR_RESID,PAINTERR1);			DisposeBitMap(&fillBM);			DisposeRgn(fillRgn);			return;		}				err=DisposeBitMap(&fillBM);				GoOffPort(theWindow);				/* ìhÇÈ */		SetGWorld(eWinRec->editDataPtr,0);		MyLockPixels(editDataPtr);		RGBForeColor(&gCurrentColor.rgb);		RGBBackColor(&gBackColor.rgb);		GetIndPattern(&pat,(gOtherPrefs.useHyperCardPalette ? 201 : 200),gPatternNo);		FillRgn(fillRgn,&pat);		MyUnlockPixels(editDataPtr);				/* êFÇå≥Ç…ñﬂÇ∑ */		ForeColor(blackColor);		BackColor(whiteColor);				/* É}ÉXÉNÇ…ä÷Ç∑ÇÈèàóù */		{			Boolean	isBlackPat=(gOtherPrefs.useHyperCardPalette && gPatternNo==12) ||								(!gOtherPrefs.useHyperCardPalette && gPatternNo==1),					isWhitePat=(gOtherPrefs.useHyperCardPalette && gPatternNo==1) ||								(!gOtherPrefs.useHyperCardPalette && gPatternNo==13);			Boolean	isOpaque=(!gCurrentColor.isTransparent && !gBackColor.isTransparent) ||								(!gCurrentColor.isTransparent && isBlackPat) ||								(!gBackColor.isTransparent && isWhitePat),					isTransparent=(gCurrentColor.isTransparent && gBackColor.isTransparent) ||								(gCurrentColor.isTransparent && isBlackPat) ||								(gBackColor.isTransparent && isWhitePat);						SetGWorld(eWinRec->currentMask,0);			LockPixels(GetGWorldPixMap(eWinRec->currentMask));			if (isOpaque || isTransparent) /* äÆëSÇ…ìßñæ or ïsìßñæ */			{				/* É}ÉXÉNèàóùÅiëIëîÕàÕì‡Ç…å¿íËÇµÇƒÇ¢Ç»Ç¢Ç©ÇÁÇøÇÂÇ¡Ç∆Ç‹Ç∏Ç¢Ç©Ç‡Åj */				if (isTransparent)					EraseRgn(fillRgn);				else					PaintRgn(fillRgn);			}			else /* ÉpÉ^Å[ÉìÇ™ä÷åWÇ∑ÇÈ */			{				ForeColor((gCurrentColor.isTransparent ? whiteColor : blackColor));				BackColor((gBackColor.isTransparent ? whiteColor : blackColor));								FillRgn(fillRgn,&pat);			}			UnlockPixels(GetGWorldPixMap(eWinRec->currentMask));		}		CopyRgn(fillRgn,eWinRec->updateRgn); /* ìhÇ¡ÇΩÇ∆Ç±ÇÎÇ™çXêVîÕàÕ */		if (eWinRec->isSelected) /* ëIëîÕàÕÇ™Ç†ÇÈéûÇÕÅAé¿ç€ÇÃï\é¶à íuÇ…Ç∏ÇÁÇ∑ */			OffsetRgn(eWinRec->updateRgn,eWinRec->selectionOffset.h,eWinRec->selectionOffset.v);		DisposeRgn(fillRgn);				SetGWorld(cPort,cDevice);		DispOffPort(theWindow);				UpdateTransparentMenu();		SetUndoMode(umPaint);	}	if (gPaletteCheck == kPaletteCheckUsed) /* ÉpÉåÉbÉgÇÃÉ`ÉFÉbÉNÇÉAÉbÉvÉfÅ[Ég */		UpdatePaletteCheck();}/* ìßñæêFÇçló∂ÇµÇΩÉoÉPÉcìhÇË */pascal Boolean MyTransparentColorSearch(RGBColor *color,long *pos){	GWorldPtr	cPort;	GDHandle	cDevice;	MatchRec	*matchData;	BucketDataRec	*bucketData;		GetGWorld(&cPort,&cDevice);	matchData=(MatchRec *)(**cDevice).gdRefCon;	bucketData=(BucketDataRec *)matchData->matchData;		if (bucketData->srcIsTransparent) /* ìhÇÈèÍèäÇ™ìßñæ */		return RealPtInMask(*(Point*)pos,bucketData->maskGWorld);	else	{		if (matchData->red == color->red && matchData->green == color->green && matchData->blue == color->blue)			return !RealPtInMask(*(Point*)pos,bucketData->maskGWorld);		else			return true;	}}/* êFÇÃíuÇ´ä∑Ç¶ */void DoReplaceColor(WindowPtr theWindow,RGBColor *srcColor,Boolean srcIsTransparent,										RGBColor *dstColor,Boolean dstIsTransparent){	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);	Rect	effectRect=eWinRec->selectedRect;	OSErr	err;	GWorldPtr	tempGWorld;	long	fgColor;	CTabHandle	ctab;	ColorSpec	*ctTable;	GWorldPtr	cPort;	GDHandle	cDevice;		/* ìØÇ∂êFÇ»ÇÁâΩÇ‡ÇµÇ»Ç¢ */	if (EqualColor(srcColor,dstColor) && srcIsTransparent==dstIsTransparent) return;		GetGWorld(&cPort,&cDevice);		if (!srcIsTransparent)	{		err=NewGWorld(&tempGWorld,eWinRec->iconDepth,&effectRect,0,0,useTempMem);				if (err!=noErr)		{			ErrorAlertFromResource(PAINTERR_RESID,PAINTERR1);			return;		}	}	GoOffPort(theWindow);		if (!srcIsTransparent) /* íuÇ´ä∑Ç¶å≥Ç™ìßñæêFÇ≈Ç»Ç¢ */	{		SetGWorld(tempGWorld,0);				LockPixels(GetGWorldPixMap(tempGWorld));		EraseRect(&effectRect);				CopyBits(GetPortBitMapForCopyBits(eWinRec->editDataPtr),			GetPortBitMapForCopyBits(tempGWorld),			&effectRect,&effectRect,srcCopy,nil);				UnlockPixels(GetGWorldPixMap(tempGWorld));				switch (eWinRec->colorMode)		{			case kNormal8BitColorMode:				RGBForeColor(srcColor);				fgColor=Color2Index(srcColor);				ctab=(**GetGWorldPixMap(tempGWorld)).pmTable;				ctTable=(**ctab).ctTable;				ctTable[fgColor].rgb=*dstColor;				CTabChanged(ctab);								SetGWorld(eWinRec->editDataPtr,0);				CopyBits(GetPortBitMapForCopyBits(tempGWorld),					GetPortBitMapForCopyBits(eWinRec->editDataPtr),					&effectRect,&effectRect,srcCopy,nil);				break;						case k32BitColorMode:				break;		}				DisposeGWorld(tempGWorld);				/* É}ÉXÉNçXêV */		if (!dstIsTransparent) /* íuÇ´ä∑Ç¶êÊÇ™ìßñæêFà»äO */		{			/*Å@ìßñæêFà»äOÇÃêFÇìßñæêFà»äOÇÃêFÇ≈íuÇ´ä∑Ç¶ÇÈÇÃÇæÇ©ÇÁÉ}ÉXÉNÇÃïœçXÇÕÇ»Ç¢ */		}		else /* íuÇ´ä∑Ç¶êÊÇ™ìßñæêF */		{			if (EqualColor(srcColor,&rgbWhiteColor)) /* íuÇ´ä∑Ç¶å≥ÇÃêFÇ™îí */			{				OSErr		err;				GWorldPtr	maskGWorld;								err=CreateMask2(eWinRec->editDataPtr,&maskGWorld);				if (err==noErr)				{					MySetGWorld(currentMask);					CopyBits(GetPortBitMapForCopyBits(maskGWorld),						GetPortBitMapForCopyBits(eWinRec->currentMask),						&effectRect,&effectRect,srcCopy,nil);					SetGWorld(cPort,cDevice);										DisposeGWorld(maskGWorld);				}				else				{					SysBeep(0);				}			}			else			{				OSErr		err;				GWorldPtr	oldMask,newMask;								err=CreateMask2(eWinRec->tempDataPtr,&oldMask);				if (err==noErr)				{					err=CreateMask2(eWinRec->editDataPtr,&newMask);					if (err==noErr)					{						SetGWorld(newMask,0);						CopyBits(GetPortBitMapForCopyBits(oldMask),							GetPortBitMapForCopyBits(newMask),							&effectRect,&effectRect,notSrcXor,nil);						MySetGWorld(currentMask);						CopyBits(GetPortBitMapForCopyBits(newMask),							GetPortBitMapForCopyBits(eWinRec->currentMask),							&effectRect,&effectRect,notSrcBic,nil);												DisposeGWorld(oldMask);						DisposeGWorld(newMask);					}					else					{						SysBeep(0);						DisposeGWorld(oldMask);					}				}				else					SysBeep(0);			}		}	}	else /* íuÇ´ä∑Ç¶å≥Ç™ìßñæêFÅ®ëSëÃÇìhÇËÇ¬Ç‘ÇµÅAÉ}ÉXÉNì‡ÇæÇØå≥Ç…ñﬂÇ∑ */	{		RgnHandle	selectedRgn=NewRgn();		Rect		tempRect;				MySetGWorld(editDataPtr);		MyLockPixels(editDataPtr);		RGBForeColor(dstColor);		PaintRect(&effectRect);				ForeColor(blackColor);				SafeCopyDeepMask(GetPortBitMapForCopyBits(eWinRec->tempDataPtr),			GetPortBitMapForCopyBits(eWinRec->currentMask),			GetPortBitMapForCopyBits(eWinRec->editDataPtr),			&effectRect,&effectRect,&effectRect,			srcCopy,nil);				MyUnlockPixels(editDataPtr);				CopyRgn(eWinRec->selectionPos,selectedRgn);		GetRegionBounds(eWinRec->selectionPos,&tempRect);		MapRgn(selectedRgn,&tempRect,&effectRect);		MySetGWorld(currentMask);		MyLockPixels(currentMask);		PaintRgn(selectedRgn);		MyUnlockPixels(currentMask);		DisposeRgn(selectedRgn);	}		CopyRgn(eWinRec->selectionPos,eWinRec->updateRgn);	SetGWorld(cPort,cDevice);	DispOffPort(theWindow);		eWinRec->replacedColor=*srcColor;	eWinRec->replacedTransparent=srcIsTransparent;	gUsedCount.replaceNum++;	UpdateTransparentMenu();	SetUndoMode(umReplaceColor);	if (gPaletteCheck == kPaletteCheckUsed) /* ÉpÉåÉbÉgÇÃÉ`ÉFÉbÉNÇÉAÉbÉvÉfÅ[Ég */		UpdatePaletteCheck();}/* é©ìÆëIë */void DoAutoSelect(WindowPtr theWindow){	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);	Rect	tempRect;	GWorldPtr	cPort;	GDHandle	cDevice;		GetGWorld(&cPort,&cDevice);		if (eWinRec->undoMode == umPaint)	{		RgnHandle	tempRgn=NewRgn();				ResetDot(theWindow);		GoOffPort(theWindow);				if (eWinRec->isSelected) /* ëIëÇ≥ÇÍÇƒÇ¢ÇÈ */		{			if (eWinRec->showSelection)				DispSelection(theWindow);						DiffRgn(eWinRec->selectionPos,eWinRec->updateRgn,tempRgn);			OffsetRgn(tempRgn,-eWinRec->selectionOffset.h,-eWinRec->selectionOffset.v);						SetGWorld(eWinRec->selectedDataPtr,0);			if (eWinRec->selectionBlend==blend)				OpColor(&rgbGrayColor);			GetRegionBounds(eWinRec->selectionPos,&tempRect);			SafeCopyDeepMask(GetPortBitMapForCopyBits(eWinRec->tempDataPtr),				GetPortBitMapForCopyBits(eWinRec->pCurrentMask),				GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),				&eWinRec->selectedRect,&eWinRec->selectedRect,&tempRect,				eWinRec->selectionBlend,eWinRec->selectionPos);						SetGWorld(eWinRec->selectionMask,0);			CopyBits(GetPortBitMapForCopyBits(eWinRec->pCurrentMask),				GetPortBitMapForCopyBits(eWinRec->selectionMask),				&eWinRec->selectedRect,&tempRect,srcOr,eWinRec->selectionPos);		}		else /* ëIëÇ≥ÇÍÇƒÇ¢Ç»Ç¢ */		{			RectRgn(tempRgn,&eWinRec->iconSize);			DiffRgn(tempRgn,eWinRec->updateRgn,tempRgn);						SetGWorld(eWinRec->selectedDataPtr,0);			CopyBits(GetPortBitMapForCopyBits(eWinRec->tempDataPtr),				GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),				&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);			SetGWorld(eWinRec->selectionMask,0);			CopyBits(GetPortBitMapForCopyBits(eWinRec->pCurrentMask),				GetPortBitMapForCopyBits(eWinRec->selectionMask),				&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);						SetPt(&eWinRec->selectionOffset,0,0);						eWinRec->isSelected=true;			eWinRec->selectionBlend=srcCopy;		}				/* ëIëïîï™ÇÃçXêV */		SetGWorld(eWinRec->editDataPtr,0);		MyLockPixels(editDataPtr);		EraseRgn(tempRgn);		MyUnlockPixels(editDataPtr);		SetGWorld(eWinRec->currentMask,0);		MyLockPixels(currentMask);		EraseRgn(tempRgn);		MyUnlockPixels(currentMask);		DisposeRgn(tempRgn);				/* ëIëîÕàÕÇÃçXêV */		CopyRgn(eWinRec->updateRgn,eWinRec->selectionPos);		GetRegionBounds(eWinRec->selectionPos,&eWinRec->selectedRect);		if (eWinRec->isSelected)			OffsetRect(&eWinRec->selectedRect,-eWinRec->selectionOffset.h,-eWinRec->selectionOffset.v);		CopyRgn(eWinRec->updateRgn,eWinRec->eSelectedRgn);		MapRgn(eWinRec->eSelectedRgn,&eWinRec->iconSize,&eWinRec->iconEditSize);		RectRgn(eWinRec->prevSelectionPos,&eWinRec->iconSize);		SetEmptyRgn(eWinRec->ePrevSelectedRgn);		eWinRec->prevSelectedRect=eWinRec->iconSize;				SetPt(&eWinRec->prevMovement,0,0);		eWinRec->showSelection=true;				SetGWorld(cPort,cDevice);		DispOffPort(theWindow);		ToolSelect(kMarqueeTool);		SetUndoMode(umSelect);		UpdateClipMenu();		UpdateSelectionMenu();		UpdateTransparentMenu();	}	else	{		if (eWinRec->isSelected) /* ëIëÇ≥ÇÍÇƒÇ¢ÇÈ */		{			MyBitMapRec	selectBM;			OSErr	err;			RgnHandle	tempRgn=NewRgn();						err=CreateMask(eWinRec->editDataPtr,&eWinRec->selectedRect,&eWinRec->selectedRect,&selectBM);			if (err==noErr)			{				err=BitMapToRegion(tempRgn,&selectBM.bmp);				DisposeBitMap(&selectBM);			}			if (err!=noErr || EmptyRgn(tempRgn))			{				DisposeRgn(tempRgn);				SysBeep(0);				return;			}						/* ëIëóÃàÊÉäÅ[ÉWÉáÉìèâä˙âª */			OffsetRgn(tempRgn,eWinRec->selectionOffset.h,eWinRec->selectionOffset.v);			SectRgn(tempRgn,eWinRec->selectionPos,tempRgn);			if (EqualRgn(tempRgn,eWinRec->selectionPos))			{				DisposeRgn(tempRgn);				return;			}						if (eWinRec->showSelection)				DispSelection(theWindow);						UpdatePSRgn(eWinRec);			GoOffPort(theWindow);						/* ÉäÅ[ÉWÉáÉìÇê›íËÇ∑ÇÈ */			CopyRgn(tempRgn,eWinRec->selectionPos);			OffsetRgn(tempRgn,-eWinRec->selectionOffset.h,-eWinRec->selectionOffset.v);			GetRegionBounds(tempRgn,&eWinRec->selectedRect);			SetPt(&eWinRec->prevMovement,0,0);						CopyRgn(eWinRec->selectionPos,eWinRec->eSelectedRgn);			MapRgn(eWinRec->eSelectedRgn,&eWinRec->iconSize,&eWinRec->iconEditSize);						eWinRec->showSelection=true;						CopyRgn(eWinRec->selectionPos,eWinRec->updateRgn);						/* É}ÉXÉNÇÃçXêV */			/* ëIëîÕàÕì‡ */			SetGWorld(eWinRec->currentMask,0);			MyLockPixels(currentMask);			EraseRect(&eWinRec->iconSize);			CopyBits(GetPortBitMapForCopyBits(eWinRec->pCurrentMask),				GetPortBitMapForCopyBits(eWinRec->currentMask),				&eWinRec->selectedRect,&eWinRec->selectedRect,srcCopy,tempRgn);			DisposeRgn(tempRgn);			MyUnlockPixels(currentMask);						CopyRgn(eWinRec->prevSelectionPos,eWinRec->updateRgn);			SetGWorld(cPort,cDevice);			DispOffPort(theWindow);						SetUndoMode(umSelect);			UpdateClipMenu();			UpdateSelectionMenu();			UpdateTransparentMenu();		}		else		{			MyBitMapRec	selectBM;			OSErr	err;			RgnHandle	tempRgn=NewRgn();						err=CreateMask(eWinRec->editDataPtr,&eWinRec->iconSize,&eWinRec->iconSize,&selectBM);			if (err==noErr)			{				err=BitMapToRegion(tempRgn,&selectBM.bmp);				DisposeBitMap(&selectBM);			}			if (err!=noErr || EmptyRgn(tempRgn))			{				DisposeRgn(tempRgn);				SysBeep(0);				return;			}						UpdatePSRgn(eWinRec);			GoOffPort(theWindow);						DoSelectMain(theWindow,tempRgn);		}	}}/* ëIëîÕàÕÇÃà⁄ìÆ */void MoveSelection(WindowPtr theWindow,short dx,short dy,Boolean redrawFlag){	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);		GoOffPort(theWindow);		CopyRgn(eWinRec->selectionPos,eWinRec->prevSelectionPos);	CopyRgn(eWinRec->eSelectedRgn,eWinRec->ePrevSelectedRgn);		OffsetRgn(eWinRec->selectionPos,dx,dy);	OffsetRgn(eWinRec->eSelectedRgn,dx<<eWinRec->ratio,dy<<eWinRec->ratio);		/* É}ÉXÉNÇ…ä÷ÇµÇƒÇÕÅAèàóùÇ∑ÇÈïKóvÇ»Çµ */		SetPt(&eWinRec->prevMovement,dx,dy);	AddPt(eWinRec->prevMovement,&eWinRec->selectionOffset);			UnionRgn(eWinRec->selectionPos,eWinRec->prevSelectionPos,eWinRec->updateRgn);		if (redrawFlag)		DispOffPort(theWindow);	if (eWinRec->showSelection)		DispSelection(theWindow);		SetUndoMode(umMove);	if (gPaletteCheck == kPaletteCheckUsed) /* ÉpÉåÉbÉgÇÃÉ`ÉFÉbÉNÇÉAÉbÉvÉfÅ[Ég */		UpdatePaletteCheck();}/* ëIëîÕàÕÇÃå≈íË */void FixSelection(WindowPtr theWindow){	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);	GWorldFlags	flags;	OSErr		err;	Rect		tempRect;	GWorldPtr	cPort;	GDHandle	cDevice;		GetGWorld(&cPort,&cDevice);		/* ògÇè¡Ç∑ */	if (eWinRec->showSelection)		DispSelection(theWindow);		err=GoOffPort(theWindow);	if (err!=noErr)	{		ErrorAlertFromResource(PAINTERR_RESID,PAINTERR2);		SetUndoMode(umCannot);		return;	}		GetPortBounds(eWinRec->editDataPtr,&tempRect);	if (!EqualRect(&tempRect,&eWinRec->iconSize))	{		flags=UpdateGWorld(&eWinRec->editDataPtr,eWinRec->iconDepth,&eWinRec->iconSize,0,0,0);		flags=UpdateGWorld(&eWinRec->currentMask,1,&eWinRec->iconSize,0,0,0);	}		SetGWorld(eWinRec->editDataPtr,0);	/* âÊñ ï\é¶ópÇÃÉeÉìÉ|ÉâÉäÇ©ÇÁéÊÇËèoÇ∑ÅiéËî≤Ç´ÇæÇ»Åj */	CopyBits(GetPortBitMapForCopyBits(eWinRec->dispTempPtr),		GetPortBitMapForCopyBits(eWinRec->editDataPtr),		&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);		/* É}ÉXÉNÇÃçXêV */	SetGWorld(eWinRec->currentMask,0);	CopyBits(GetPortBitMapForCopyBits(eWinRec->selectionMask),		GetPortBitMapForCopyBits(eWinRec->currentMask),		&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);	GetRegionBounds(eWinRec->selectionPos,&tempRect);	CopyBits(GetPortBitMapForCopyBits(eWinRec->pCurrentMask),		GetPortBitMapForCopyBits(eWinRec->currentMask),		&eWinRec->selectedRect,&tempRect,srcOr,nil);		/* ëIëîÕàÕÇÃçXêV */	CopyRgn(eWinRec->selectionPos,eWinRec->prevSelectionPos);	CopyRgn(eWinRec->eSelectedRgn,eWinRec->ePrevSelectedRgn);	RectRgn(eWinRec->selectionPos,&eWinRec->iconSize);	SetEmptyRgn(eWinRec->eSelectedRgn);	eWinRec->isSelected=false;	eWinRec->selectedRect=eWinRec->iconSize;		/* éÊÇËè¡ÇµÇÃÇΩÇﬂÇ…selectionMaskÇÕécÇµÇƒÇ®Ç≠ */		/* ëOâÒÇÃëIëîÕàÕÇ™çXêVîÕàÕ */	CopyRgn(eWinRec->prevSelectionPos,eWinRec->updateRgn);		SetGWorld(cPort,cDevice);	UpdateClipMenu();	UpdateSelectionMenu();	UpdateTransparentMenu();		SetUndoMode(umDeselect);}/* ëIëîÕàÕÇ∆îwåiÇåä∑ */void ExchangeSelection(WindowPtr theWindow){	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);	Rect	tempRect,tempRect2,tempRect3;	GWorldPtr	cPort;	GDHandle	cDevice;		/* Ç«Ç±Ç‡ëIëÇ≥ÇÍÇƒÇ¢Ç»ÇØÇÍÇŒÉGÉâÅ[ */	if (!eWinRec->isSelected)	{		SysBeep(0);		UpdateClipMenu();		return;	}		GetGWorld(&cPort,&cDevice);	GoOffPort(theWindow);		/* îwåiÇ™Ç»Ç¢ïîï™ÇÃÇΩÇﬂÇÃèàóù */	tempRect=eWinRec->iconSize;	GetRegionBounds(eWinRec->selectionPos,&tempRect2);	OffsetRect(&tempRect,eWinRec->selectedRect.left-tempRect2.left,				eWinRec->selectedRect.top-tempRect2.top);		/* åä∑Ç∑ÇÈ */	SetGWorld(eWinRec->editDataPtr,0);	ClipRect(&tempRect);	CopyBits(GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),		GetPortBitMapForCopyBits(eWinRec->editDataPtr),		&tempRect2,&eWinRec->selectedRect,		srcCopy,nil);	GetPortBounds(eWinRec->editDataPtr,&tempRect3);	ClipRect(&tempRect3);		SetGWorld(eWinRec->selectedDataPtr,0);	CopyBits(GetPortBitMapForCopyBits(eWinRec->tempDataPtr),		GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),		&eWinRec->selectedRect,&tempRect2,		srcCopy,eWinRec->selectionPos);		/* É}ÉXÉNÇÃèàóù */	SetGWorld(eWinRec->currentMask,0);	ClipRect(&tempRect);	CopyBits(GetPortBitMapForCopyBits(eWinRec->selectionMask),		GetPortBitMapForCopyBits(eWinRec->currentMask),		&tempRect2,&eWinRec->selectedRect,		srcCopy,nil);	GetPortBounds(eWinRec->currentMask,&tempRect3);	ClipRect(&tempRect3);		SetGWorld(eWinRec->selectionMask,0);	CopyBits(GetPortBitMapForCopyBits(eWinRec->pCurrentMask),		GetPortBitMapForCopyBits(eWinRec->selectionMask),		&eWinRec->selectedRect,&tempRect2,		srcCopy,eWinRec->selectionPos);		CopyRgn(eWinRec->selectionPos,eWinRec->updateRgn);		SetGWorld(cPort,cDevice);	DispOffPort(theWindow);		UpdateTransparentMenu();	SetUndoMode(umExchange);	if (gPaletteCheck == kPaletteCheckUsed) /* ÉpÉåÉbÉgÇÃÉ`ÉFÉbÉNÇÉAÉbÉvÉfÅ[Ég */		UpdatePaletteCheck();}	static RGBColor	gSearchColor;/* éwíËÇÃêFÇÃóÃàÊÇëIë */void DoSelectColorArea(WindowPtr theWindow,RGBColor *color,Boolean isTransparent){	PaintWinRec	*eWinRec;	GWorldPtr	selectGWorld;	OSErr		err;	RgnHandle	selectRgn;	ColorSearchUPP	csUPP;	GWorldPtr	cPort;	GDHandle	cDevice;		if (theWindow==nil) return;	eWinRec=GetPaintWinRec(theWindow);		if (eWinRec->isSelected) /* ëIëîÕàÕÇ™Ç†ÇÍÇŒå≈íËÇ∑ÇÈ */		FixSelection(theWindow);		UpdatePSRgn(eWinRec);	GetGWorld(&cPort,&cDevice);	err=GoOffPort(theWindow);		if (isTransparent) /* É}ÉXÉNäOÇÃÇ› */	{		RgnHandle	tempRgn;				selectRgn=NewRgn();		err=BitMapToRegion(selectRgn,GetPortBitMapForCopyBits(eWinRec->currentMask));		if (err!=noErr)		{			DisposeRgn(selectRgn);			DispOffPort(theWindow);			SetUndoMode(umCannot);			SysBeep(0);			return;		}				tempRgn=NewRgn();		RectRgn(tempRgn,&eWinRec->iconSize);		DiffRgn(tempRgn,selectRgn,selectRgn);		DisposeRgn(tempRgn);	}	else	{		err=NewGWorld(&selectGWorld,1,&eWinRec->iconSize,0,0,useTempMem);		if (err!=noErr)		{			DispOffPort(theWindow);			SetUndoMode(umCannot);			SysBeep(0);			return;		}				/* éwíËÇµÇΩêFÇæÇØÇÉRÉsÅ[Ç∑ÇÈ */		SetGWorld(selectGWorld,0);		LockPixels(GetGWorldPixMap(selectGWorld));		gSearchColor=*color;		csUPP = NewColorSearchUPP(SearchColorAreaProc);		AddSearch(csUPP);		CopyBits(GetPortBitMapForCopyBits(eWinRec->editDataPtr),GetPortBitMapForCopyBits(selectGWorld),			&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);		DelSearch(csUPP);		DisposeColorSearchUPP(csUPP);				selectRgn=NewRgn();		err=BitMapToRegion(selectRgn,GetPortBitMapForCopyBits(selectGWorld));		if (err!=noErr)		{			SetEmptyRgn(selectRgn);			SysBeep(0);		}		UnlockPixels(GetGWorldPixMap(selectGWorld));		SetGWorld(cPort,cDevice);		DisposeGWorld(selectGWorld);	}		if (EmptyRgn(selectRgn)) /* ëIëóÃàÊÇ™ãÛÇ≈Ç†ÇÍÇŒÇ»Ç…Ç‡ÇµÇ»Ç¢ */	{		DisposeRgn(selectRgn);		DispOffPort(theWindow);		SetUndoMode(umCannot);				UpdateClipMenu();		UpdateSelectionMenu();		UpdateTransparentMenu();	}	else		DoSelectMain(theWindow,selectRgn);}/* êFóÃàÊëIëÇÃï‚èïÉãÅ[É`ÉìÅiéwíËÇÃêFÇçïÇ≠Ç∑ÇÈÅj */pascal Boolean SearchColorAreaProc(RGBColor *color,long *pos){	if (EqualColor(color,&gSearchColor))		*pos=1;	else		*pos=0;	return true;}/* É}ÉXÉNïœçXÅiìßñæÅAïsìßñæÅj */void ChangeMask(WindowPtr theWindow,short mode){	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);	RgnHandle	maskRgn;	OSErr		err;	GWorldPtr	maskGWorld;	Rect		tempRect;	GWorldPtr	cPort;	GDHandle	cDevice;		GetGWorld(&cPort,&cDevice);	GoOffPort(theWindow);		GetPortBounds(eWinRec->currentMask,&tempRect);	switch (mode)	{		case srcCopy:			/* ïsìßñæ */			maskRgn=NewRgn();			CopyRgn(eWinRec->selectionPos,maskRgn);			if (eWinRec->isSelected)				OffsetRgn(maskRgn,-eWinRec->selectionOffset.h,-eWinRec->selectionOffset.v);						MySetGWorld(currentMask);			MyLockPixels(currentMask);			EraseRect(&tempRect);			PaintRgn(maskRgn);			MyUnlockPixels(currentMask);			DisposeRgn(maskRgn);			SetGWorld(cPort,cDevice);			break;				case transparent:			/* ìßñæ */			err=CreateMask2(eWinRec->editDataPtr,&maskGWorld);			if (err==noErr)			{				MySetGWorld(currentMask);				MyLockPixels(currentMask);				CopyBits(GetPortBitMapForCopyBits(maskGWorld),					GetPortBitMapForCopyBits(eWinRec->currentMask),					&tempRect,&tempRect,srcCopy,nil);				MyUnlockPixels(currentMask);				DisposeGWorld(maskGWorld);				SetGWorld(cPort,cDevice);			}			else				SysBeep(0);			break;	}		CopyRgn(eWinRec->selectionPos,eWinRec->updateRgn);		DispOffPort(theWindow);	UpdateTransparentMenu();	SetUndoMode(umMaskChange);	if (gPaletteCheck == kPaletteCheckUsed) /* ÉpÉåÉbÉgÇÃÉ`ÉFÉbÉNÇÉAÉbÉvÉfÅ[Ég */		UpdatePaletteCheck();}/* ëIëîÕàÕÇÉAÉCÉRÉìÇ…ïœä∑ *//* rectMaskÇÕÅAÉvÉåÉrÉÖÅ[ÉAÉCÉRÉìópÇ…éläpÇ¢É}ÉXÉNÇçÏê¨Ç∑ÇÈÇ©Ç«Ç§Ç© */Handle GetSelectionIconHandle(WindowPtr theWindow,short size,short depth,Boolean rectMask){	Handle	resHandle;	GWorldPtr	iconDataPtr;	PixMapHandle	iconDataPix;	Ptr		pixPtr;	Ptr		iconPtr;	Rect	iconRect;	Rect	realIconRect;	OSErr	err;	short	i;	MyBitMapRec	maskBM;	long	s;	long	iconRowBytes=size*depth/8,rowBytes;	Boolean	isMaskAvailable;	GWorldPtr	tempGWorld;	GWorldPtr	cPort;	GDHandle	cDevice;		PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);	Rect	selectedRect=eWinRec->selectedRect;		/* ÉAÉCÉRÉìópÇÃï`âÊóÃàÊÇçÏê¨ */	SetRect(&iconRect,0,0,size,size);	if (eWinRec->isSelected)		isMaskAvailable=false;	else		isMaskAvailable=(eWinRec->backgroundGWorld != nil);		GetGWorld(&cPort,&cDevice);		if (isMaskAvailable)	{		SetGWorld(eWinRec->selectedDataPtr,0);		LockPixels(GetGWorldPixMap(eWinRec->selectedDataPtr));		EraseRect(&eWinRec->iconSize);		UnlockPixels(GetGWorldPixMap(eWinRec->selectedDataPtr));		CopyBits(GetPortBitMapForCopyBits(eWinRec->backgroundGWorld),			GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),			&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);				if (eWinRec->foreTransparency != kForeTrans0)		{			short	foreMode=SetForeBlend(eWinRec);						SafeCopyDeepMask(GetPortBitMapForCopyBits(eWinRec->editDataPtr),				GetPortBitMapForCopyBits(eWinRec->currentMask),				GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),				&eWinRec->iconSize,&eWinRec->iconSize,&eWinRec->iconSize,foreMode,nil);		}		SetGWorld(cPort,cDevice);				tempGWorld=eWinRec->selectedDataPtr;	}	else		tempGWorld=eWinRec->editDataPtr;		realIconRect=selectedRect;	ReduceRect(&realIconRect,size);		err=NewGWorld(&iconDataPtr,depth,&iconRect,0,0,useTempMem);	if (err<0)	{		ErrorAlertFromResource(PAINTERR_RESID,PAINTERR1);		return (Handle)0;	}	iconDataPix=GetGWorldPixMap(iconDataPtr);		/* ÉAÉCÉRÉìÇÃÉfÅ[É^Çé˚ÇﬂÇÈÇΩÇﬂÇÃÉnÉìÉhÉãÇçÏê¨ */	resHandle=NewHandle(size*size/8*(depth==1?2:depth));	if (resHandle==0)	{		DisposeGWorld(iconDataPtr);		ErrorAlertFromResource(PAINTERR_RESID,PAINTERR1);		return (Handle)0;	}		/* ÉAÉCÉRÉìÉfÅ[É^ópÇÃï`âÊóÃàÊÇ…ÉRÉsÅ[ */	SetGWorld(iconDataPtr,0);		LockPixels(iconDataPix);	EraseRect(&iconRect);	ForeColor(blackColor);	BackColor(whiteColor);		CopyBits(GetPortBitMapForCopyBits(tempGWorld),		GetPortBitMapForCopyBits(iconDataPtr),		&selectedRect,&realIconRect,(rectMask ? ditherCopy : srcCopy),0); /* ÉäÅ[ÉWÉáÉìÇ…Ç¬Ç¢ÇƒÇÕï€óØ */		if (rectMask)	{		IconSuiteRef	theIconSuite;				FrameRect(&realIconRect);				err=GetIconSuite(&theIconSuite,135,kSelectorAllAvailableData);		err=PlotIconSuite(&iconRect,kAlignNone,kTransformNone,theIconSuite);		err=DisposeIconSuite(theIconSuite,true);	}		/* ï`âÊóÃàÊÇ©ÇÁÉAÉCÉRÉìÇÃÉfÅ[É^Ç÷ÉRÉsÅ[ */	HLock(resHandle);	rowBytes=MyGetPixRowBytes(iconDataPix) & 0x3fff;	iconPtr=*resHandle;	pixPtr=MyGetPixBaseAddr(iconDataPix);		for (i=0; i<size; i++)	{		BlockMoveData(pixPtr,iconPtr,iconRowBytes);		iconPtr+=iconRowBytes;		pixPtr+=rowBytes;	}		UnlockPixels(iconDataPix);		SetGWorld(cPort,cDevice);		DisposeGWorld(iconDataPtr);		if (depth==kICNDepth) /* îíçïÇ»ÇÁÇŒÉ}ÉXÉNÉpÉ^Å[ÉìÇçÏê¨ */	{		if (rectMask)		{			Rect	logoRect;						err=NewGWorld(&iconDataPtr,1,&iconRect,0,0,useTempMem);			if (err!=0)			{				DisposeHandle(resHandle);				return nil;			}			iconDataPix=GetGWorldPixMap(iconDataPtr);						SetGWorld(iconDataPtr,0);						LockPixels(iconDataPix);			EraseRect(&iconRect);			ForeColor(blackColor);						PaintRect(&realIconRect);						if (size == 32)				SetRect(&logoRect,19,21,32,32);			else				SetRect(&logoRect,8,9,32,32);			PaintRect(&logoRect);			//UnlockPixels(iconDataPix);			SetGWorld(cPort,cDevice);						rowBytes=(**iconDataPix).rowBytes & 0x7fff;			pixPtr=(**iconDataPix).baseAddr;		}		else		{			/* É}ÉXÉNÉpÉ^Å[ÉìópÇÃï`âÊóÃàÊÇçÏê¨ */			err=NewGWorld(&iconDataPtr,8,&iconRect,0,0,useTempMem);			if (err!=0)			{				DisposeHandle(resHandle);				return nil;			}			iconDataPix=GetGWorldPixMap(iconDataPtr);						SetGWorld(iconDataPtr,0);						LockPixels(iconDataPix);			EraseRect(&iconRect);			ForeColor(blackColor);			BackColor(whiteColor);						CopyBits(GetPortBitMapForCopyBits(tempGWorld),				GetPortBitMapForCopyBits(iconDataPtr),				&selectedRect,&realIconRect,srcCopy,NULL); /* ÉäÅ[ÉWÉáÉìÇ…Ç¬Ç¢ÇƒÇÕï€óØ */						UnlockPixels(iconDataPix);						SetGWorld(cPort,cDevice);						/* É}ÉXÉNÉpÉ^Å[ÉìÇçÏê¨ */			err=CreateMask(iconDataPtr,&iconRect,&iconRect,&maskBM);			if (err!=noErr)			{				DisposeHandle(resHandle);				DisposeGWorld(iconDataPtr);				return nil;			}						rowBytes=maskBM.bmp.rowBytes & 0x7fff;			pixPtr=maskBM.bmp.baseAddr;						/* îwåiÇ™Ç»Ç¢Ç∆Ç´ÇÕÅAÉyÉCÉìÉgÉEÉBÉìÉhÉEÇÃÉ}ÉXÉNÇçló∂Ç∑ÇÈ */			while (eWinRec->backgroundGWorld == nil)			{				GWorldPtr		maskDataPtr;				PixMapHandle	maskDataPix;				Ptr				src,dst,temp1,temp2;				short			srcRowBytes,dstRowBytes,j;								err=NewGWorld(&maskDataPtr,1,&iconRect,0,0,useTempMem);				if (err!=noErr) break; /* ÉGÉâÅ[ÇÃéûÇÕÅAÇ»Ç©Ç¡ÇΩÇ±Ç∆Ç…Ç∑ÇÈ */				maskDataPix=GetGWorldPixMap(maskDataPtr);								SetGWorld(maskDataPtr,0);								LockPixels(maskDataPix);				EraseRect(&iconRect);				ForeColor(blackColor);				BackColor(whiteColor);								CopyBits(GetPortBitMapForCopyBits(eWinRec->currentMask),					GetPortBitMapForCopyBits(maskDataPtr),					&selectedRect,&realIconRect,srcCopy,NULL);								src = (**maskDataPix).baseAddr;				dst = pixPtr;				srcRowBytes = (**maskDataPix).rowBytes & 0x7fff;				dstRowBytes = rowBytes;								for (i=0; i<size; i++)				{					temp1 = src;					temp2 = dst;										for (j=0; j<size/8; j++)						*temp2++ &= *temp1++;										src += srcRowBytes;					dst += dstRowBytes;				}								UnlockPixels(maskDataPix);				SetGWorld(cPort,cDevice);								DisposeGWorld(maskDataPtr);								break;			}		}				for (i=0; i<size; i++)		{			BlockMoveData(pixPtr,iconPtr,size/8);			iconPtr+=size/8;			pixPtr+=rowBytes;		}				if (rectMask)		{			UnlockPixels(iconDataPix);		}		else		{			DisposeBitMap(&maskBM);		}		s=GetHandleSize(resHandle);				DisposeGWorld(iconDataPtr);	}		HUnlock(resHandle);	return resHandle;}/* çÇÇ≥heightÅAïùwidthÇÃRectÇsize*sizeÇÃîÕàÕÇ…é˚Ç‹ÇÈÇÊÇ§Ç…èkè¨Ç∑ÇÈ *//* resultÇ…åãâ Çï‘Ç∑ */void ReduceRect(Rect *result,short size){	short	destH,destW;	short	height,width;		height=result->bottom-result->top;	width=result->right-result->left;		if (height<=size && width<=size)	{		destH=height;		destW=width;	}	else if (height>width)	{		destH=size;		destW=size*width/height;	}	else	{		destH=size*height/width;		destW=size;	}		SetRect(result,(size-destW)>>1,(size-destH)>>1,(size+destW+1)>>1,(size+destH+1)>>1);}/* ëIëÉ}ÉXÉNÇçÏê¨ */OSErr CreateMask(GWorldPtr gWorld,Rect *srcRect,Rect *dstRect,MyBitMapRec *bmpRec){	ColorSearchUPP	upp;	OSErr		err;	GWorldPtr	maskPtr;	PixMapHandle	maskPix,pmh;	Rect		gWorldRect;	GWorldPtr	cPort;	GDHandle	cDevice;		GetPortBounds(gWorld,&gWorldRect);	pmh=GetGWorldPixMap(gWorld);		#if 1	/* É}ÉXÉNópÇÃGWorldÇçÏê¨ */	err=NewGWorld(&maskPtr,1,dstRect,0,0,useTempMem);	if (err!=noErr) return err;		/* É}ÉXÉNópÇÃBitMapçÏê¨ */	err=NewBitMap(bmpRec,dstRect);	if (err!=noErr)	{		DisposeGWorld(maskPtr);		return err;	}		maskPix=GetGWorldPixMap(maskPtr);		GetGWorld(&cPort,&cDevice);	SetGWorld(maskPtr,0);	LockPixels(maskPix);	EraseRect(dstRect);		upp=NewColorSearchUPP(MySearchProc);	AddSearch(upp);		(**(**pmh).pmTable).ctSeed=GetCTSeed();		CopyBits(GetPortBitMapForCopyBits(gWorld),GetPortBitMapForCopyBits(maskPtr),		srcRect,dstRect,srcCopy,0);	DelSearch(upp);	DisposeColorSearchUPP(upp);		CalcCMask(GetPortBitMapForCopyBits(maskPtr),&bmpRec->bmp,dstRect,dstRect,		&rgbBlackColor,0,0);	#else	err=NewGWorld(&maskPtr,8,dstRect,0,0,useTempMem);	if (err!=noErr) return err;		err=NewBitMap(bmpRec,dstRect);	if (err!=noErr)	{		DisposeGWorld(maskPtr);		return err;	}		maskPix=GetGWorldPixMap(maskPtr);		GetGWorld(&cPort,&cDevice);	SetGWorld(maskPtr,0);	LockPixels(maskPix);	EraseRect(dstRect);		CopyBits(GetPortBitMapForCopyBits(gWorld),GetPortBitMapForCopyBits(maskPtr),		srcRect,dstRect,srcCopy,nil);		{		CTabHandle	ctab=(*maskPix)->pmTable;		ColorSpec	*ctTable=(*ctab)->ctTable;		short		i;				for (i=1; i<255; i++)			ctTable[i].rgb=rgbBlackColor;		CTabChanged(ctab);	}		CalcCMask(GetPortBitMapForCopyBits(maskPtr),&bmpRec->bmp,dstRect,dstRect,		&rgbBlackColor,nil,0);	#endif		SetGWorld(cPort,cDevice);	DisposeGWorld(maskPtr);		return err;}/* ÉåÉCÉÑÅ[É}ÉXÉNÇçÏê¨ */OSErr CreateMask2(GWorldPtr gWorld,GWorldPtr *maskGWorld){	ColorSearchUPP	upp;	OSErr			err;	PixMapHandle	maskPix;	Rect			r;	GWorldPtr		cPort;	GDHandle		cDevice;		GetPortBounds(gWorld,&r);	GetGWorld(&cPort,&cDevice);		/* É}ÉXÉNópGWorldÇçÏê¨ */	err=NewGWorld(maskGWorld,1,&r,0,0,useTempMem);	if (err!=noErr) return err;		maskPix=GetGWorldPixMap(*maskGWorld);	SetGWorld(*maskGWorld,0);	LockPixels(maskPix);	EraseRect(&r);	UnlockPixels(maskPix);		upp=NewColorSearchUPP(MySearchProc);	AddSearch(upp);		CopyBits(GetPortBitMapForCopyBits(gWorld),		GetPortBitMapForCopyBits(*maskGWorld),		&r,&r,srcCopy,nil);	DelSearch(upp);	DisposeColorSearchUPP(upp);		SetGWorld(cPort,cDevice);		return noErr;}/* É}ÉXÉNçÏê¨ÇÃï‚èïÉãÅ[É`ÉìÅiîíà»äOÇÃêFÇçïÇ≠Ç∑ÇÈÅj */pascal Boolean MySearchProc(RGBColor *color,long *pos){	#pragma unused(pos)		if (color->red!=0xffff || color->blue!=0xffff || color->green!=0xffff)		*pos=1;	else		*pos=0;	return true;}/* ëIëóÃàÊÇÃÉäÅ[ÉWÉáÉìÇÃçXêV */void UpdatePSRgn(PaintWinRec *eWinRec){	CopyRgn(eWinRec->selectionPos,eWinRec->prevSelectionPos);	CopyRgn(eWinRec->eSelectedRgn,eWinRec->ePrevSelectedRgn);}/* åªç›ÇÃâÊñ ÉfÅ[É^Çï€ë∂ÇµÅAÉIÉtÉ|Å[ÉgÇÉJÉåÉìÉgÇ…Ç∑ÇÈ */OSErr GoOffPort(WindowPtr theWindow){	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);	Rect	portSize,tempRect;	OSErr	result=noErr;	GWorldPtr	cPort;	GDHandle	cDevice;		GetPortBounds(eWinRec->editDataPtr,&portSize);	ResetDot(theWindow);		GetGWorld(&cPort,&cDevice);		GetPortBounds(eWinRec->tempDataPtr,&tempRect);	if (!EqualRect(&portSize,&tempRect)) /* ÉTÉCÉYÇ™àŸÇ»ÇÈ */	{		GWorldFlags	flags,newFlags;				/* É}ÉXÉNÇ‡ïœå` */		flags=UpdateGWorld(&eWinRec->pCurrentMask,1,&portSize,0,0,0);				MySetGWorld(tempDataPtr);		flags=UpdateGWorld(&eWinRec->tempDataPtr,eWinRec->iconDepth,&portSize,0,0,0);		if ((flags & gwFlagErr)!=0)		{			result=(OSErr)flags;		}		else if (eWinRec->undoMode==umResize)		{			/* ÉäÉTÉCÉYå„Ç»ÇÁÉeÉìÉ|ÉâÉäÇ»Ç«ÇÃÉTÉCÉYÇçXêV */			MySetGWorld(selectedDataPtr);			flags=UpdateGWorld(&eWinRec->selectedDataPtr,eWinRec->iconDepth,&portSize,0,0,0);						MyLockPixels(selectedDataPtr);			EraseRect(&portSize);			MyUnlockPixels(selectedDataPtr);						/* É}ÉXÉNÇ‡çXêV */			MySetGWorld(selectionMask);			flags=UpdateGWorld(&eWinRec->selectionMask,1,&portSize,0,0,0);						MyLockPixels(selectionMask);			EraseRect(&portSize);			MyUnlockPixels(selectionMask);						if (eWinRec->backgroundGWorld != nil)			{				/* îwåiÇ‡ïœå` */				SetGWorld(eWinRec->backgroundGWorld,0);				newFlags=0 + (eWinRec->resizeImage ? stretchPix + (eWinRec->resizeDither ? ditherPix : 0) : 0);				flags=UpdateGWorld(&eWinRec->backgroundGWorld,eWinRec->iconDepth,&portSize,0,0,newFlags);			}		}	}		/* äGÇÃÉoÉbÉNÉAÉbÉv */	SetGWorld(eWinRec->tempDataPtr,0);	CopyBits(GetPortBitMapForCopyBits(eWinRec->editDataPtr),		GetPortBitMapForCopyBits(eWinRec->tempDataPtr),		&portSize,&portSize,srcCopy,nil);		/* É}ÉXÉNÇÃÉoÉbÉNÉAÉbÉv */	SetGWorld(eWinRec->pCurrentMask,0);	CopyBits(GetPortBitMapForCopyBits(eWinRec->currentMask),		GetPortBitMapForCopyBits(eWinRec->pCurrentMask),		&portSize,&portSize,srcCopy,nil);		SetGWorld(cPort,cDevice);		return result;}/* âîïMÅ^è¡ÇµÉSÉÄÉcÅ[ÉãÇ≈ÇÃï`âÊ */OSErr PaintOffPort(WindowPtr theWindow,short mode,Point pt,Boolean shiftDown){	RGBColor	newColor;	Point	mousePt,prevPt;	Rect	redrawRect,eRedrawRect;	Rect	penRect;	Boolean	moveHorizontal=false;	short	dh,dv;	short	width,height;	PenState	pnState;	Boolean		transparency;	Boolean		usePressure = (isTabletAvailable && ((mode == kPencilMode && gTabletPrefs.usePressure) ||								(mode == kEraserMode && gTabletPrefs.useEraserPressure)));	RGBColor	blendRatio2;	RgnHandle	tempRgn=NewRgn();	Point	offsetPt={0,0};		PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);	Boolean	isBackMode=(eWinRec->backgroundGWorld==nil && !eWinRec->isBackTransparent);	short	ratio=eWinRec->ratio;		OSErr		err;	GWorldPtr	tempGWorld;	PixMapHandle	tempPix;	Boolean		selectClip=eWinRec->isSelected;	RgnHandle	eRgn=nil,clipRgn=NewRgn();	Rect		imageRect,tempRect;		RgnHandle	maskRgn=NewRgn(); /* É}ÉXÉNèàóùóp */	GWorldPtr	maskGWorld;	short		foreMode=srcCopy;	GWorldPtr	foreTransGWorld;		GWorldPtr	cPort;	GDHandle	cDevice;		GetGWorld(&cPort,&cDevice);		GetWindowPortBounds(theWindow,&imageRect);		switch (mode)	{		case kPencilMode:			newColor=gCurrentColor.rgb;			break;				case kEraserMode:			if (isBackMode)				newColor=gBackColor.rgb;			else			{				mode=kEraseMaskMode;				newColor=rgbWhiteColor;			}			break;				case kEraseMaskMode:			newColor=rgbWhiteColor;			break;	}		err=NewGWorld(&maskGWorld,1,&eWinRec->iconSize,0,0,useTempMem);	if (err!=noErr)	{		SetGWorld(cPort,cDevice);		DisposeRgn(tempRgn);		DisposeRgn(maskRgn);		DisposeRgn(clipRgn);		SysBeep(0);		SetUndoMode(umCannot);		return err;	}	LockPixels(GetGWorldPixMap(maskGWorld));		if (eWinRec->backgroundGWorld != nil)	{		switch (eWinRec->foreTransparency)		{			case kForeTrans100:				foreTransGWorld=eWinRec->dispTempPtr;			case kForeTrans0:				break;						default:				err=NewGWorld(&foreTransGWorld,eWinRec->iconDepth,&eWinRec->iconSize,0,0,useTempMem);				if (err!=noErr)				{					UnlockPixels(GetGWorldPixMap(maskGWorld));					DisposeGWorld(maskGWorld);										SetGWorld(cPort,cDevice);					DisposeRgn(tempRgn);					DisposeRgn(maskRgn);					SysBeep(0);					SetUndoMode(umCannot);				}				LockPixels(GetGWorldPixMap(foreTransGWorld));		}	}	else		foreTransGWorld=eWinRec->dispTempPtr;		SetGWorld(cPort,cDevice);	SetPortWindowPort(theWindow);	/* é¿ç€Ç…ï\é¶â¬î\Ç»óÃàÊ */	imageRect.right-=kScrollBarWidth;	imageRect.bottom-=kScrollBarHeight;	ClipRect(&imageRect);	GetClip(clipRgn);		SetGWorld(eWinRec->editDataPtr,0);		mousePt=pt;		/* ÉyÉìÉTÉCÉYÇåvéZ */	/* ÇµÇ©ÇµÅAÇÌÇ¥ÇÌÇ¥Ç±ÇÒÇ»Ç±Ç∆Ç∑ÇÈÇ≠ÇÁÇ¢Ç»ÇÁà¯Ç´êîÇ≈ÇÌÇΩÇµÇƒÇ‡Ç¢Ç¢ÇÊÇ§Ç»ãCÇ™Ç∑ÇÈÇ™Åc */	GetPenState(&pnState);	width=(pnState.pnSize).h;	height=(pnState.pnSize).v;	SetPt(&offsetPt,-width/2,-height/2);	AddPt(offsetPt,&mousePt);		/* ÉyÉìÇÃì]ëóÉÇÅ[Éh */	transparency=(pnState.pnMode == blend);		/* É}ÉXÉNÇÃè¡ãé */	SetGWorld(maskGWorld,0);	EraseRect(&eWinRec->iconSize);	PenSize(width,height);		/* ëIëîÕàÕÇÃèàóù */	if (selectClip)	{		err=NewGWorld(&tempGWorld,eWinRec->iconDepth,&eWinRec->iconSize,0,0,useTempMem);		if (err!=noErr)		{			if (eWinRec->backgroundGWorld != nil && (eWinRec->foreTransparency != kForeTrans100 &&													eWinRec->foreTransparency != kForeTrans0))			{				UnlockPixels(GetGWorldPixMap(foreTransGWorld));				DisposeGWorld(foreTransGWorld);			}			UnlockPixels(GetGWorldPixMap(maskGWorld));			DisposeGWorld(maskGWorld);						SetGWorld(cPort,cDevice);			DisposeRgn(tempRgn);			DisposeRgn(maskRgn);			SysBeep(0);			SetUndoMode(umCannot);			return err;		}				eRgn=eWinRec->eSelectedRgn;		SectRgn(clipRgn,eRgn,clipRgn);	}	else	{		tempGWorld=eWinRec->dispTempPtr;	}	SetGWorld(tempGWorld,0);	tempPix=GetGWorldPixMap(tempGWorld);	LockPixels(tempPix);		SetPenState(&pnState);		if (selectClip)	{		EraseRect(&eWinRec->iconSize);		GetRegionBounds(eWinRec->selectionPos,&tempRect);		CopyBits(GetPortBitMapForCopyBits(eWinRec->editDataPtr),			GetPortBitMapForCopyBits(tempGWorld),			&eWinRec->selectedRect,&tempRect,srcCopy,nil);	}		/* êFÇê›íË */	RGBForeColor(&newColor);		/* ïMà≥èàóù */	if (transparency)		if (usePressure && IsTabletInUse())		{			/* É^ÉuÉåÉbÉgégópéû */			Pressure2Ratio(&blendRatio2);			OpColor(&blendRatio2);		}		else			OpColor(&gBlendRatio);		prevPt=mousePt;	SetGWorld(cPort,cDevice);	if (shiftDown) /* ÉVÉtÉgÇ™âüÇ≥ÇÍÇƒÇ¢ÇÈÇ∆Ç´ÇÕècÇ‹ÇΩÇÕâ°Ç…ÇæÇØÇ–Ç≠ or ç≈å„Ç…ï`âÊÇ≥ÇÍÇΩèÍèäÇ©ÇÁíºê¸Çà¯Ç≠ */	{		UInt32	t=TickCount()+60;				/* É}ÉEÉXÇ™ìÆÇ≠Ç‹Ç≈ë“Ç¡ÇƒÅAìÆÇ¢ÇΩï˚å¸Ç…ÇÊÇ¡Çƒècê¸Ç©â°ê¸Ç©ÇåàíË */		while (EqualPt(mousePt,prevPt) && StillDown() && TickCount()<t)		{			GetMouse(&mousePt);			ToRealPos(&mousePt,ratio);			AddPt(offsetPt,&mousePt);		}		if (eWinRec->undoMode == umPaint && EqualPt(mousePt,prevPt))		{			SetGWorld(tempGWorld,0);			RGBForeColor(&newColor);			MoveTo(eWinRec->lastPaintPos.h,eWinRec->lastPaintPos.v);			LineTo(mousePt.h,mousePt.v);			ForeColor(blackColor);						SetGWorld(maskGWorld,0);			MoveTo(eWinRec->lastPaintPos.h,eWinRec->lastPaintPos.v);			LineTo(mousePt.h,mousePt.v);						SetRect(&redrawRect,mousePt.h,mousePt.v,eWinRec->lastPaintPos.h+width,eWinRec->lastPaintPos.v+height);			SortRect(&redrawRect,false);			goto dispStart;		}		dh=mousePt.h-prevPt.h;		dv=mousePt.v-prevPt.v;		dh=(dh>0?dh:-dh); /* ê‚ëŒíl */		dv=(dv>0?dv:-dv);		if (dh<dv)			moveHorizontal=false;		else			moveHorizontal=true;	}		/* Ç∆ÇËÇ†Ç¶Ç∏ç≈èâÇ…ÉNÉäÉbÉNÇ≥ÇÍÇΩÇ∆Ç±ÇÎÇ…ì_Çë≈Ç¡ÇƒÇ®Ç≠ */	/* É}ÉXÉNÇ…ì_Çë≈Ç¬ */	SetGWorld(maskGWorld,0);	MoveTo(mousePt.h,mousePt.v);	Line(0,0);		SetGWorld(tempGWorld,0);	RGBForeColor(&newColor);	MoveTo(mousePt.h,mousePt.v);	Line(0,0);	ForeColor(blackColor);		SetRect(&redrawRect,mousePt.h,mousePt.v,mousePt.h+width,mousePt.v+height);dispStart:	SectRect(&redrawRect,&eWinRec->iconSize,&redrawRect);	if (selectClip)	{		SetGWorld(eWinRec->dispTempPtr,0);		CopyBits(GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),			GetPortBitMapForCopyBits(eWinRec->dispTempPtr),			&redrawRect,&redrawRect,srcCopy,0);				/* ëIëóÃàÊÇ∆îwåiÇÃèdÇÀçáÇπ */		if (eWinRec->selectionBlend==blend) /* ÉuÉåÉìÉh */			OpColor(&rgbGrayColor);		CopyBits(GetPortBitMapForCopyBits(tempGWorld),			GetPortBitMapForCopyBits(eWinRec->dispTempPtr),			&redrawRect,&redrawRect,eWinRec->selectionBlend,eWinRec->selectionPos);	}	prevPt=mousePt;		/* âÊñ Ç÷ÇÃï`âÊ */	/* ÉvÉåÉrÉÖÅ[ */	ForeColor(blackColor);	SetGWorld(cPort,cDevice);	SetPortWindowPort(gPreviewWindow);	if (mode==kEraseMaskMode)	{		if (eWinRec->backgroundGWorld != nil)		{			if (selectClip)			{				SetGWorld(eWinRec->dispTempPtr,0);				CopyBits(GetPortBitMapForCopyBits(eWinRec->backgroundGWorld),					GetPortBitMapForCopyBits(eWinRec->dispTempPtr),					&redrawRect,&redrawRect,srcCopy,eWinRec->selectionPos);				SafeCopyDeepMask(GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),					GetPortBitMapForCopyBits(eWinRec->selectionMask),					GetPortBitMapForCopyBits(eWinRec->dispTempPtr),					&redrawRect,&redrawRect,&redrawRect,srcCopy,eWinRec->selectionPos);								SetGWorld(cPort,cDevice);				SetPortWindowPort(gPreviewWindow);				CopyBits(GetPortBitMapForCopyBits(eWinRec->dispTempPtr),					GetPortBitMapForCopyBits(GetWindowPort(gPreviewWindow)),					&redrawRect,&redrawRect,srcCopy,eWinRec->selectionPos);			}			else				CopyBits(GetPortBitMapForCopyBits(eWinRec->backgroundGWorld),					GetPortBitMapForCopyBits(GetWindowPort(gPreviewWindow)),					&redrawRect,&redrawRect,srcCopy,eWinRec->selectionPos);		}		else		{			CopyBits(GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),				GetPortBitMapForCopyBits(GetWindowPort(gPreviewWindow)),				&redrawRect,&redrawRect,srcCopy,eWinRec->selectionPos);		}	}	else	{		if (eWinRec->backgroundGWorld != nil)		{			switch (eWinRec->foreTransparency)			{				case kForeTrans100:					break;								case kForeTrans0:					goto dispEnd2;					break;								default:					SetGWorld(foreTransGWorld,0);					CopyBits(GetPortBitMapForCopyBits(eWinRec->backgroundGWorld),						GetPortBitMapForCopyBits(foreTransGWorld),						&redrawRect,&redrawRect,srcCopy,eWinRec->selectionPos);					foreMode=SetForeBlend(eWinRec);					CopyBits(GetPortBitMapForCopyBits(eWinRec->dispTempPtr),						GetPortBitMapForCopyBits(foreTransGWorld),						&redrawRect,&redrawRect,foreMode,eWinRec->selectionPos);										SetGWorld(cPort,cDevice);					SetPortWindowPort(gPreviewWindow);			}		}		CopyBits(GetPortBitMapForCopyBits(foreTransGWorld),			GetPortBitMapForCopyBits(GetWindowPort(gPreviewWindow)),			&redrawRect,&redrawRect,srcCopy,eWinRec->selectionPos);	}		/* ÉyÉCÉìÉg */	eRedrawRect=redrawRect;	MapRect(&eRedrawRect,&eWinRec->iconSize,&eWinRec->iconEditSize);	SetPortWindowPort(theWindow);//	SetClip(eRgn);	SetClip(clipRgn);	if (mode==kEraseMaskMode)	{		if (eWinRec->backgroundGWorld != nil)			if (selectClip)				CopyBits(GetPortBitMapForCopyBits(eWinRec->dispTempPtr),					GetPortBitMapForCopyBits(GetWindowPort(theWindow)),					&redrawRect,&eRedrawRect,srcCopy,eRgn);			else				CopyBits(GetPortBitMapForCopyBits(eWinRec->backgroundGWorld),					GetPortBitMapForCopyBits(GetWindowPort(theWindow)),					&redrawRect,&eRedrawRect,srcCopy,eRgn);		else			CopyBits(GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),				GetPortBitMapForCopyBits(GetWindowPort(theWindow)),				&redrawRect,&eRedrawRect,srcCopy,eRgn);	}	else	{		if (eWinRec->backgroundGWorld != nil)		{			switch (eWinRec->foreTransparency)			{				case kForeTrans0:					goto dispEnd2;					break;								case kForeTrans100:					break;			}		}		CopyBits(GetPortBitMapForCopyBits(foreTransGWorld),			GetPortBitMapForCopyBits(GetWindowPort(theWindow)),			&redrawRect,&eRedrawRect,srcCopy,eRgn);	}dispEnd2:	DrawGrid(theWindow);		SetGWorld(tempGWorld,0);	RGBForeColor(&newColor);	while(StillDown())	{		SetGWorld(cPort,cDevice);		GetMouse(&mousePt); /* ïÅí ÇÃÉOÉâÉtÉBÉbÉNÉ|Å[ÉgÇÉJÉåÉìÉgÇ…ÇµÇƒÇ¢Ç»Ç¢Ç∆É}ÉEÉXÇÃà íuÇ™ê≥ämÇ…ãÅÇﬂÇÁÇÍÇ»Ç¢ */		SetGWorld(tempGWorld,0);		ToRealPos(&mousePt,ratio);		AddPt(offsetPt,&mousePt);				if (shiftDown) /* ÉVÉtÉgÇ™âüÇ≥ÇÍÇƒÇ¢ÇÍÇŒÅAÇªÇÍÇ»ÇËÇÃèàóùÇÇ∑ÇÈ */			if (moveHorizontal)				mousePt.v=prevPt.v;			else				mousePt.h=prevPt.h;				if (EqualPt(mousePt,prevPt)) continue; /* åãâ ìIÇ…ìÆÇ¢ÇƒÇ¢Ç»ÇØÇÍÇŒñ≥éã */				if (transparency && PtInRect(prevPt,&eWinRec->iconSize)) /* ÉNÉäÉbÉsÉìÉO */		{			/* ìßñæìxÇ™ê›íËÇ≥ÇÍÇƒÇ¢ÇÈÇ∆Ç´ÅAèdÇ»Ç¡ÇΩóÃàÊÇ™îZÇ≠Ç»Ç¡ÇƒÇµÇ‹Ç§ÇÃÇñhÇÆ */			/* åæótÇ≈ê‡ñæÇ∑ÇÈÇÃÇÕìÔÇµÇ¢èàóùÇæÇ»Åc */				SetRect(&penRect,prevPt.h,prevPt.v,prevPt.h+width,prevPt.v+height);			RectRgn(tempRgn,&penRect);			DiffRgn(eWinRec->selectionPos,tempRgn,tempRgn);			SetClip(tempRgn);						/* ïMà≥èàóù */			if (usePressure && IsTabletInUse())			{				/* É^ÉuÉåÉbÉgégópéû */				Pressure2Ratio(&blendRatio2);				OpColor(&blendRatio2);			}		}		LineTo(mousePt.h,mousePt.v);				/* É}ÉXÉNÇ‡ï`âÊ */		SetGWorld(maskGWorld,0);		MoveTo(prevPt.h,prevPt.v);		LineTo(mousePt.h,mousePt.v);				SetGWorld(tempGWorld,0);				/* âÊñ Ç…ï\é¶Ç∑ÇÈóÃàÊÇãÅÇﬂÇÈ */		Pt2Rect(mousePt,prevPt,&redrawRect);		redrawRect.right+=width;		redrawRect.bottom+=height;		SectRect(&redrawRect,&eWinRec->iconSize,&redrawRect);				/* ïKóvÇ»ÇÁèdÇÀçáÇÌÇπèàóùÇÇ∑ÇÈ */		if (selectClip)		{			SetGWorld(eWinRec->dispTempPtr,0);			CopyBits(GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),				GetPortBitMapForCopyBits(eWinRec->dispTempPtr),				&redrawRect,&redrawRect,srcCopy,0);						if (eWinRec->selectionBlend==blend) /* ÉuÉåÉìÉh */				OpColor(&rgbGrayColor);			CopyBits(GetPortBitMapForCopyBits(tempGWorld),				GetPortBitMapForCopyBits(eWinRec->dispTempPtr),				&redrawRect,&redrawRect,eWinRec->selectionBlend,eWinRec->selectionPos);		}				/* âÊñ Ç…ï\é¶ */		/* ÉvÉåÉrÉÖÅ[ÉEÉBÉìÉhÉEÇÃçXêV */		ForeColor(blackColor);		SetGWorld(cPort,cDevice);		SetPortWindowPort(gPreviewWindow);		err=BitMapToRegion(maskRgn,GetPortBitMapForCopyBits(maskGWorld));		SectRgn(maskRgn,eWinRec->selectionPos,maskRgn);		if (mode==kEraseMaskMode)		{			if (eWinRec->backgroundGWorld != nil)			{				if (selectClip)				{					SetGWorld(eWinRec->dispTempPtr,0);					CopyBits(GetPortBitMapForCopyBits(eWinRec->backgroundGWorld),						GetPortBitMapForCopyBits(eWinRec->dispTempPtr),						&redrawRect,&redrawRect,srcCopy,eWinRec->selectionPos);					SafeCopyDeepMask(GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),						GetPortBitMapForCopyBits(eWinRec->selectionMask),						GetPortBitMapForCopyBits(eWinRec->dispTempPtr),						&redrawRect,&redrawRect,&redrawRect,srcCopy,maskRgn);										SetGWorld(cPort,cDevice);					SetPortWindowPort(gPreviewWindow);					CopyBits(GetPortBitMapForCopyBits(eWinRec->dispTempPtr),						GetPortBitMapForCopyBits(GetWindowPort(gPreviewWindow)),						&redrawRect,&redrawRect,srcCopy,maskRgn);				}				else					CopyBits(GetPortBitMapForCopyBits(eWinRec->backgroundGWorld),						GetPortBitMapForCopyBits(GetWindowPort(gPreviewWindow)),						&redrawRect,&redrawRect,srcCopy,maskRgn);			}			else				CopyBits(GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),					GetPortBitMapForCopyBits(GetWindowPort(gPreviewWindow)),					&redrawRect,&redrawRect,srcCopy,maskRgn);		}		else		{			if (eWinRec->backgroundGWorld != nil) {				switch (eWinRec->foreTransparency)				{					case kForeTrans0:						goto dispEnd;						break;										case kForeTrans100:						break;										default:						SetGWorld(foreTransGWorld,0);						CopyBits(GetPortBitMapForCopyBits(eWinRec->backgroundGWorld),							GetPortBitMapForCopyBits(foreTransGWorld),							&redrawRect,&redrawRect,srcCopy,maskRgn);						foreMode=SetForeBlend(eWinRec);						CopyBits(GetPortBitMapForCopyBits(eWinRec->dispTempPtr),							GetPortBitMapForCopyBits(foreTransGWorld),							&redrawRect,&redrawRect,foreMode,maskRgn);												SetGWorld(cPort,cDevice);						SetPortWindowPort(gPreviewWindow);				}			}						CopyBits(GetPortBitMapForCopyBits(foreTransGWorld),				GetPortBitMapForCopyBits(GetWindowPort(gPreviewWindow)),				&redrawRect,&redrawRect,srcCopy,maskRgn);		}				eRedrawRect=redrawRect;		MapRect(&eRedrawRect,&eWinRec->iconSize,&eWinRec->iconEditSize);		MapRgn(maskRgn,&eWinRec->iconSize,&eWinRec->iconEditSize);//		SectRgn(maskRgn,clipRgn,maskRgn);				/* ÉyÉCÉìÉgÉEÉBÉìÉhÉEÇÃçXêV */		SetPortWindowPort(theWindow);//		SetClip(maskRgn);		if (mode==kEraseMaskMode)		{			if (eWinRec->backgroundGWorld != nil)				if (selectClip)					CopyBits(GetPortBitMapForCopyBits(eWinRec->dispTempPtr),						GetPortBitMapForCopyBits(GetWindowPort(theWindow)),						&redrawRect,&eRedrawRect,srcCopy,maskRgn);				else					CopyBits(GetPortBitMapForCopyBits(eWinRec->backgroundGWorld),						GetPortBitMapForCopyBits(GetWindowPort(theWindow)),						&redrawRect,&eRedrawRect,srcCopy,maskRgn);			else				CopyBits(GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),					GetPortBitMapForCopyBits(GetWindowPort(theWindow)),					&redrawRect,&eRedrawRect,srcCopy,maskRgn);		}		else		{			if (eWinRec->backgroundGWorld != nil)			{				switch (eWinRec->foreTransparency)				{					case kForeTrans0:						goto dispEnd;						break;										case kForeTrans100:						break;				}			}			CopyBits(GetPortBitMapForCopyBits(foreTransGWorld),				GetPortBitMapForCopyBits(GetWindowPort(theWindow)),				&redrawRect,&eRedrawRect,srcCopy,maskRgn);		}dispEnd:		DrawGrid(theWindow);				SetGWorld(tempGWorld,0);				RGBForeColor(&newColor);				prevPt=mousePt;	}		ForeColor(blackColor);	PenMode(srcCopy);		ClipRect(&eWinRec->iconSize);	SetGWorld(eWinRec->editDataPtr,0);	if (selectClip)	{		/* ï\é¶óÃàÊÇãÅÇﬂÇÈ */		RectRgn(tempRgn,&eWinRec->iconSize);		SectRgn(tempRgn,eWinRec->selectionPos,tempRgn);		GetRegionBounds(eWinRec->selectionPos,&tempRect);		MapRgn(tempRgn,&tempRect,&eWinRec->selectedRect);				CopyBits(GetPortBitMapForCopyBits(tempGWorld),			GetPortBitMapForCopyBits(eWinRec->editDataPtr),			&tempRect,&eWinRec->selectedRect,srcCopy,			tempRgn);				UnlockPixels(tempPix);		DisposeGWorld(tempGWorld);	}	else	{		CopyBits(GetPortBitMapForCopyBits(tempGWorld),			GetPortBitMapForCopyBits(eWinRec->editDataPtr),			&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);				UnlockPixels(tempPix);	}		DisposeRgn(tempRgn);		/* GWorldÇîjä¸ */	if (eWinRec->backgroundGWorld != nil && (eWinRec->foreTransparency != kForeTrans0 && 		eWinRec->foreTransparency != kForeTrans100))	{		UnlockPixels(GetGWorldPixMap(foreTransGWorld));		DisposeGWorld(foreTransGWorld);	}		/* É}ÉXÉNèàóù */	err=BitMapToRegion(maskRgn,GetPortBitMapForCopyBits(maskGWorld));	UnlockPixels(GetGWorldPixMap(maskGWorld));	DisposeGWorld(maskGWorld);		SectRgn(maskRgn,eWinRec->selectionPos,maskRgn); /* ëIëîÕàÕÇÃÇ› */	CopyRgn(maskRgn,eWinRec->updateRgn);		if (eWinRec->isSelected)	{		GetRegionBounds(eWinRec->selectionPos,&tempRect);		MapRgn(maskRgn,&tempRect,&eWinRec->selectedRect);	}		MySetGWorld(currentMask);	MyLockPixels(currentMask);	if (mode==kEraseMaskMode)		EraseRgn(maskRgn);	else		PaintRgn(maskRgn);	MyUnlockPixels(currentMask);	DisposeRgn(maskRgn);		SetGWorld(cPort,cDevice);	SetPortWindowPort(theWindow);	GetWindowPortBounds(theWindow,&tempRect);	ClipRect(&tempRect);	DisposeRgn(clipRgn);		eWinRec->lastPaintPos = mousePt;		DispOffPort(theWindow);		return noErr;}/* ÉIÉtÉ|Å[ÉgÇÃâÊëúÇï\é¶ */void DispOffPort(WindowPtr theWindow){	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);	RgnHandle	tempRgn;	Rect		tempRect;	GWorldPtr	cPort;	GDHandle	cDevice;		GetGWorld(&cPort,&cDevice);		SetGWorld(eWinRec->editDataPtr,0);	ForeColor(blackColor);	SetGWorld(eWinRec->dispTempPtr,0);		if (eWinRec->isSelected) /* ëIëÇ≥ÇÍÇƒÇ¢ÇÈéû */	{		CopyBits(GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),			GetPortBitMapForCopyBits(eWinRec->dispTempPtr),			&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);				if (eWinRec->selectionBlend==blend) /* ÉuÉåÉìÉh */			OpColor(&rgbGrayColor);		GetRegionBounds(eWinRec->selectionPos,&tempRect);		SafeCopyDeepMask(GetPortBitMapForCopyBits(eWinRec->editDataPtr),			GetPortBitMapForCopyBits(eWinRec->currentMask),			GetPortBitMapForCopyBits(eWinRec->dispTempPtr),			&eWinRec->selectedRect,&eWinRec->selectedRect,&tempRect,			eWinRec->selectionBlend,eWinRec->selectionPos);	}	else	{		CopyBits(GetPortBitMapForCopyBits(eWinRec->editDataPtr),			GetPortBitMapForCopyBits(eWinRec->dispTempPtr),			&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);	}		SetGWorld(cPort,cDevice);		if (MyFrontNonFloatingWindow() == theWindow)	{		/* Preview */		SetPortWindowPort(gPreviewWindow);		MyInvalWindowRgn(gPreviewWindow,eWinRec->updateRgn);	}		SetPortWindowPort(theWindow);	ForeColor(blackColor);	tempRgn=NewRgn();	CopyRgn(eWinRec->updateRgn,tempRgn);		MapRgn(tempRgn,&eWinRec->iconSize,&eWinRec->iconEditSize);	MyInvalWindowRgn(theWindow,tempRgn);		DisposeRgn(tempRgn);	if (gToolPrefs.showRuler)		SetPt(&gPrevRulerPt,-1,-1);}/* ëIëóÃàÊÇÃògÇï`âÊ */void DispSelection(WindowPtr theWindow){	DispSelectionMain(theWindow,true,true);}/* óÃàÊï\é¶ÉÅÉCÉì */void DispSelectionMain(WindowPtr theWindow,Boolean dispPaint,Boolean dispPreview){	PatHandle	gray;		PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);	Rect		editRect;		gray=GetPattern(128);		if (dispPreview && MyFrontNonFloatingWindow() == theWindow)	{		SetPortWindowPort(gPreviewWindow);		PenMode(patXor);		PenPat(*gray);		FrameRgn(eWinRec->selectionPos);		PenNormal();	}	if (dispPaint)	{		RgnHandle	tempRgn=NewRgn();				SetPortWindowPort(theWindow);		GetWindowPortBounds(theWindow,&editRect);		editRect.right-=kScrollBarWidth;		editRect.bottom-=kScrollBarHeight;		GetClip(tempRgn);		ClipRect(&editRect);		PenMode(patXor);		PenPat(*gray);		FrameRgn(eWinRec->eSelectedRgn);		PenNormal();		SetClip(tempRgn);		DisposeRgn(tempRgn);	}		ReleaseResource((Handle)gray);}/* ëIëóÃàÊÇÃÉhÉâÉbÉOÅiï‘ÇËílÇÕÅAé¿ç€Ç…ÉhÉâÉbÉOÇ≥ÇÍÇΩÇ©Ç«Ç§Ç©Åj */Boolean DragSelection(WindowPtr theWindow,Point pt,Point *resultPt,Boolean shiftDown){	Point	mousePt;	Point	prevMousePt;	RgnHandle	dragRgn;	RgnHandle	prevDragRgn;	GrafPtr	port;	KeyMap	theKeys;	Boolean		horizFlag=true;	Boolean		vertFlag=true;	Point	offsetPt;		PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);	short	ratio=eWinRec->ratio;		GWorldPtr	eDispTempPtr=(GWorldPtr)0L; /* ï“èWâÊñ ÇÃÉOÉäÉbÉhóp */	PixMapHandle	eDispTempPix=NULL;	OSErr		err;		Rect	imageRect,tempRect;	Boolean	result=false;		GWorldPtr	tempGWorld;	GWorldPtr	cPort;	GDHandle	cDevice;		#define		abs(x)	((x>0 ? x : -x))		if (eWinRec->backgroundGWorld != nil)		err=NewGWorld(&tempGWorld,eWinRec->iconDepth,&eWinRec->iconSize,0,0,useTempMem);	else		tempGWorld=eWinRec->dispTempPtr;		GetPort(&port);	GetGWorld(&cPort,&cDevice);	SetPortWindowPort(theWindow);		GetWindowPortBounds(theWindow,&imageRect);	imageRect.right-=kScrollBarWidth;	imageRect.bottom-=kScrollBarHeight;	ClipRect(&imageRect);		GetKeys(theKeys);	if (BitTst(theKeys,61)) /* ÉIÉvÉVÉáÉìÉLÅ[ */		MySetCursor(kCursorHandOnPlus);	else		MySetCursor(kCursorHandOn);		/* É}ÉEÉXÇ™ìÆÇ≠Ç‹Ç≈ë“Ç¬ */	if (eWinRec->showSelection)		DispSelection(theWindow);	GetMouse(&prevMousePt);	mousePt=prevMousePt;	while (EqualPt(prevMousePt,mousePt) && StillDown())	{		GetMouse(&mousePt);	}	if (EqualPt(prevMousePt,mousePt))	{		/* ìÆÇ©Ç≥ÇÍÇƒÇ¢Ç»Ç¢ */		SetPt(resultPt,0,0);		goto exit;	}		/* ç∂âEÅAè„â∫Ç…à⁄ìÆÇ≈Ç´ÇÈÇ© */	if (shiftDown)	{		SubPt(mousePt,&prevMousePt);		if (abs(prevMousePt.h) > abs(prevMousePt.v))			vertFlag=false;		else			horizFlag=false;	}		prevMousePt=pt;		prevDragRgn=NewRgn();		dragRgn=eWinRec->selectionPos;	CopyRgn(eWinRec->selectionPos,prevDragRgn);		GetRegionBounds(eWinRec->selectionPos,&tempRect);	SetPt(&offsetPt,tempRect.left,tempRect.top);	SubPt(pt,&offsetPt);		if (gToolPrefs.gridMode!=iGNone)	{		err=NewGWorld(&eDispTempPtr,eWinRec->iconDepth,&eWinRec->iconEditSize,0,0,useTempMem);		eDispTempPix=GetGWorldPixMap(eDispTempPtr);		LockPixels(eDispTempPix);				SetGWorld(eDispTempPtr,0);		EraseRect(&eWinRec->iconEditSize);		SetGWorld(cPort,cDevice);	}		while (StillDown())	{		GetMouse(&mousePt);		GetKeys(theKeys);		ToRealPos(&mousePt,ratio);		long temp;#if TARGET_RT_LITTLE_ENDIAN		temp = EndianS32_BtoN (theKeys[1].bigEndianValue);#else		temp = theKeys[1];#endif			if ((temp & 0x00000001) != 0 && !shiftDown)		{			AddPt(offsetPt,&mousePt);			FixToGrid2(&mousePt);			SubPt(offsetPt,&mousePt);		}				if (!EqualPt(prevMousePt,mousePt))		{			SubPt(mousePt,&prevMousePt);			OffsetRgn(dragRgn,-prevMousePt.h*horizFlag,-prevMousePt.v*vertFlag);						/* îwåiÇÃçƒï`âÊ */			UnionRgn(prevDragRgn,dragRgn,prevDragRgn);			SetGWorld(eWinRec->dispTempPtr,0);			GetRegionBounds(prevDragRgn,&tempRect);			CopyBits(GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),				GetPortBitMapForCopyBits(eWinRec->dispTempPtr),				&tempRect,&tempRect,srcCopy,prevDragRgn);						/* ëIëóÃàÊÇÃçƒï`âÊ */			if (eWinRec->selectionBlend==blend)				OpColor(&rgbGrayColor);			GetRegionBounds(dragRgn,&tempRect);			SafeCopyDeepMask(GetPortBitMapForCopyBits(eWinRec->editDataPtr),				GetPortBitMapForCopyBits(eWinRec->currentMask),				GetPortBitMapForCopyBits(eWinRec->dispTempPtr),				&eWinRec->selectedRect,&eWinRec->selectedRect,&tempRect,				eWinRec->selectionBlend,nil);						/* ÉvÉåÉrÉÖÅ[âÊñ ÇÃçƒï`âÊ */			if (eWinRec->backgroundGWorld != nil)			{				GWorldPtr	maskGWorld;								err=NewGWorld(&maskGWorld,1,&eWinRec->iconSize,0,0,useTempMem);				SetGWorld(maskGWorld,0);				LockPixels(GetGWorldPixMap(maskGWorld));				EraseRect(&eWinRec->iconSize);				GetRegionBounds(eWinRec->selectionPos,&tempRect);				CopyBits(GetPortBitMapForCopyBits(eWinRec->currentMask),					GetPortBitMapForCopyBits(maskGWorld),					&eWinRec->selectedRect,&tempRect,srcCopy,nil);				CopyBits(GetPortBitMapForCopyBits(eWinRec->selectionMask),					GetPortBitMapForCopyBits(maskGWorld),					&eWinRec->iconSize,&eWinRec->iconSize,srcOr,nil);				UnlockPixels(GetGWorldPixMap(maskGWorld));								SetGWorld(tempGWorld,0);				/* îwåiï\é¶ */				if (eWinRec->dispBackground)				{					GetRegionBounds(prevDragRgn,&tempRect);					CopyBits(GetPortBitMapForCopyBits(eWinRec->backgroundGWorld),						GetPortBitMapForCopyBits(tempGWorld),						&tempRect,&tempRect,srcCopy,prevDragRgn);				}								/* ëOåiï\é¶ */				if (eWinRec->foreTransparency != kForeTrans0)				{					SafeCopyDeepMask(GetPortBitMapForCopyBits(eWinRec->dispTempPtr),						GetPortBitMapForCopyBits(maskGWorld),						GetPortBitMapForCopyBits(tempGWorld),						&eWinRec->iconSize,&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);				}								DisposeGWorld(maskGWorld);			}						SetGWorld(cPort,cDevice);			SetPortWindowPort(gPreviewWindow);						GetRegionBounds(prevDragRgn,&tempRect);			CopyBits(GetPortBitMapForCopyBits(tempGWorld),				GetPortBitMapForCopyBits(GetWindowPort(gPreviewWindow)),				&tempRect,&tempRect,srcCopy,prevDragRgn);						/* ï“èWâÊñ ÇÃçƒï`âÊ */			MapRgn(prevDragRgn,&eWinRec->iconSize,&eWinRec->iconEditSize);						if (eDispTempPtr==nil)			{				SetPortWindowPort(theWindow);				SetClip(prevDragRgn);				CopyBits(GetPortBitMapForCopyBits(tempGWorld),					GetPortBitMapForCopyBits(GetWindowPort(theWindow)),					&eWinRec->iconSize,&eWinRec->iconEditSize,srcCopy,prevDragRgn);				DrawGrid(theWindow);			}			else			{				SetGWorld(eDispTempPtr,0);				SetClip(prevDragRgn);				CopyBits(GetPortBitMapForCopyBits(tempGWorld),					GetPortBitMapForCopyBits(eDispTempPtr),					&eWinRec->iconSize,&eWinRec->iconEditSize,srcCopy,prevDragRgn);								DrawGridMain(eWinRec->ratio,&eWinRec->iconSize);								SetGWorld(cPort,cDevice);				SetPortWindowPort(theWindow);				CopyBits(GetPortBitMapForCopyBits(eDispTempPtr),					GetPortBitMapForCopyBits(GetWindowPort(theWindow)),					&eWinRec->iconEditSize,&eWinRec->iconEditSize,srcCopy,prevDragRgn);			}						CopyRgn(dragRgn,prevDragRgn);						prevMousePt=mousePt;		}	}		SubPt(pt,&prevMousePt);	if (!horizFlag) prevMousePt.h=0;	if (!vertFlag) prevMousePt.v=0;	*resultPt=prevMousePt;		DisposeRgn(prevDragRgn);		if (eDispTempPtr!=nil)	{		UnlockPixels(eDispTempPix);		DisposeGWorld(eDispTempPtr);	}		OffsetRgn(eWinRec->selectionPos,-resultPt->h,-resultPt->v);		result=true;	exit:	if (eWinRec->backgroundGWorld != nil)		DisposeGWorld(tempGWorld);		SetGWorld(cPort,cDevice);	SetPortWindowPort(theWindow);	GetWindowPortBounds(theWindow,&tempRect);	ClipRect(&tempRect);	SetPort(port);		return result;}#define	dResizeIcon		144enum {	diWidth=3,	diHeight,	diResizeImage,	diResizeDither,	diWidthUnit,	diHeightUnit,	diConstRatio,	diResizeBackground,};/* âÊëúÉTÉCÉYÇÃïœçX */void ChangeIconSize(WindowPtr theWindow){	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);	DialogPtr	dp;	short	width=eWinRec->iconSize.right,height=eWinRec->iconSize.bottom;	long	newWidth,newHeight;	Str255	widthStr,heightStr;	short	item;	ResizeDataRec	newResizeData;	short	tempUnit;	short	a[2],b[2];	short	background=0;	ModalFilterUPP	mfUPP=NewModalFilterUPP(MyModalDialogFilter);		/* ÉoÉbÉNÉOÉâÉEÉìÉhÇ™ë∂ç›Ç∑ÇÈéûÇÕégópïsâ¬ */	if (eWinRec->backgroundGWorld!=nil || eWinRec->foregroundGWorld!=nil)	{		SysBeep(0);		UpdateEffectMenu();		return;	}		DeactivateFloatersAndFirstDocumentWindow();	dp=GetNewDialog(dResizeIcon,nil,kFirstWindowOfClass);		/* äeÉAÉCÉeÉÄÇÃèâä˙âª */	SetDialogControlValue(dp,diResizeImage,gResizeData.resizeImage);	if (!gResizeData.resizeImage)		SetDialogControlHilite(dp,diResizeDither,255);	SetDialogControlValue(dp,diResizeDither,gResizeData.dither);		SetDialogControlValue(dp,diWidthUnit,gResizeData.unit[0]);	SetDialogControlValue(dp,diHeightUnit,gResizeData.unit[1]);	SetDialogControlValue(dp,diConstRatio,gResizeData.constRatio);		SetDialogControlValue(dp,diResizeBackground,(eWinRec->isBackTransparent ? 								2 : gPaintWinPrefs.background+1));	SetDialogControlHilite(dp,diResizeBackground,255);		newResizeData=gResizeData;		a[0]=height;	a[1]=100;	b[0]=width;	b[1]=100;		NumToString(b[gResizeData.unit[0]-1],widthStr);	NumToString(a[gResizeData.unit[1]-1],heightStr);		SetDialogItemText2(dp,diWidth,widthStr);	SetDialogItemText2(dp,diHeight,heightStr);		SetDialogDefaultItem(dp,ok);	SetDialogCancelItem(dp,cancel);		SelectDialogItemText(dp,diWidth,0,widthStr[0]);	ShowWindow(GetDialogWindow(dp));		item=3;	while (item!=ok && item!=cancel)	{		ModalDialog(mfUPP,&item);				switch (item)		{			case diConstRatio:				newResizeData.constRatio=!newResizeData.constRatio;				SetDialogControlValue(dp,diConstRatio,newResizeData.constRatio);			case diWidth:				if (newResizeData.constRatio)				{					/* ècâ°î‰àÍíËÇ»ÇÁ */					GetDialogItemText2(dp,diWidth,widthStr);					StringToNum(widthStr,&newWidth);					newHeight=newWidth*a[newResizeData.unit[1]-1]/b[newResizeData.unit[0]-1];					NumToString(newHeight,heightStr);					SetDialogItemText2(dp,diHeight,heightStr);				}				IsMarginExists(dp,width,height,&newResizeData);				break;							case diHeight:				if (newResizeData.constRatio)				{					GetDialogItemText2(dp,diHeight,heightStr);					StringToNum(heightStr,&newHeight);					newWidth=newHeight*b[newResizeData.unit[0]-1]/a[newResizeData.unit[1]-1];					NumToString(newWidth,widthStr);					SetDialogItemText2(dp,diWidth,widthStr);				}				IsMarginExists(dp,width,height,&newResizeData);				break;						case diWidthUnit:				tempUnit=newResizeData.unit[0];				newResizeData.unit[0]=GetDialogControlValue(dp,diWidthUnit);				GetDialogItemText2(dp,diWidth,widthStr);				StringToNum(widthStr,&newWidth);				newWidth=newWidth*b[newResizeData.unit[0]-1]/b[tempUnit-1];				NumToString(newWidth,widthStr);				SetDialogItemText2(dp,diWidth,widthStr);				SelectDialogItemText(dp,diWidth,0,widthStr[0]);				break;						case diHeightUnit:				tempUnit=newResizeData.unit[1];				newResizeData.unit[1]=GetDialogControlValue(dp,diHeightUnit);				GetDialogItemText2(dp,diHeight,heightStr);				StringToNum(heightStr,&newHeight);				newHeight=newHeight*a[newResizeData.unit[1]-1]/a[tempUnit-1];				NumToString(newHeight,heightStr);				SetDialogItemText2(dp,diHeight,heightStr);				SelectDialogItemText(dp,diHeight,0,heightStr[0]);				break;						case diResizeImage:				newResizeData.resizeImage=!newResizeData.resizeImage;				SetDialogControlValue(dp,diResizeImage,newResizeData.resizeImage);				SetDialogControlHilite(dp,diResizeDither,newResizeData.resizeImage ? 0 : 255);				IsMarginExists(dp,width,height,&newResizeData);				break;						case diResizeDither:				newResizeData.dither=!newResizeData.dither;				SetDialogControlValue(dp,diResizeDither,newResizeData.dither);				break;		}	}		if (item==ok)	{		GetDialogItemText2(dp,diWidth,widthStr);		StringToNum(widthStr,&newWidth);		if (newResizeData.unit[0]==unitPercent) newWidth=newWidth*width/100;				GetDialogItemText2(dp,diHeight,heightStr);		StringToNum(heightStr,&newHeight);		if (newResizeData.unit[1]==unitPercent) newHeight=newHeight*height/100;				background=GetDialogControlValue(dp,diResizeBackground)-1;				gResizeData=newResizeData;	}		DisposeDialog(dp);	DisposeModalFilterUPP(mfUPP);	ActivateFloatersAndFirstDocumentWindow();		if (item==cancel) return;	if (newWidth <= 0 || newWidth > 16383 || newHeight <= 0 || newHeight > 16383)	{		SysBeep(0);		return;	}		if (width != newWidth || height != newHeight)	{		Rect	newSize;				SetRect(&newSize,0,0,newWidth,newHeight);		ChangeIconSizeMain(theWindow,&newSize,background);		if (gPaletteCheck == kPaletteCheckUsed) /* ÉpÉåÉbÉgÇÃÉ`ÉFÉbÉNÇÉAÉbÉvÉfÅ[Ég */			UpdatePaletteCheck();	}}/* ÉäÉTÉCÉYå„ÇÃÉCÉÅÅ[ÉWÇ…ó]îíÇ™Ç≈Ç´ÇÈÇ©Ç«Ç§Ç©ÇîªíËÇ∑ÇÈ */void IsMarginExists(DialogPtr dp,short width,short height,ResizeDataRec *resizePrefs){	long	newHeight,newWidth;	Str255	str;	Boolean	result=false;		/* ÉCÉÅÅ[ÉWÇïœå^Ç∑ÇÈÇ»ÇÁä÷åWÇ»Ç¢ */	if (!resizePrefs->resizeImage)	{		/* â°ïùÇ™ëÂÇ´Ç≠Ç»Ç¡ÇƒÇ¢ÇÈÇ© */		GetDialogItemText2(dp,diWidth,str);		StringToNum(str,&newWidth);		switch (resizePrefs->unit[0])		{			case unitPixels:				result=(newWidth > width);				break;						case unitPercent:				result=(newWidth > 100);				break;		}				/* ÇªÇ§Ç≈Ç»ÇØÇÍÇŒècÇ™ëÂÇ´Ç≠Ç»Ç¡ÇƒÇ¢ÇÈÇ© */		if (!result)		{			GetDialogItemText2(dp,diHeight,str);			StringToNum(str,&newHeight);			switch(resizePrefs->unit[1])			{				case unitPixels:					result=(newHeight > height);					break;								case unitPercent:					result=(newHeight > 100);					break;			}		}	}		SetDialogControlHilite(dp,diResizeBackground,(result ? 0 : 255));}/* é¿ç€ÇÃÉäÉTÉCÉY */void ChangeIconSizeMain(WindowPtr theWindow,Rect *newSize,short background){	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);	GWorldFlags	newFlags;	GrafPtr		port;	Rect		copySize;	short		tMode=srcCopy;	OSErr		err=noErr;		long		reqMemSize=(long)newSize->right*(long)newSize->bottom - (long)eWinRec->iconSize.right*(long)eWinRec->iconSize.bottom;	Handle		tempH[4]={nil,nil,nil,nil};	short		i;	GWorldPtr	cPort;	GDHandle	cDevice;		/* écÇËÉÅÉÇÉäÉ`ÉFÉbÉN */	if (reqMemSize>0)	{		for (i=0; i<4; i++)		{			tempH[i]=NewHandle(reqMemSize);			if (tempH[i]==nil)			{				err=memFullErr;				break;			}		}		for (i=0; i<4; i++)			DisposeHandle(tempH[i]);	}		if (err!=noErr)	{		ErrorAlertFromResource(PAINTERR_RESID,PAINTERR1);		return;	}		/* ëIëóÃàÊÇ™Ç†ÇÈèÍçáÇÕÇ‹Ç∏å≈íË */	if (eWinRec->isSelected)		FixSelection(theWindow);	GetGWorld(&cPort,&cDevice);	GoOffPort(theWindow);		/* GWorldÇÃÉTÉCÉYÇïœçX */	newFlags=UpdateGWorld(&eWinRec->editDataPtr,eWinRec->iconDepth,newSize,0,0,0);	if ((newFlags & gwFlagErr)!=0)	{		Rect	oldRect;				GetPortBounds(eWinRec->tempDataPtr,&oldRect);				SetGWorld(eWinRec->editDataPtr,0);		CopyBits(GetPortBitMapForCopyBits(eWinRec->tempDataPtr),			GetPortBitMapForCopyBits(eWinRec->editDataPtr),			&oldRect,&oldRect,srcCopy,nil);		SetGWorld(cPort,cDevice);		DispOffPort(theWindow);		if (eWinRec->undoMode == umDeselect) DoUndo();		SetUndoMode(umCannot);				ErrorAlertFromResource(PAINTERR_RESID,PAINTERR1);		return;	}	newFlags=UpdateGWorld(&eWinRec->currentMask,1,newSize,0,0,0);	if ((newFlags & gwFlagErr)!=0)	{		Rect	oldRect;				GetPortBounds(eWinRec->tempDataPtr,&oldRect);				newFlags=UpdateGWorld(&eWinRec->editDataPtr,eWinRec->iconDepth,&oldRect,0,0,0);				SetGWorld(eWinRec->editDataPtr,0);		CopyBits(GetPortBitMapForCopyBits(eWinRec->tempDataPtr),			GetPortBitMapForCopyBits(eWinRec->editDataPtr),			&oldRect,&oldRect,srcCopy,nil);				SetGWorld(eWinRec->currentMask,0);		CopyBits(GetPortBitMapForCopyBits(eWinRec->pCurrentMask),			GetPortBitMapForCopyBits(eWinRec->currentMask),			&oldRect,&oldRect,srcCopy,nil);				SetGWorld(cPort,cDevice);		DispOffPort(theWindow);		if (eWinRec->undoMode == umDeselect) DoUndo();		SetUndoMode(umCannot);				ErrorAlertFromResource(PAINTERR_RESID,PAINTERR1);		return;	}		/* ÉRÉsÅ[Ç∑ÇÈÉTÉCÉYÇ»Ç«ÇåvéZ */	if (gResizeData.resizeImage)	{		copySize=*newSize;		if (gResizeData.dither)			tMode+=ditherCopy;	}	else		copySize=eWinRec->iconSize;		/* ÉäÉTÉCÉYÅAÉRÉsÅ[Ç∑ÇÈ */	SetGWorld(eWinRec->editDataPtr,0);	LockPixels(GetGWorldPixMap(eWinRec->editDataPtr));		/* ó]îíÇìhÇÈ */	if (background == 2)		RGBBackColor(&gBackColor.rgb);	EraseRect(newSize);	BackColor(whiteColor);	CopyBits(GetPortBitMapForCopyBits(eWinRec->tempDataPtr),		GetPortBitMapForCopyBits(eWinRec->editDataPtr),		&eWinRec->iconSize,&copySize,tMode,nil);	UnlockPixels(GetGWorldPixMap(eWinRec->editDataPtr));		SetGWorld(eWinRec->dispTempPtr,0);	newFlags=UpdateGWorld(&eWinRec->dispTempPtr,eWinRec->iconDepth,newSize,0,0,0);		LockPixels(GetGWorldPixMap(eWinRec->dispTempPtr));		/* ó]îíÇìhÇÈ */	if (background == 2)		RGBBackColor(&gBackColor.rgb);	EraseRect(newSize);	BackColor(whiteColor);	CopyBits(GetPortBitMapForCopyBits(eWinRec->editDataPtr),		GetPortBitMapForCopyBits(eWinRec->dispTempPtr),		newSize,newSize,srcCopy,nil);	UnlockPixels(GetGWorldPixMap(eWinRec->dispTempPtr));		SetGWorld(cPort,cDevice);		/* ëIëîÕàÕçXêV */	RectRgn(eWinRec->selectionPos,newSize);	SetEmptyRgn(eWinRec->eSelectedRgn);	eWinRec->isSelected=false;	eWinRec->selectedRect=eWinRec->iconSize;		eWinRec->resizeImage=gResizeData.resizeImage;	eWinRec->resizeDither=gResizeData.dither;		/* É}ÉXÉN */	if (gResizeData.resizeImage) /* ÉCÉÅÅ[ÉWÇïœå` */	{		GWorldPtr	maskGWorld;				MySetGWorld(currentMask);		CopyBits(GetPortBitMapForCopyBits(eWinRec->pCurrentMask),			GetPortBitMapForCopyBits(eWinRec->currentMask),			&eWinRec->iconSize,&copySize,srcCopy,nil);		err=CreateMask2(eWinRec->editDataPtr,&maskGWorld);		if (err!=noErr)			SysBeep(0);		else		{			MySetGWorld(currentMask);			CopyBits(GetPortBitMapForCopyBits(maskGWorld),				GetPortBitMapForCopyBits(eWinRec->currentMask),				&copySize,&copySize,srcOr,nil);						DisposeGWorld(maskGWorld);		}		SetGWorld(cPort,cDevice);	}	else /* ÉCÉÅÅ[ÉWÇïœå^ÇµÇ»Ç¢ */	{		MySetGWorld(currentMask);		MyLockPixels(currentMask);				if (background == 1 || (background == 2 && gBackColor.isTransparent))			EraseRect(newSize);		else			PaintRect(newSize);		CopyBits(GetPortBitMapForCopyBits(eWinRec->pCurrentMask),			GetPortBitMapForCopyBits(eWinRec->currentMask),			&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);				MyUnlockPixels(currentMask);		SetGWorld(cPort,cDevice);	}		GetPort(&port);	SetPortWindowPort(theWindow);	eWinRec->iconSize=*newSize;	eWinRec->selectedRect=*newSize;	UpdatePaintWindow(theWindow);		SetPortWindowPort(gPreviewWindow);	SizeWindow(gPreviewWindow,newSize->right,newSize->bottom,false);	ClipRect(&eWinRec->iconSize);	MyInvalWindowRect(gPreviewWindow,&eWinRec->iconSize);	SetPort(port);		SetUndoMode(umResize);}/* ÉoÉbÉNÉOÉâÉEÉìÉhï“èWÉÇÅ[ÉhÇ÷ */void GoBackgroundMode(WindowPtr theWindow){	PaintWinRec	*eWinRec;	OSErr		err;	RgnHandle	tempRgn;	short		mode=umCannot;	Rect		tempRect;	GWorldPtr	cPort;	GDHandle	cDevice;		ResetRuler();	eWinRec=GetPaintWinRec(theWindow);		GetGWorld(&cPort,&cDevice);	GoOffPort(theWindow);		/* âÊñ Ç©ÇÁÇÕÇ›èoÇƒÇ¢ÇÈïîï™Çîjä¸Ç∑ÇÈ */	if (eWinRec->isSelected)	{		GWorldFlags	flags;				tempRgn=NewRgn();		RectRgn(tempRgn,&eWinRec->iconSize);		SectRgn(tempRgn,eWinRec->selectionPos,eWinRec->selectionPos);		DisposeRgn(tempRgn);				/* âÊñ ï\é¶ópÇÃÉäÅ[ÉWÉáÉìÇ‡çXêV */		CopyRgn(eWinRec->selectionPos,eWinRec->eSelectedRgn);		MapRgn(eWinRec->eSelectedRgn,&eWinRec->iconSize,&eWinRec->iconEditSize);				/* ÉCÉÅÅ[ÉWÅAÉ}ÉXÉNÇÃïœå` */		flags=UpdateGWorld(&eWinRec->editDataPtr,eWinRec->iconDepth,&eWinRec->iconSize,0,0,0);		flags=UpdateGWorld(&eWinRec->currentMask,1,&eWinRec->iconSize,0,0,0);				/* ÉCÉÅÅ[ÉWÅAÉ}ÉXÉNÇÃï`Ç´ñﬂÇµ */		SetGWorld(eWinRec->editDataPtr,0);		MyLockPixels(editDataPtr);		EraseRect(&eWinRec->iconSize);		GetRegionBounds(eWinRec->selectionPos,&tempRect);		CopyBits(GetPortBitMapForCopyBits(eWinRec->tempDataPtr),			GetPortBitMapForCopyBits(eWinRec->editDataPtr),			&eWinRec->selectedRect,&tempRect,srcCopy,nil);		MyUnlockPixels(editDataPtr);		SetGWorld(eWinRec->currentMask,0);		MyLockPixels(currentMask);		EraseRect(&eWinRec->iconSize);		CopyBits(GetPortBitMapForCopyBits(eWinRec->pCurrentMask),			GetPortBitMapForCopyBits(eWinRec->currentMask),			&eWinRec->selectedRect,&tempRect,srcCopy,nil);		MyUnlockPixels(currentMask);				/* ÇªÇÃëºÇÃïœêîÇí≤êÆ */		eWinRec->selectedRect=tempRect;		SetPt(&eWinRec->selectionOffset,0,0);	}		if (eWinRec->editBackground) /* îwåiï“èWéû */	{		/* îwåiGWorldÇçÏê¨ */		err=NewGWorld(&eWinRec->backgroundGWorld,eWinRec->iconDepth,&eWinRec->iconSize,0,0,useTempMem);		SetGWorld(eWinRec->backgroundGWorld,0);		LockPixels(GetGWorldPixMap(eWinRec->backgroundGWorld));		EraseRect(&eWinRec->iconSize);		UnlockPixels(GetGWorldPixMap(eWinRec->backgroundGWorld));				/* ï“èWíÜÇÃâÊëúÇîwåiÇ…ÉRÉsÅ[ */		CopyBits(GetPortBitMapForCopyBits(eWinRec->dispTempPtr),			GetPortBitMapForCopyBits(eWinRec->backgroundGWorld),			&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);				if (eWinRec->foregroundGWorld == nil) /* ëOåiÇ™ë∂ç›ÇµÇ»ÇØÇÍÇŒ */		{			EraseOffPort(eWinRec);			/* É}ÉXÉNçÏê¨ */			err=NewGWorld(&eWinRec->foregroundMask,1,&eWinRec->iconSize,0,0,useTempMem);			MySetGWorld(foregroundMask);			MyLockPixels(foregroundMask);			EraseRect(&eWinRec->iconSize);			MyUnlockPixels(foregroundMask);						eWinRec->foreTransparency=kForeTrans100;						mode=umAddForeground;		}		else		{			/* ëOåiÇï“èWâ¬î\Ç… */			SetGWorld(eWinRec->editDataPtr,0);			CopyBits(GetPortBitMapForCopyBits(eWinRec->foregroundGWorld),				GetPortBitMapForCopyBits(eWinRec->editDataPtr),				&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);			SetGWorld(eWinRec->selectedDataPtr,0);			LockPixels(GetGWorldPixMap(eWinRec->selectedDataPtr));			CopyBits(GetPortBitMapForCopyBits(eWinRec->foregroundGWorld),				GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),				&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);			EraseRgn(eWinRec->selectionPos);			UnlockPixels(GetGWorldPixMap(eWinRec->selectedDataPtr));						/* ëOåiÇîjä¸ */			DisposeGWorld(eWinRec->foregroundGWorld);			eWinRec->foregroundGWorld=nil;		}				eWinRec->dispBackground=true;				/* É}ÉXÉN */		MySetGWorld(currentMask);		MyLockPixels(currentMask);		EraseRect(&eWinRec->iconSize);		CopyBits(GetPortBitMapForCopyBits(eWinRec->foregroundMask),			GetPortBitMapForCopyBits(eWinRec->currentMask),			&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,eWinRec->selectionPos);		MyUnlockPixels(currentMask);				MySetGWorld(selectionMask);		MyLockPixels(selectionMask);		EraseRect(&eWinRec->iconSize);		CopyBits(GetPortBitMapForCopyBits(eWinRec->foregroundMask),			GetPortBitMapForCopyBits(eWinRec->selectionMask),			&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);		EraseRgn(eWinRec->selectionPos);		MyUnlockPixels(selectionMask);		DisposeGWorld(eWinRec->foregroundMask);		eWinRec->foregroundMask=nil;	}	else /* ëOåiï“èWéû */	{		/* ëOåiGWorldÇçÏê¨ */		err=NewGWorld(&eWinRec->foregroundGWorld,eWinRec->iconDepth,&eWinRec->iconSize,0,0,useTempMem);		SetGWorld(eWinRec->foregroundGWorld,0);		MyLockPixels(foregroundGWorld);		EraseRect(&eWinRec->iconSize);		MyUnlockPixels(foregroundGWorld);				/* ï“èWíÜÇÃâÊëúÇëOåiÇ…ÉRÉsÅ[ */		CopyBits(GetPortBitMapForCopyBits(eWinRec->dispTempPtr),			GetPortBitMapForCopyBits(eWinRec->foregroundGWorld),			&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);				/* É}ÉXÉNÇÉRÉsÅ[ */		err=NewGWorld(&eWinRec->foregroundMask,1,&eWinRec->iconSize,0,0,useTempMem);		MySetGWorld(foregroundMask);		MyLockPixels(foregroundMask);		EraseRect(&eWinRec->iconSize);		CopyBits(GetPortBitMapForCopyBits(eWinRec->currentMask),			GetPortBitMapForCopyBits(eWinRec->foregroundMask),			&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);		CopyBits(GetPortBitMapForCopyBits(eWinRec->selectionMask),			GetPortBitMapForCopyBits(eWinRec->foregroundMask),			&eWinRec->iconSize,&eWinRec->iconSize,srcOr,nil);		MyUnlockPixels(foregroundMask);				if (eWinRec->backgroundGWorld == nil) /* îwåiÇ™ë∂ç›ÇµÇ»ÇØÇÍÇŒ */		{			EraseOffPort(eWinRec);			eWinRec->foreTransparency=kForeTrans100;						mode=umAddBackground;		}		else		{			/* îwåiÇï“èWâ¬î\Ç… */			SetGWorld(eWinRec->editDataPtr,0);			CopyBits(GetPortBitMapForCopyBits(eWinRec->backgroundGWorld),				GetPortBitMapForCopyBits(eWinRec->editDataPtr),				&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);			SetGWorld(eWinRec->selectedDataPtr,0);			LockPixels(GetGWorldPixMap(eWinRec->selectedDataPtr));			CopyBits(GetPortBitMapForCopyBits(eWinRec->backgroundGWorld),				GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),				&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);			RGBBackColor(&gBackColor.rgb);			EraseRgn(eWinRec->selectionPos);			BackColor(whiteColor);			UnlockPixels(GetGWorldPixMap(eWinRec->selectedDataPtr));						/* îwåiÇîjä¸ */			DisposeGWorld(eWinRec->backgroundGWorld);			eWinRec->backgroundGWorld=nil;		}				/* É}ÉXÉN */		MySetGWorld(currentMask);		MyLockPixels(currentMask);		PaintRgn(eWinRec->selectionPos);		MyUnlockPixels(currentMask);				MySetGWorld(selectionMask);		MyLockPixels(selectionMask);		PaintRect(&eWinRec->iconSize);		if (gBackColor.isTransparent)			EraseRgn(eWinRec->selectionPos);		MyUnlockPixels(selectionMask);	}		RectRgn(eWinRec->updateRgn,&eWinRec->iconSize);		SetGWorld(cPort,cDevice);	DispOffPort(theWindow);		eWinRec->editBackground=!eWinRec->editBackground;	UpdateBGMenu();	UpdateEffectMenu();	UpdateTransparentMenu();	UpdateBackInfo(theWindow);	SetUndoMode(mode);	if (gPaletteCheck == kPaletteCheckUsed) /* ÉpÉåÉbÉgÇÃÉ`ÉFÉbÉNÇÉAÉbÉvÉfÅ[Ég */		UpdatePaletteCheck();}/* ÉoÉbÉNÉOÉâÉEÉìÉhÇìùçá */void UnionBackground(WindowPtr theWindow){	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);	short		foreMode;	GWorldPtr	cPort;	GDHandle	cDevice;		if (eWinRec->backgroundGWorld == nil && eWinRec->foregroundGWorld == nil) /* ÉoÉbÉNÉOÉâÉEÉìÉhÇ™ë∂ç›ÇµÇ»Ç¢ */	{		UpdateBGMenu();		return;	}		GetGWorld(&cPort,&cDevice);		/* Ç∆ÇËÇ†Ç¶Ç∏ÅAå≈íËÇ∑ÇÈ */	if (eWinRec->isSelected)		FixSelection(theWindow);		/* îwåiï\é¶éûÇ…ÇÕëOåiï\é¶Ç…Ç∑ÇÈ */	if (eWinRec->foregroundGWorld != nil)		GoBackgroundMode(theWindow);		/* ëOåiÇéÊÇËè¡ÇµópÉoÉbÉtÉ@Ç…ÉoÉbÉNÉAÉbÉv */	GoOffPort(theWindow);		/* îwåiÇÕëIëóÃàÊäOÇ…ÉoÉbÉNÉAÉbÉv */	SetGWorld(eWinRec->selectedDataPtr,0);	CopyBits(GetPortBitMapForCopyBits(eWinRec->backgroundGWorld),		GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),		&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);		if (eWinRec->foreTransparency != kForeTrans0)	{		SetGWorld(eWinRec->backgroundGWorld,0);		foreMode=SetForeBlend(eWinRec);				/* éüÇ…ÅAîwåiÇ…ÉRÉsÅ[ÇµÇƒçáê¨ */		SafeCopyDeepMask(GetPortBitMapForCopyBits(eWinRec->dispTempPtr),			GetPortBitMapForCopyBits(eWinRec->currentMask),			GetPortBitMapForCopyBits(eWinRec->backgroundGWorld),			&eWinRec->iconSize,&eWinRec->iconSize,&eWinRec->iconSize,foreMode,nil);	}		/* îwåiÇ©ÇÁï“èWâÊñ Ç…ÉRÉsÅ[ */	SetGWorld(eWinRec->editDataPtr,0);	CopyBits(GetPortBitMapForCopyBits(eWinRec->backgroundGWorld),		GetPortBitMapForCopyBits(eWinRec->editDataPtr),		&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);		/* îwåiÇîjä¸ */	DisposeGWorld(eWinRec->backgroundGWorld);	eWinRec->backgroundGWorld=nil;	eWinRec->editBackground=gOtherPrefs.addForeground;		/* îwåiÇ™ìßñæÇ©Ç«Ç§Ç©ÇÃÉtÉâÉOÇÉäÉZÉbÉg */	eWinRec->isBackTransparent=false;		/* É}ÉXÉN */	MySetGWorld(currentMask);	MyLockPixels(currentMask);	PaintRect(&eWinRec->iconSize);	MyUnlockPixels(currentMask);		RectRgn(eWinRec->updateRgn,&eWinRec->iconSize);		SetGWorld(cPort,cDevice);	DispOffPort(theWindow);		UpdateBGMenu();	UpdateEffectMenu();	UpdateBackInfo(theWindow);	SetUndoMode(umUnionBackground);	if (gPaletteCheck == kPaletteCheckUsed) /* ÉpÉåÉbÉgÇÃÉ`ÉFÉbÉNÇÉAÉbÉvÉfÅ[Ég */		UpdatePaletteCheck();}/* îwåiÇÃçÌèú */void DeleteBackground(WindowPtr theWindow){	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);	GWorldPtr	cPort;	GDHandle	cDevice;		if (eWinRec->backgroundGWorld == nil && eWinRec->foregroundGWorld == nil) /* ÉoÉbÉNÉOÉâÉEÉìÉhÇ™ë∂ç›ÇµÇ»Ç¢ */	{		UpdateBGMenu();		return;	}		GetGWorld(&cPort,&cDevice);		/* Ç∆ÇËÇ†Ç¶Ç∏ÅAå≈íËÇ∑ÇÈ */	if (eWinRec->isSelected)		FixSelection(theWindow);		/* îwåiï\é¶éûÇ…ÇÕëOåiï\é¶Ç…Ç∑ÇÈ */	if (eWinRec->foregroundGWorld != nil)		GoBackgroundMode(theWindow);		/* ëOåiÇÉoÉbÉNÉAÉbÉv */	GoOffPort(theWindow);		/* îwåiÇÉoÉbÉNÉAÉbÉv */	SetGWorld(eWinRec->selectedDataPtr,0);	CopyBits(GetPortBitMapForCopyBits(eWinRec->backgroundGWorld),		GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),		&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);		/* îwåiÇçÌèú */	DisposeGWorld(eWinRec->backgroundGWorld);	eWinRec->backgroundGWorld=nil;	eWinRec->editBackground=gOtherPrefs.addForeground;		RectRgn(eWinRec->updateRgn,&eWinRec->iconSize);		SetGWorld(cPort,cDevice);	DispOffPort(theWindow);		UpdateBGMenu();	UpdateEffectMenu();	UpdateBackInfo(theWindow);	SetUndoMode(umDeleteBackground);	if (gPaletteCheck == kPaletteCheckUsed) /* ÉpÉåÉbÉgÇÃÉ`ÉFÉbÉNÇÉAÉbÉvÉfÅ[Ég */		UpdatePaletteCheck();}/* ëOåiÇÃçÌèú */void DeleteForeground(WindowPtr theWindow){	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);	GWorldPtr	tempGWorld;	GWorldPtr	cPort;	GDHandle	cDevice;		if (eWinRec->backgroundGWorld == nil && eWinRec->foregroundGWorld == nil) /* ÉoÉbÉNÉOÉâÉEÉìÉhÇ™ë∂ç›ÇµÇ»Ç¢ */	{		UpdateBGMenu();		return;	}		GetGWorld(&cPort,&cDevice);		/* Ç∆ÇËÇ†Ç¶Ç∏ÅAå≈íËÇ∑ÇÈ */	if (eWinRec->isSelected)		FixSelection(theWindow);		/* ëOåiï\é¶éûÇ…ÇÕîwåiï\é¶Ç…Ç∑ÇÈ */	if (eWinRec->backgroundGWorld != nil)	{		OSErr	err;				/* É}ÉXÉNÇÉoÉbÉNÉAÉbÉvÇ∑ÇÈ */		err=NewGWorld(&tempGWorld,eWinRec->iconDepth,&eWinRec->iconSize,0,0,useTempMem);		SetGWorld(tempGWorld,0);		CopyBits(GetPortBitMapForCopyBits(eWinRec->currentMask),			GetPortBitMapForCopyBits(tempGWorld),			&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);		SetGWorld(cPort,cDevice);				GoBackgroundMode(theWindow);				/* É}ÉXÉNÇå≥Ç…ñﬂÇ∑ */		SetGWorld(eWinRec->currentMask,0);		CopyBits(GetPortBitMapForCopyBits(tempGWorld),			GetPortBitMapForCopyBits(eWinRec->currentMask),			&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);		SetGWorld(cPort,cDevice);		DisposeGWorld(tempGWorld);	}		/* îwåiÇÉoÉbÉNÉAÉbÉv */	GoOffPort(theWindow);		/* ëOåiÇÉoÉbÉNÉAÉbÉv */	SetGWorld(eWinRec->selectedDataPtr,0);	CopyBits(GetPortBitMapForCopyBits(eWinRec->foregroundGWorld),		GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),		&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);		/* ëOåiÇçÌèú */	DisposeGWorld(eWinRec->foregroundGWorld);	eWinRec->foregroundGWorld=nil;	eWinRec->editBackground=gOtherPrefs.addForeground;		/* É}ÉXÉN */	SetGWorld(eWinRec->currentMask,0);	MyLockPixels(currentMask);	PaintRect(&eWinRec->iconSize);	MyUnlockPixels(currentMask);	RectRgn(eWinRec->updateRgn,&eWinRec->iconSize);		SetGWorld(cPort,cDevice);	DispOffPort(theWindow);		UpdateBGMenu();	UpdateEffectMenu();	UpdateBackInfo(theWindow);	SetUndoMode(umDeleteForeground);	if (gPaletteCheck == kPaletteCheckUsed) /* ÉpÉåÉbÉgÇÃÉ`ÉFÉbÉNÇÉAÉbÉvÉfÅ[Ég */		UpdatePaletteCheck();}/* îwåiÇÃï\é¶Å^îÒï\é¶ÇêÿÇËë÷Ç¶ */void ShowHideBackground(WindowPtr theWindow){	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);	Rect		r;		if (eWinRec->backgroundGWorld == nil)	{		UpdateBGMenu();		return;	}		eWinRec->dispBackground=!eWinRec->dispBackground;	GetWindowPortBounds(theWindow,&r);	r.right-=kScrollBarWidth;	r.bottom-=kScrollBarHeight;	SetPortWindowPort(theWindow);	MyInvalWindowRect(theWindow,&r);	SetPortWindowPort(gPreviewWindow);	MyInvalWindowPortBounds(gPreviewWindow);	SetPortWindowPort(theWindow);		UpdateBGMenu();}/* ëIëíÜÇÃògÇï\é¶ */void TrackMarquee(PaintWinRec *eWinRec,Rect *previewRect,Boolean shiftDown){	PatHandle	gray;	Point	mousePt;	Rect 	startRect;	Rect	nowRect,prevRect;	Rect	pNowRect,pPrevRect;	GrafPtr	port;	WindowPtr	theWindow;	short	ratio=eWinRec->ratio;	Rect	imageRect,tempRect;		gray=GetPattern(128);		theWindow=MyFrontNonFloatingWindow();		/* ÉyÉìÉpÉ^Å[ÉìÇÃê›íË */	GetPort(&port);	SetPortWindowPort(theWindow);		/* ï\é¶â¬î\óÃàÊ */	GetWindowPortBounds(theWindow,&imageRect);	imageRect.right-=kScrollBarWidth;	imageRect.bottom-=kScrollBarHeight;	ClipRect(&imageRect);		PenNormal();	PenMode(patXor);	PenPat(*gray);	SetPortWindowPort(gPreviewWindow);	PenNormal();	PenMode(patXor);	PenPat(*gray);		startRect=*previewRect;	MapRect(&startRect,&eWinRec->iconSize,&eWinRec->iconEditSize);	nowRect=startRect;	pNowRect=*previewRect;	SetPortWindowPort(theWindow);	FrameRect(&nowRect);	SetPortWindowPort(gPreviewWindow);	FrameRect(&pNowRect);	SetPortWindowPort(theWindow);	prevRect=nowRect;	pPrevRect=pNowRect;		while (StillDown())	{		GetMouse(&mousePt);		ToRealPos(&mousePt,ratio);		if (shiftDown)			FixToGrid(&mousePt);		SetRect(&pNowRect,previewRect->left,previewRect->top,mousePt.h,mousePt.v);		SortRect(&pNowRect,shiftDown);		if (!EqualRect(&pNowRect,&pPrevRect))		{			SectRect(&pNowRect,&eWinRec->iconSize,&pNowRect);			nowRect=pNowRect;			MapRect(&nowRect,&eWinRec->iconSize,&eWinRec->iconEditSize);			FrameRect(&prevRect);			FrameRect(&nowRect);			SetPortWindowPort(gPreviewWindow);			FrameRect(&pPrevRect);			FrameRect(&pNowRect);			SetPortWindowPort(theWindow);			prevRect=nowRect;			pPrevRect=pNowRect;		}	}	SetPortWindowPort(theWindow);	FrameRect(&prevRect);		GetWindowPortBounds(theWindow,&tempRect);	ClipRect(&tempRect);	PenNormal();		SetPortWindowPort(gPreviewWindow);	FrameRect(&pPrevRect);	PenNormal();	SetPort(port);	*previewRect=pPrevRect;}/* sort rectangle *//* shiftÇ™âüÇ≥ÇÍÇƒÇ¢ÇÈÇ∆Ç´ÇÕÅAÉOÉäÉbÉhÇÃï™ÇæÇØï‚ê≥Ç∑ÇÈ */void SortRect(Rect *dragRect,Boolean shiftDown){	short	temp;	short	h=1;		/* 1.20b12èCê≥ */	if (shiftDown)		if (((gToolPrefs.gridMode>>4)& 0x0f) == 1) /* 32*32 */			h = 32;		else			h = 16;		if (dragRect->bottom<dragRect->top)	{		temp=dragRect->bottom;		dragRect->bottom=dragRect->top+h;		dragRect->top=temp;	}	if (dragRect->right<dragRect->left)	{		temp=dragRect->right;		dragRect->right=dragRect->left+h;		dragRect->left=temp;	}}/* éwíËÇ≥ÇÍÇΩì_Ç™É}ÉXÉNì‡Ç©Ç«Ç§Ç©Çí≤Ç◊ÇÈ */Boolean PtInMask(Point pt,PaintWinRec *eWinRec){	if (eWinRec->isSelected) /* ëIëîÕàÕÇ™Ç†ÇÈ */		SubPt(eWinRec->selectionOffset,&pt);		return RealPtInMask(pt,eWinRec->currentMask);}/* éwíËÇ≥ÇÍÇΩì_Ç™É}ÉXÉNì‡Ç©Ç«Ç§Ç©í≤Ç◊ÇÈÇQ */Boolean RealPtInMask(Point pt,GWorldPtr maskGWorld){	PixMapHandle	pmh;	long	rowBytes;	Ptr		baseAddr;	Boolean	result;	short	left,top;	Rect	tempRect;		GetPortBounds(maskGWorld,&tempRect);	if (!PtInRect(pt,&tempRect)) return false;		pmh=GetGWorldPixMap(maskGWorld);	LockPixels(pmh);	rowBytes=MyGetPixRowBytes(pmh) & 0x3fff;	baseAddr=MyGetPixBaseAddr(pmh);		left=tempRect.left;	top=tempRect.top;	result=BitTst(baseAddr+rowBytes * (pt.v - top),(pt.h - left));	UnlockPixels(pmh);	return result;}/* ëOåiÇÃïsìßñæìxÇ…ÇÊÇ¡ÇƒÉuÉåÉìÉhäÑÇËçáÇ¢ÇåàíËÇ∑ÇÈ */short SetForeBlend(PaintWinRec *eWinRec){	short	foreMode;	UInt16	t[]={0xc000,0x8000,0x4000,0x0000},tt;	RGBColor	foreTransparency;		switch(eWinRec->foreTransparency)	{		case kForeTrans100:			foreMode=srcCopy;			break;				default:			foreMode=blend;			tt=t[eWinRec->foreTransparency-kForeTrans75];			SetRGBColor(&foreTransparency,tt,tt,tt);			OpColor(&foreTransparency);	}		return foreMode;}/* ç¿ïWÇé¿ç€ÇÃà íuÇ…ïœä∑Ç∑ÇÈ */void ToRealPos(Point *mousePt,short ratio){	mousePt->h>>=ratio;	mousePt->v>>=ratio;}/* ç¿ïWÇâÊñ è„ÇÃà íuÇ…ïœä∑Ç∑ÇÈ */void ToGridPos(Point *mousePt,short ratio){	mousePt->h<<=ratio;	mousePt->v<<=ratio;}/* ÉOÉäÉbÉhÇ…ÇªÇ¡ÇΩà íuÇ…ìÆÇ©Ç∑ */void FixToGrid(Point *mousePt){	switch ((gToolPrefs.gridMode>>4)& 0x0f)	{		case 0:		case 2:			mousePt->h&=0xFFF0;			mousePt->v&=0xFFF0;			break;				case 1:			mousePt->h&=0xFFE0;			mousePt->v&=0xFFE0;			break;	}}/* ÉOÉäÉbÉhÇ…ÇªÇ¡ÇΩà íuÇ…ìÆÇ©Ç∑ *//* éléÃå‹ì¸Ç∑ÇÈî≈ */void FixToGrid2(Point *mousePt){	switch ((gToolPrefs.gridMode>>4)& 0x0f)	{		case 0:		case 2:			mousePt->h = ((mousePt->h + 8) & 0xFFF0);			mousePt->v = ((mousePt->v + 8) & 0xFFF0);			break;				case 1:			mousePt->h = ((mousePt->h + 16) & 0xFFE0);			mousePt->v = ((mousePt->v + 16) & 0xFFE0);			break;	}}/* BitMapÇçÏê¨ */OSErr NewBitMap(MyBitMapRec *bmpRec,Rect *rect){	long	size;	short	rowBytes;	Ptr		baseAddr;	OSErr	err;	Ptr		temp;		/* ÉTÉCÉYÉ`ÉFÉbÉN */	if (EmptyRect(rect)) return paramErr;	rowBytes=((rect->right-rect->left+31)>>5)<<2;	size=(long)rowBytes*(long)(rect->bottom-rect->top);		/* ÉÅÉÇÉäämï€ */	bmpRec->bmpDataH=TempNewHandle(size,&err);	if (err!=noErr) return err;	TempHLock(bmpRec->bmpDataH,&err);		/* ÉfÅ[É^ÇÉNÉäÉA */	baseAddr=*bmpRec->bmpDataH;	temp=baseAddr;	for ( ; size>0; size--)		*temp++=0;		bmpRec->bmp.baseAddr=baseAddr;	bmpRec->bmp.rowBytes=rowBytes;	bmpRec->bmp.bounds=*rect;		return noErr;}/* BitMapÇîjä¸ */OSErr DisposeBitMap(MyBitMapRec *bmpRec){	OSErr	err;		TempHUnlock(bmpRec->bmpDataH,&err);	TempDisposeHandle(bmpRec->bmpDataH,&err);		return err;}/* ÉäÅ[ÉWÉáÉìÇ∆RectÇÃåãçá */void UnionRectRgn(RgnHandle dstRgn,Rect *srcRect){	RgnHandle	tempRgn=NewRgn();		RectRgn(tempRgn,srcRect);	UnionRgn(dstRgn,tempRgn,dstRgn);	DisposeRgn(tempRgn);}
+/* ------------------------------------------------------------ */
+/*  Paint.c                                                     */
+/*     „Éö„Ç§„É≥„ÉàÂá¶ÁêÜ                                             */
+/*                                                              */
+/*                 1997.1.28 - 2001.3.10  naoki iimura        	*/
+/* ------------------------------------------------------------ */
+
+/* includes */
+#ifdef __APPLE_CC__
+#include	<Carbon/Carbon.h>
+#else
+#include	<sound.h>
+#include	<Fonts.h>
+#include	<NumberFormatting.h>
+#include	<Resources.h>
+#include	<ToolUtils.h>
+#include	<Gestalt.h>
+#endif
+
+#include	"Globals.h"
+#include	"IconParty.h"
+#include	"FileRoutines.h"
+#include	"MenuRoutines.h"
+#include	"UsefulRoutines.h"
+#include	"WindowExtensions.h"
+#include	"TabletUtils.h"
+#include	"WindowRoutines.h"
+#include	"PreCarbonSupport.h"
+#include	"Preferences.h"
+#include	"PaintRoutines.h"
+#include	"EditRoutines.h"
+#include	"ToolRoutines.h"
+#include	"UpdateCursor.h"
+
+enum {
+	kPencilMode=1,
+	kEraserMode,
+	kEraseMaskMode,
+};
+
+extern WindowPtr	DotModePalette;
+
+#pragma options align=mac68k
+
+typedef struct {
+	GWorldPtr	maskGWorld;
+	Boolean		srcIsTransparent;
+} BucketDataRec;
+
+/* „É™„Çµ„Ç§„Ç∫Áî®ÊßãÈÄ†‰Ωì„Å®„Ç∞„É≠„Éº„Éê„É´ */
+typedef struct {
+	Boolean	resizeImage;
+	Boolean	dither;
+	short	unit[2];
+	Boolean	constRatio;
+} ResizeDataRec;
+
+enum {
+	unitPixels=1,
+	unitPercent,
+};
+
+static ResizeDataRec gResizeData={false,false,{unitPixels,unitPixels},false};
+
+#pragma options align=reset
+
+/* prototype */
+static pascal Boolean	MyTransparentColorSearch(RGBColor *color,long *pos);
+
+static Boolean	DragSelection(WindowPtr theWindow,Point mousePt,Point *result,Boolean shiftDown);
+
+static pascal Boolean	SearchColorAreaProc(RGBColor *color,long *pos);
+
+/* „Ç¢„Ç§„Ç≥„É≥Ë£úÂä© */
+static void	ReduceRect(Rect *result,short size);
+
+/* „Éû„Çπ„ÇØ‰ΩúÊàê */
+static pascal Boolean	MySearchProc(RGBColor *color,long *pos);
+
+static OSErr	PaintOffPort(WindowPtr theWindow,short mode,Point mousePt,Boolean shiftDown);
+
+static void	TrackMarquee(PaintWinRec *eWinRec,Rect *startRect,Boolean shiftDown);
+static void	SortRect(Rect *r,Boolean shiftDown);
+
+static void	FixToGrid(Point *mousePt);
+static void FixToGrid2(Point *mousePt);
+
+static Boolean	PtInMask(Point pt,PaintWinRec *eWinRec);
+
+static void	Pressure2Ratio(RGBColor *ratio);
+
+static void	ChangeIconSizeMain(WindowPtr theWindow,Rect *newSize,short background);
+static void	IsMarginExists(DialogPtr dp,short width,short height,ResizeDataRec *resizePrefs);
+
+/* BitMapÈñ¢ÈÄ£ */
+static OSErr	NewBitMap(MyBitMapRec *bmpRec,Rect *rect);
+
+/* „É™„Éº„Ç∏„Éß„É≥ */
+static void	UnionRectRgn(RgnHandle dstRgn,Rect *srcRect);
+
+
+#define PAINTERR_RESID	4006
+#define	PAINTERR1	1
+#define	PAINTERR2	2
+
+
+/* ÈâõÁ≠Ü„ÉÑ„Éº„É´„Å´„Çà„ÇãÊèèÁîª */
+void DoPaint(WindowPtr theWindow,Point pt,Boolean shiftDown)
+{
+	Point	mousePt;
+	RGBColor	newColor;
+	RGBColor	blendRatio2;
+	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
+	short	ratio=eWinRec->ratio;
+	short	mode;
+	OSErr	err;
+	GWorldPtr	cPort;
+	GDHandle	cDevice;
+	
+	/* ÊèèÁîª„Å´ÂÖ•„ÇãÂâç„Å´„Ç´„Éº„ÇΩ„É´„ÇíÊõ¥Êñ∞ */
+	SetPenCursor(kPencilTool);
+	
+	GetGWorld(&cPort,&cDevice);
+	GoOffPort(theWindow);
+	
+	SetGWorld(eWinRec->editDataPtr,0);
+	mousePt=pt;
+	ToRealPos(&mousePt,ratio);
+	if (gCurrentColor.isTransparent)
+	{
+		mode=kEraseMaskMode; /* „Éû„Çπ„ÇØ„ÇíÊ∂à„Åô */
+		PenMode(srcCopy);
+	}
+	else
+	{
+		Boolean	usePressure=isTabletAvailable && gTabletPrefs.usePressure && IsTabletInUse();
+		Boolean isEraserMode = (gToolPrefs.eraseSameColor && /* Âêå„ÅòËâ≤ */
+			 (!gToolPrefs.eraseSize11 || (gPenWidth==1 && gPenHeight==1)) && /* 1*1„ÅÆÂ†¥Âêà„ÅÆ„Åø */
+			 !usePressure && gBlendMode == srcCopy && /* „Çø„Éñ„É¨„ÉÉ„Éà„ÅÆÁ≠ÜÂúß‰ΩøÁî®„ÄÅ„ÅÇ„Çã„ÅÑ„ÅØ„ÄÅ‰∏çÈÄèÊòéÂ∫¶„Åå100%‰ª•Â§ñ„Åã */
+			 PtInMask(mousePt,eWinRec)); /* „Éû„Çπ„ÇØÂÜÖ„Åã */
+		
+		if (isEraserMode)
+		{
+			LockPixels(GetGWorldPixMap(eWinRec->editDataPtr));
+			if (eWinRec->isSelected)
+				GetCPixel(mousePt.h-eWinRec->selectionOffset.h,mousePt.v-eWinRec->selectionOffset.v,&newColor);
+			else
+				GetCPixel(mousePt.h,mousePt.v,&newColor);
+			UnlockPixels(GetGWorldPixMap(eWinRec->editDataPtr));
+		}
+		/* ÊèèÁîªÈñãÂßã„ÅÆÁÇπ„ÅÆËâ≤„ÅåÈÅ∏ÊäûËâ≤„Å®Âêå‰∏Ä„Å™„Çâ„Å∞... */
+		if (isEraserMode && EqualColor(&newColor,&gCurrentColor.rgb))
+		{
+			mode=kEraserMode; /* Ê∂à„Åô */
+			PenMode(srcCopy);
+		}
+		else
+		{
+			mode=kPencilMode;
+			PenMode(gBlendMode);
+			
+			if (usePressure)
+			{
+				/* „Çø„Éñ„É¨„ÉÉ„Éà‰ΩøÁî®ÊôÇ */
+				Pressure2Ratio(&blendRatio2);
+				OpColor(&blendRatio2);
+				PenMode(blend);
+			}
+			else
+				OpColor(&gBlendRatio);
+		}
+	}
+	
+	PenSize(gPenWidth,gPenHeight); /* ÈâõÁ≠Ü„ÉÑ„Éº„É´„ÅÆ„Çµ„Ç§„Ç∫„Å´„Çà„Å£„Å¶„Éö„É≥„Çµ„Ç§„Ç∫„ÇíÂ§â„Åà„Çã */
+	
+	SetGWorld(cPort,cDevice);
+	err=PaintOffPort(theWindow,mode,mousePt,shiftDown);
+	PenNormal();
+	SetGWorld(cPort,cDevice);
+	
+	if (err==noErr)
+	{
+		UpdateTransparentMenu();
+		SetUndoMode(umPaint);
+		if (gPaletteCheck == kPaletteCheckUsed) /* „Éë„É¨„ÉÉ„Éà„ÅÆ„ÉÅ„Çß„ÉÉ„ÇØ„Çí„Ç¢„ÉÉ„Éó„Éá„Éº„Éà */
+			UpdatePaletteCheck();
+	}
+}
+
+void Pressure2Ratio(RGBColor *ratio)
+{
+	unsigned short	pressure;
+	
+	pressure=GetPressure();
+	SetRGBColor(ratio,pressure,pressure,pressure);
+}
+
+/* Ê∂à„Åó„Ç¥„É†„ÉÑ„Éº„É´„Åß„ÅÆÊ∂àÂéª */
+void DoErase(WindowPtr theWindow,Point pt,Boolean shiftDown)
+{
+	Point	mousePt;
+	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
+	short	ratio=eWinRec->ratio;
+	RGBColor	blendRatio2;
+	OSErr	err;
+	short	mode=kEraserMode;
+	GWorldPtr	cPort;
+	GDHandle	cDevice;
+	
+	/* ÊèèÁîª„Å´ÂÖ•„ÇãÂâç„Å´„Ç´„Éº„ÇΩ„É´„ÇíÊõ¥Êñ∞ */
+	SetPenCursor(kEraserTool);
+	
+	GetGWorld(&cPort,&cDevice);
+	GoOffPort(theWindow);
+	
+	SetGWorld(eWinRec->editDataPtr,0);
+	mousePt=pt;
+	ToRealPos(&mousePt,ratio);
+	if (gBackColor.isTransparent)
+	{
+		mode=kEraseMaskMode;
+		PenMode(srcCopy);
+	}
+	else
+	{
+		if (isTabletAvailable && gTabletPrefs.useEraserPressure && IsTabletInUse() &&
+				(eWinRec->backgroundGWorld == nil && !eWinRec->isBackTransparent))
+		{
+			/* „Çø„Éñ„É¨„ÉÉ„Éà‰ΩøÁî®ÊôÇ */
+			Pressure2Ratio(&blendRatio2);
+			OpColor(&blendRatio2);
+			PenMode(blend);
+		}
+		else
+			PenMode(srcCopy);
+	}
+	
+	PenSize(gEraserWidth,gEraserHeight); /* Ê∂à„Åó„Ç¥„É†„ÉÑ„Éº„É´„ÅÆ„Çµ„Ç§„Ç∫„Å´„Çà„Å£„Å¶„Éö„É≥„Çµ„Ç§„Ç∫„ÇíÂ§â„Åà„Çã */
+	
+	SetGWorld(cPort,cDevice);
+	err=PaintOffPort(theWindow,mode,mousePt,shiftDown);
+	PenNormal();
+	SetGWorld(cPort,cDevice);
+	
+	if (err==noErr)
+	{
+		UpdateTransparentMenu();
+		SetUndoMode(umPaint);
+		if (gPaletteCheck == kPaletteCheckUsed) /* „Éë„É¨„ÉÉ„Éà„ÅÆ„ÉÅ„Çß„ÉÉ„ÇØ„Çí„Ç¢„ÉÉ„Éó„Éá„Éº„Éà */
+			UpdatePaletteCheck();
+	}
+}
+
+/* ÊèèÁîªÁÇπ„ÉÑ„Éº„É´„Åß„ÅÆÊèèÁîª */
+void DoDotPaint(WindowPtr theWindow,Point pt)
+{
+	Point	mousePt;
+	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
+	short	ratio=eWinRec->ratio;
+	Point	offsetPt;
+	
+	SetPt(&offsetPt,-gPenWidth/2,-gPenHeight/2);
+	mousePt=pt;
+	ToRealPos(&mousePt,ratio);
+	AddPt(offsetPt,&mousePt);
+	
+	/* ÊèèÁîªÁÇπ„É¢„Éº„Éâ„Å´ÁßªË°å„ÄÅ„Éá„Éº„Çø„ÇíÂàùÊúüÂåñ */
+	eWinRec->isDotMode=true;
+	eWinRec->dotPos=mousePt;
+	eWinRec->dotCommand[0]=0;
+	eWinRec->isInverted=false;
+	eWinRec->lastInvertedTime=TickCount();
+	
+	eWinRec->firstDotPos=mousePt;
+	eWinRec->prevDotCommand[0]=0;
+	
+	ShowReferencedWindow(DotModePalette);
+	
+	UpdateEffectMenu();
+}
+
+/* ÊèèÁîªÁÇπ„ÉÑ„Éº„É´„Å´„Çà„ÇãÊèèÁîªÔºà„É°„Ç§„É≥Ôºâ */
+void DoDotPaintMain(WindowPtr theWindow,Point pt)
+{
+	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
+	RGBColor	newColor;
+	short		mode;
+	Boolean		isBackMode=(eWinRec->backgroundGWorld==nil && !eWinRec->isBackTransparent);
+	RgnHandle	maskRgn=NewRgn();
+	Rect		redrawRect;
+	GWorldPtr	cPort;
+	GDHandle	cDevice;
+	
+	GetGWorld(&cPort,&cDevice);
+	ResetRuler();
+	
+	if (eWinRec->isSelected)
+		SubPt(eWinRec->selectionOffset,&pt);
+	
+	/* Âèñ„ÇäÊ∂à„Åó„ÅÆ„É¢„Éº„Éâ„ÅåÊèèÁîªÁÇπ„Å´„Çà„ÇãÊèèÁîª„Åß„Å™„Åë„Çå„Å∞„Éê„ÉÉ„ÇØ„Ç¢„ÉÉ„Éó */
+	if (eWinRec->undoMode != umDotPaint)
+	{
+		GoOffPort(theWindow);
+		SetEmptyRgn(eWinRec->updateRgn);
+		
+		eWinRec->firstDotPos=pt;
+		PStrCpy(eWinRec->dotCommand,eWinRec->prevDotCommand);
+	}
+	
+	SetGWorld(eWinRec->editDataPtr,0);
+	
+	if (PtInRect(pt,&eWinRec->iconSize))
+	{
+		/* ÈÄèÊòé„Åã„Å©„ÅÜ„Åã */
+		if (gCurrentColor.isTransparent)
+		{
+			mode=kEraseMaskMode;
+			ForeColor(whiteColor);
+			goto next;
+		}
+		else
+		{
+			Boolean isEraserMode = (gToolPrefs.eraseSameColor &&
+				(!gToolPrefs.eraseSize11 || (gPenWidth==1 && gPenHeight==1)) &&
+				gBlendMode == srcCopy && 
+				PtInMask(pt,eWinRec));
+			
+			if (isEraserMode)
+			{
+				/* ÊèèÁîª„Åó„Çà„ÅÜ„Å®„Åó„Å¶„ÅÑ„ÇãÁÇπ„ÅÆËâ≤„ÇíË™ø„Åπ„Çã */
+				LockPixels(GetGWorldPixMap(eWinRec->editDataPtr));
+				GetCPixel(pt.h,pt.v,&newColor);
+				UnlockPixels(GetGWorldPixMap(eWinRec->editDataPtr));
+			}
+			/* ÊèèÁîª„Åó„Çà„ÅÜ„Å®„Åó„Å¶„ÅÑ„ÇãËâ≤„Å®Âêå‰∏Ä„Å™„Çâ‚Ä¶‚Ä¶ */
+			if (isEraserMode && EqualColor(&newColor,&gCurrentColor.rgb))
+			{
+				mode=kEraserMode; /* Ê∂à„Åô */
+				if (isBackMode)
+					RGBForeColor(&gBackColor.rgb);
+				else
+					ForeColor(whiteColor);
+				
+				PenMode(srcCopy);
+				goto next;
+			}
+		}
+	}
+	
+	mode=kPencilMode;
+	
+	PenMode(gBlendMode);
+	OpColor(&gBlendRatio);
+	RGBForeColor(&gCurrentColor.rgb);
+	
+next:
+	PenSize(gPenWidth,gPenHeight);
+	MoveTo(pt.h,pt.v);
+	Line(0,0);
+	
+	ForeColor(blackColor);
+	PenNormal();
+	
+	SetRect(&redrawRect,pt.h,pt.v,pt.h+gPenWidth,pt.v+gPenHeight);
+	SectRect(&redrawRect,&eWinRec->iconSize,&redrawRect);
+	
+	/* „Éû„Çπ„ÇØÂá¶ÁêÜ */
+	SetGWorld(eWinRec->currentMask,0);
+	LockPixels(GetGWorldPixMap(eWinRec->currentMask));
+	if (mode==kEraseMaskMode || (mode==kEraserMode && !isBackMode))
+		EraseRect(&redrawRect);
+	else
+		PaintRect(&redrawRect);
+	
+	if (eWinRec->isSelected)
+		OffsetRect(&redrawRect,eWinRec->selectionOffset.h,eWinRec->selectionOffset.v);
+	RectRgn(maskRgn,&redrawRect);
+	UnionRgn(eWinRec->updateRgn,maskRgn,eWinRec->updateRgn);
+	DisposeRgn(maskRgn);
+	
+	SetGWorld(cPort,cDevice);
+	DispOffPort(theWindow);
+	
+	UpdateTransparentMenu();
+	SetUndoMode(umDotPaint);
+	if (gPaletteCheck == kPaletteCheckUsed) /* „Éë„É¨„ÉÉ„Éà„ÅÆ„ÉÅ„Çß„ÉÉ„ÇØ„Çí„Ç¢„ÉÉ„Éó„Éá„Éº„Éà */
+		UpdatePaletteCheck();
+}
+
+/* ÈÅ∏Êäû„ÉÑ„Éº„É´„Å´„Çà„ÇãÈÅ∏Êäû */
+void DoSelect(WindowPtr theWindow,Point pt,Boolean shiftDown,Boolean optDown,Boolean cmdDown)
+{
+	Point	mousePt;
+	Point	result;
+	Rect	startRect;
+	MyBitMapRec	selectBM;
+	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
+	short	ratio=eWinRec->ratio;
+	OSErr	err;
+	Rect	tempRect;
+	GWorldPtr	cPort;
+	GDHandle	cDevice;
+	
+	mousePt=pt;
+	GetGWorld(&cPort,&cDevice);
+	
+	if (PtInRgn(mousePt,eWinRec->eSelectedRgn)) /* ÈÅ∏ÊäûÁØÑÂõ≤ÂÜÖ„Åß„ÅÆ„Éâ„É©„ÉÉ„Ç∞„Å™„Çâ„Å∞ */
+	{
+		if (optDown) /* „Ç™„Éó„Ç∑„Éß„É≥„Ç≠„Éº„ÅåÊäº„Åï„Çå„Å¶„ÅÑ„Çå„Å∞Ë§áË£Ω„Åô„Çã */
+		{
+			SetGWorld(eWinRec->selectedDataPtr,0);
+			CopyBits(GetPortBitMapForCopyBits(eWinRec->dispTempPtr),
+				GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),
+				&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,0);
+			
+			/* „Éû„Çπ„ÇØ„ÇÇË§áË£Ω„Åô„Çã */
+			SetGWorld(eWinRec->selectionMask,0);
+			GetRegionBounds(eWinRec->selectionPos,&tempRect);
+			CopyBits(GetPortBitMapForCopyBits(eWinRec->currentMask),
+				GetPortBitMapForCopyBits(eWinRec->selectionMask),
+				&eWinRec->selectedRect,&tempRect,srcOr,nil);
+			SetGWorld(cPort,cDevice);
+		}
+		
+		/* ÈÅ∏ÊäûÁØÑÂõ≤„ÇíÁßªÂãï„Åï„Åõ„Çã */
+		ToRealPos(&mousePt,ratio);
+		if (DragSelection(theWindow,mousePt,&result,shiftDown))
+		{
+			if (result.h!=0 || result.v!=0)
+				MoveSelection(theWindow,result.h,result.v,false);
+			else
+				if (eWinRec->showSelection)
+					DispSelection(theWindow);
+		}
+		else
+		{
+			/* „ÇØ„É™„ÉÉ„ÇØ„Å†„Åë„Åï„Çå„ÅüÊôÇ */
+			RgnHandle	tempRgn=NewRgn();
+			
+			if (eWinRec->showSelection)
+				DispSelection(theWindow);
+			
+			/* ÈÅ∏ÊäûÈ†òÂüü„ÅåÂÖ®‰Ωì„Å™„ÇâÂõ∫ÂÆö„Åô„Çã */
+			RectRgn(tempRgn,&eWinRec->iconSize);
+			if (EqualRgn(eWinRec->selectionPos,tempRgn))
+				FixSelection(theWindow);
+			
+			DisposeRgn(tempRgn);
+		}
+	}
+	else /* ÈÅ∏ÊäûÁØÑÂõ≤ÂÜÖ„Åß„Å™„Åë„Çå„Å∞ÈÅ∏Êäû */
+	{
+		RgnHandle	selectRgn;
+		
+		/* „Ç´„Éº„ÇΩ„É´Êõ¥Êñ∞ */
+		MySetCursor(128+kMarqueeTool);
+		
+		/* ÈÅ∏ÊäûÁØÑÂõ≤„Å´„Éû„Éº„Ç≠„Éº„ÇíË°®Á§∫„Åô„ÇãÂá¶ÁêÜ */
+		ToRealPos(&mousePt,ratio);
+		if (shiftDown)
+			FixToGrid(&mousePt);
+		Pt2Rect(mousePt,mousePt,&startRect);
+		TrackMarquee(eWinRec,&startRect,shiftDown);
+		
+		if (eWinRec->isSelected) /* „Åô„Åß„Å´ÈÅ∏ÊäûÁØÑÂõ≤„Åå„ÅÇ„Çå„Å∞Âõ∫ÂÆö„Åô„Çã */
+			FixSelection(theWindow);
+		
+		if (EmptyRect(&startRect)) /* „Å©„Åì„ÇÇÈÅ∏Êäû„Åï„Çå„Å™„Åë„Çå„Å∞ÁµÇ„Çè„Çä */
+			return;
+		
+		selectRgn=NewRgn();
+		UpdatePSRgn(eWinRec);
+		
+		GoOffPort(theWindow);
+		if (cmdDown) /* „Ç≥„Éû„É≥„Éâ„Ç≠„Éº„ÇíÊäº„Åó„Å™„Åå„ÇâÈÅ∏Êäû„Åó„Åü„Å®„Åç */
+		{
+			/* „Éû„Çπ„ÇØ„Éë„Çø„Éº„É≥„ÅÆ‰ΩúÊàê */
+			err=CreateMask(eWinRec->editDataPtr,&startRect,&startRect,&selectBM);
+			if (err==noErr)
+			{
+				err=BitMapToRegion(selectRgn,&selectBM.bmp);
+				DisposeBitMap(&selectBM);
+			}
+			if (err!=noErr)
+			{
+				SysBeep(0);
+				RectRgn(selectRgn,&startRect);
+			}
+			
+			if (EmptyRgn(selectRgn)) /* „Å©„Åì„ÇÇÈÅ∏Êäû„Åï„Çå„Å™„Åë„Çå„Å∞ÁµÇ„Çè„Çä */
+			{
+				DisposeRgn(selectRgn);
+				SetEmptyRgn(eWinRec->eSelectedRgn);
+				eWinRec->isSelected=false;
+				eWinRec->selectedRect=eWinRec->iconSize;
+				RectRgn(eWinRec->selectionPos,&eWinRec->iconSize);
+				DispOffPort(theWindow);
+				return;
+			}
+		}
+		else /* ÊôÆÈÄö„ÅÆÈÅ∏Êäû */
+			RectRgn(selectRgn,&startRect);
+		
+		DoSelectMain(theWindow,selectRgn);
+	}
+}
+
+/* ÈÅ∏ÊäûÂá¶ÁêÜ„É°„Ç§„É≥ÔºàselectRgn„ÅØ„É´„Éº„ÉÅ„É≥ÂÜÖ„ÅßÁ†¥Ê£ÑÔºâ */
+void DoSelectMain(WindowPtr theWindow,RgnHandle selectRgn)
+{
+	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
+	Boolean		isBackMode=(eWinRec->backgroundGWorld == nil && !eWinRec->isBackTransparent);
+	Rect		tempRect;
+	GWorldPtr	cPort;
+	GDHandle	cDevice;
+	
+	GetGWorld(&cPort,&cDevice);
+	
+	/* ÈÅ∏ÊäûÈ†òÂüü„É™„Éº„Ç∏„Éß„É≥ÂàùÊúüÂåñ */
+	CopyRgn(selectRgn,eWinRec->selectionPos);
+	DisposeRgn(selectRgn);
+	GetRegionBounds(eWinRec->selectionPos,&eWinRec->selectedRect);
+	SetPt(&eWinRec->selectionOffset,0,0);
+	SetPt(&eWinRec->prevMovement,0,0);
+	
+	CopyRgn(eWinRec->selectionPos,eWinRec->eSelectedRgn);
+	MapRgn(eWinRec->eSelectedRgn,&eWinRec->iconSize,&eWinRec->iconEditSize);
+	
+	/* ÈÅ∏ÊäûÂá¶ÁêÜ */
+	SetGWorld(eWinRec->selectedDataPtr,0);
+	MyLockPixels(selectedDataPtr);
+	EraseRect(&eWinRec->iconSize);
+	CopyBits(GetPortBitMapForCopyBits(eWinRec->editDataPtr),
+		GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),
+		&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,0);
+	
+	if (isBackMode) /* ËÉåÊôØ„Åå„Å™„ÅÑÂ†¥Âêà„ÅØËÉåÊôØËâ≤„ÅßÂ°ó„Çã */
+		RGBBackColor(&gBackColor.rgb);
+	EraseRgn(eWinRec->selectionPos);
+	BackColor(whiteColor);
+	UnlockPixels(GetGWorldPixMap(eWinRec->selectedDataPtr));
+	
+	eWinRec->isSelected=true;
+	eWinRec->selectionBlend=srcCopy;
+	eWinRec->showSelection=true;
+	
+	SetGWorld(eWinRec->dispTempPtr,0);
+	CopyBits(GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),
+		GetPortBitMapForCopyBits(eWinRec->dispTempPtr),
+		&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);
+	GetRegionBounds(eWinRec->selectionPos,&tempRect);
+	CopyBits(GetPortBitMapForCopyBits(eWinRec->editDataPtr),
+		GetPortBitMapForCopyBits(eWinRec->dispTempPtr),
+		&tempRect,&tempRect,
+		eWinRec->selectionBlend,eWinRec->selectionPos);
+	
+	CopyRgn(eWinRec->selectionPos,eWinRec->updateRgn);
+	
+	/* „Éû„Çπ„ÇØ„ÅÆÊõ¥Êñ∞ */
+	/* ÈÅ∏ÊäûÁØÑÂõ≤Â§ñ */
+	SetGWorld(eWinRec->selectionMask,0);
+	LockPixels(GetGWorldPixMap(eWinRec->selectionMask));
+	EraseRect(&eWinRec->iconSize);
+	CopyBits(GetPortBitMapForCopyBits(eWinRec->currentMask),
+		GetPortBitMapForCopyBits(eWinRec->selectionMask),
+		&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);
+	if (!isBackMode || gBackColor.isTransparent) /* ËÉåÊôØ„Åå„ÅÇ„Çã„ÄÅ„ÅÇ„Çã„ÅÑ„ÅØËÉåÊôØËâ≤„ÅåÈÄèÊòé„ÅÆÊôÇ„ÅØ„Éû„Çπ„ÇØÂâäÈô§ */
+		EraseRgn(eWinRec->selectionPos);
+	else /* „Åù„Çå‰ª•Â§ñ„ÅÆÂ†¥Âêà„ÅØ„Éû„Çπ„ÇØËøΩÂä†ÔºàÔºüÔºâ */
+		PaintRgn(eWinRec->selectionPos);
+	UnlockPixels(GetGWorldPixMap(eWinRec->selectionMask));
+	
+	/* ÈÅ∏ÊäûÁØÑÂõ≤ÂÜÖ */
+	SetGWorld(eWinRec->currentMask,0);
+	LockPixels(GetGWorldPixMap(eWinRec->currentMask));
+	EraseRect(&eWinRec->iconSize);
+	CopyBits(GetPortBitMapForCopyBits(eWinRec->pCurrentMask),
+		GetPortBitMapForCopyBits(eWinRec->currentMask),
+		&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,eWinRec->selectionPos);
+	UnlockPixels(GetGWorldPixMap(eWinRec->currentMask));
+	
+	SetGWorld(cPort,cDevice);
+	DispSelection(theWindow);
+	
+	UpdateClipMenu();
+	UpdateSelectionMenu();
+	UpdateTransparentMenu();
+	
+	SetUndoMode(umSelect);
+}
+
+/* „Çπ„Éù„Ç§„Éà„ÉÑ„Éº„É´„Å´„Çà„ÇãËâ≤ÈÅ∏Êäû */
+void DoSpoit(WindowPtr theWindow,Point pt)
+{
+	Point		mousePt=pt;
+	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
+	RGBColor	newColor;
+	GWorldPtr	cPort;
+	GDHandle	cDevice;
+	
+	/* GWorld‰øùÂ≠ò */
+	GetGWorld(&cPort,&cDevice);
+	ToRealPos(&mousePt,eWinRec->ratio);
+	
+	if (PtInMask(mousePt,eWinRec) || (eWinRec->isSelected && RealPtInMask(mousePt,eWinRec->selectionMask)))
+	{
+		/* „Éû„Çπ„ÇØÂÜÖ„Å™„ÇâË°®Á§∫Áî®„ÉÜ„É≥„Éù„É©„É™„Åã„ÇâËâ≤„ÇíÂæó„Çã */
+		MySetGWorld(dispTempPtr);
+		MyLockPixels(dispTempPtr);
+		GetCPixel(mousePt.h,mousePt.v,&newColor);
+		MyUnlockPixels(dispTempPtr);
+	}
+	else
+	{
+		/* „Éû„Çπ„ÇØÂ§ñ */
+		if (eWinRec->backgroundGWorld == nil)
+		{
+			/* ËÉåÊôØ„Åå„Å™„ÅÑ‚ÜíËÉåÊôØÁ∑®ÈõÜ‰∏≠ */
+			newColor.red=newColor.blue=newColor.green = 0xffff;
+			
+			/* „Åì„Åì„ÅßÈÄèÊòéËâ≤„Åå„Å®„Çå„Çã„Çà„ÅÜ„Å´„Åô„Çã„Åã„Å©„ÅÜ„Åã„ÅØÊ§úË®é„ÅÆ‰ΩôÂú∞„Åå„ÅÇ„Çã */
+		}
+		else
+		{
+			if (!eWinRec->dispBackground) return; /* ËÉåÊôØÈùûË°®Á§∫ÊôÇ„ÅØ„Å™„Å´„ÇÇ„Åó„Å™„ÅÑ */
+			
+			MySetGWorld(backgroundGWorld);
+			MyLockPixels(backgroundGWorld);
+			GetCPixel(mousePt.h,mousePt.v,&newColor);
+			MyUnlockPixels(backgroundGWorld);
+		}
+	}
+	/* GWorldÂæ©Â∏∞ */
+	SetGWorld(cPort,cDevice);
+	ChangeColor(&newColor,false);
+}
+
+/* „Éê„Ç±„ÉÑ„ÉÑ„Éº„É´„Å´„Çà„ÇãÂ°ó„Çä„Å§„Å∂„Åó */
+void DoBucket(WindowPtr theWindow,Point pt,Boolean cmdDown)
+{
+	Point	mousePt;
+	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
+	short	ratio=eWinRec->ratio;
+	Rect	effectRect=eWinRec->selectedRect;
+	Boolean	srcIsTransparent;
+	GWorldPtr	cPort;
+	GDHandle	cDevice;
+	
+	mousePt=pt;
+	GetGWorld(&cPort,&cDevice);
+	ToRealPos(&mousePt,ratio);
+	if (eWinRec->isSelected)
+		SubPt(eWinRec->selectionOffset,&mousePt);
+	
+	if (!PtInRect(mousePt,&effectRect)) return; /* „ÇØ„É™„ÉÉ„ÇØ„Åï„Çå„Åü„ÅÆ„ÅåÈÅ∏ÊäûÁØÑÂõ≤Â§ñ */
+	srcIsTransparent=!RealPtInMask(mousePt,eWinRec->currentMask);
+	
+	if (cmdDown) /* ÁΩÆ„ÅçÊèõ„Åà */
+	{
+		if (srcIsTransparent) /* ÈÄèÊòéËâ≤ */
+		{
+			if (gCurrentColor.isTransparent) return;
+			
+			DoReplaceColor(theWindow,&rgbWhiteColor,true,&gCurrentColor.rgb,gCurrentColor.isTransparent);
+		}
+		else /* ÈÄèÊòéËâ≤„Åß„Å™„ÅÑ */
+		{
+			RGBColor	newColor;
+			
+			/* Â°ó„ÇãÂ†¥ÊâÄ„ÅÆËâ≤„ÇíÊ±Ç„ÇÅ„Çã */
+			SetGWorld(eWinRec->editDataPtr,0);
+			LockPixels(GetGWorldPixMap(eWinRec->editDataPtr));
+			GetCPixel(mousePt.h,mousePt.v,&newColor);
+			UnlockPixels(GetGWorldPixMap(eWinRec->editDataPtr));
+			SetGWorld(cPort,cDevice);
+			
+			if (!gCurrentColor.isTransparent && EqualColor(&newColor,&gCurrentColor.rgb)) return; /* Âêå„ÅòËâ≤„Å™„Çâ‰Ωï„ÇÇ„Åó„Å™„ÅÑ */
+			
+			DoReplaceColor(theWindow,&newColor,false,&gCurrentColor.rgb,gCurrentColor.isTransparent);
+		}
+		SetUndoMode(umEffect);
+	}
+	else /* „Éê„Ç±„ÉÑ */
+	{
+		OSErr	err;
+		RgnHandle	fillRgn;
+		MyBitMapRec	fillBM;
+		Pattern	pat;
+		
+		/* Â°ó„ÇãÁØÑÂõ≤„ÇíÊ±Ç„ÇÅ„Çã */
+		err=NewBitMap(&fillBM,&effectRect);
+		if (err!=noErr)
+		{
+			ErrorAlertFromResource(PAINTERR_RESID,PAINTERR1);
+			return;
+		}
+		
+		if (srcIsTransparent) /* ÈÄèÊòéËâ≤ */
+		{
+			/* „Éû„Çπ„ÇØ„Å†„Åë„ÇíËÄÉÊÖÆ */
+			SetGWorld(eWinRec->currentMask,0);
+			MyLockPixels(currentMask);
+			SeedCFill(GetPortBitMapForCopyBits(eWinRec->currentMask),&fillBM.bmp,
+				&effectRect,&effectRect,mousePt.h,mousePt.v,nil,0);
+			MyUnlockPixels(currentMask);
+		}
+		else
+		{
+			RGBColor	newColor;
+			Boolean		isWhite;
+			
+			SetGWorld(eWinRec->editDataPtr,0);
+			LockPixels(GetGWorldPixMap(eWinRec->editDataPtr));
+			GetCPixel(mousePt.h,mousePt.v,&newColor);
+			isWhite= (newColor.red == 0xffff && newColor.blue == 0xffff && newColor.green == 0xffff);
+			if (isWhite) /* ÁôΩ„ÅÆÊôÇ„ÅØ„Éû„Çπ„ÇØ„Å´„Çà„ÇäÁîªÂÉè„ÇíÂèçËª¢„Åó„ÄÅÈÄèÊòéÈÉ®ÂàÜ„Å®Âå∫Âà•„Åô„Çã */
+			{
+				CopyBits(GetPortBitMapForCopyBits(eWinRec->currentMask),
+					GetPortBitMapForCopyBits(eWinRec->editDataPtr),
+					&effectRect,&effectRect,srcXor,nil);
+			}
+			
+			SeedCFill(GetPortBitMapForCopyBits(eWinRec->editDataPtr),&fillBM.bmp,
+				&effectRect,&effectRect,mousePt.h,mousePt.v,nil,0);
+			
+			if (isWhite) /* ÁôΩ */
+			{
+				CopyBits(GetPortBitMapForCopyBits(eWinRec->currentMask),
+					GetPortBitMapForCopyBits(eWinRec->editDataPtr),
+					&effectRect,&effectRect,srcXor,nil);
+			}
+			
+			UnlockPixels(GetGWorldPixMap(eWinRec->editDataPtr));
+		}
+		SetGWorld(cPort,cDevice);
+		
+		/* „ÇÇ„Å®„Åæ„Å£„ÅüÁØÑÂõ≤„Çí„É™„Éº„Ç∏„Éß„É≥„Å´„Åô„Çã */
+		fillRgn=NewRgn();
+		err=BitMapToRegion(fillRgn,&fillBM.bmp);
+		if (err!=noErr)
+		{
+			ErrorAlertFromResource(PAINTERR_RESID,PAINTERR1);
+			DisposeBitMap(&fillBM);
+			DisposeRgn(fillRgn);
+			return;
+		}
+		
+		err=DisposeBitMap(&fillBM);
+		
+		GoOffPort(theWindow);
+		
+		/* Â°ó„Çã */
+		SetGWorld(eWinRec->editDataPtr,0);
+		MyLockPixels(editDataPtr);
+		RGBForeColor(&gCurrentColor.rgb);
+		RGBBackColor(&gBackColor.rgb);
+		GetIndPattern(&pat,(gOtherPrefs.useHyperCardPalette ? 201 : 200),gPatternNo);
+		FillRgn(fillRgn,&pat);
+		MyUnlockPixels(editDataPtr);
+		
+		/* Ëâ≤„ÇíÂÖÉ„Å´Êàª„Åô */
+		ForeColor(blackColor);
+		BackColor(whiteColor);
+		
+		/* „Éû„Çπ„ÇØ„Å´Èñ¢„Åô„ÇãÂá¶ÁêÜ */
+		{
+			Boolean	isBlackPat=(gOtherPrefs.useHyperCardPalette && gPatternNo==12) ||
+								(!gOtherPrefs.useHyperCardPalette && gPatternNo==1),
+					isWhitePat=(gOtherPrefs.useHyperCardPalette && gPatternNo==1) ||
+								(!gOtherPrefs.useHyperCardPalette && gPatternNo==13);
+			Boolean	isOpaque=(!gCurrentColor.isTransparent && !gBackColor.isTransparent) ||
+								(!gCurrentColor.isTransparent && isBlackPat) ||
+								(!gBackColor.isTransparent && isWhitePat),
+					isTransparent=(gCurrentColor.isTransparent && gBackColor.isTransparent) ||
+								(gCurrentColor.isTransparent && isBlackPat) ||
+								(gBackColor.isTransparent && isWhitePat);
+			
+			SetGWorld(eWinRec->currentMask,0);
+			LockPixels(GetGWorldPixMap(eWinRec->currentMask));
+			if (isOpaque || isTransparent) /* ÂÆåÂÖ®„Å´ÈÄèÊòé or ‰∏çÈÄèÊòé */
+			{
+				/* „Éû„Çπ„ÇØÂá¶ÁêÜÔºàÈÅ∏ÊäûÁØÑÂõ≤ÂÜÖ„Å´ÈôêÂÆö„Åó„Å¶„ÅÑ„Å™„ÅÑ„Åã„Çâ„Å°„Çá„Å£„Å®„Åæ„Åö„ÅÑ„Åã„ÇÇÔºâ */
+				if (isTransparent)
+					EraseRgn(fillRgn);
+				else
+					PaintRgn(fillRgn);
+			}
+			else /* „Éë„Çø„Éº„É≥„ÅåÈñ¢‰øÇ„Åô„Çã */
+			{
+				ForeColor((gCurrentColor.isTransparent ? whiteColor : blackColor));
+				BackColor((gBackColor.isTransparent ? whiteColor : blackColor));
+				
+				FillRgn(fillRgn,&pat);
+			}
+			UnlockPixels(GetGWorldPixMap(eWinRec->currentMask));
+		}
+		CopyRgn(fillRgn,eWinRec->updateRgn); /* Â°ó„Å£„Åü„Å®„Åì„Çç„ÅåÊõ¥Êñ∞ÁØÑÂõ≤ */
+		if (eWinRec->isSelected) /* ÈÅ∏ÊäûÁØÑÂõ≤„Åå„ÅÇ„ÇãÊôÇ„ÅØ„ÄÅÂÆüÈöõ„ÅÆË°®Á§∫‰ΩçÁΩÆ„Å´„Åö„Çâ„Åô */
+			OffsetRgn(eWinRec->updateRgn,eWinRec->selectionOffset.h,eWinRec->selectionOffset.v);
+		DisposeRgn(fillRgn);
+		
+		SetGWorld(cPort,cDevice);
+		DispOffPort(theWindow);
+		
+		UpdateTransparentMenu();
+		SetUndoMode(umPaint);
+	}
+	if (gPaletteCheck == kPaletteCheckUsed) /* „Éë„É¨„ÉÉ„Éà„ÅÆ„ÉÅ„Çß„ÉÉ„ÇØ„Çí„Ç¢„ÉÉ„Éó„Éá„Éº„Éà */
+		UpdatePaletteCheck();
+}
+
+/* ÈÄèÊòéËâ≤„ÇíËÄÉÊÖÆ„Åó„Åü„Éê„Ç±„ÉÑÂ°ó„Çä */
+pascal Boolean MyTransparentColorSearch(RGBColor *color,long *pos)
+{
+	GWorldPtr	cPort;
+	GDHandle	cDevice;
+	MatchRec	*matchData;
+	BucketDataRec	*bucketData;
+	
+	GetGWorld(&cPort,&cDevice);
+	matchData=(MatchRec *)(**cDevice).gdRefCon;
+	bucketData=(BucketDataRec *)matchData->matchData;
+	
+	if (bucketData->srcIsTransparent) /* Â°ó„ÇãÂ†¥ÊâÄ„ÅåÈÄèÊòé */
+		return RealPtInMask(*(Point*)pos,bucketData->maskGWorld);
+	else
+	{
+		if (matchData->red == color->red && matchData->green == color->green && matchData->blue == color->blue)
+			return !RealPtInMask(*(Point*)pos,bucketData->maskGWorld);
+		else
+			return true;
+	}
+}
+
+/* Ëâ≤„ÅÆÁΩÆ„ÅçÊèõ„Åà */
+void DoReplaceColor(WindowPtr theWindow,RGBColor *srcColor,Boolean srcIsTransparent,
+										RGBColor *dstColor,Boolean dstIsTransparent)
+{
+	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
+	Rect	effectRect=eWinRec->selectedRect;
+	OSErr	err;
+	GWorldPtr	tempGWorld;
+	long	fgColor;
+	CTabHandle	ctab;
+	ColorSpec	*ctTable;
+	GWorldPtr	cPort;
+	GDHandle	cDevice;
+	
+	/* Âêå„ÅòËâ≤„Å™„Çâ‰Ωï„ÇÇ„Åó„Å™„ÅÑ */
+	if (EqualColor(srcColor,dstColor) && srcIsTransparent==dstIsTransparent) return;
+	
+	GetGWorld(&cPort,&cDevice);
+	
+	if (!srcIsTransparent)
+	{
+		err=NewGWorld(&tempGWorld,eWinRec->iconDepth,&effectRect,0,0,useTempMem);
+		
+		if (err!=noErr)
+		{
+			ErrorAlertFromResource(PAINTERR_RESID,PAINTERR1);
+			return;
+		}
+	}
+
+	GoOffPort(theWindow);
+	
+	if (!srcIsTransparent) /* ÁΩÆ„ÅçÊèõ„ÅàÂÖÉ„ÅåÈÄèÊòéËâ≤„Åß„Å™„ÅÑ */
+	{
+		SetGWorld(tempGWorld,0);
+		
+		LockPixels(GetGWorldPixMap(tempGWorld));
+		EraseRect(&effectRect);
+		
+		CopyBits(GetPortBitMapForCopyBits(eWinRec->editDataPtr),
+			GetPortBitMapForCopyBits(tempGWorld),
+			&effectRect,&effectRect,srcCopy,nil);
+		
+		UnlockPixels(GetGWorldPixMap(tempGWorld));
+		
+		switch (eWinRec->colorMode)
+		{
+			case kNormal8BitColorMode:
+				RGBForeColor(srcColor);
+				fgColor=Color2Index(srcColor);
+				ctab=(**GetGWorldPixMap(tempGWorld)).pmTable;
+				ctTable=(**ctab).ctTable;
+				ctTable[fgColor].rgb=*dstColor;
+				CTabChanged(ctab);
+				
+				SetGWorld(eWinRec->editDataPtr,0);
+				CopyBits(GetPortBitMapForCopyBits(tempGWorld),
+					GetPortBitMapForCopyBits(eWinRec->editDataPtr),
+					&effectRect,&effectRect,srcCopy,nil);
+				break;
+			
+			case k32BitColorMode:
+				break;
+		}
+		
+		DisposeGWorld(tempGWorld);
+		
+		/* „Éû„Çπ„ÇØÊõ¥Êñ∞ */
+		if (!dstIsTransparent) /* ÁΩÆ„ÅçÊèõ„ÅàÂÖà„ÅåÈÄèÊòéËâ≤‰ª•Â§ñ */
+		{
+			/*„ÄÄÈÄèÊòéËâ≤‰ª•Â§ñ„ÅÆËâ≤„ÇíÈÄèÊòéËâ≤‰ª•Â§ñ„ÅÆËâ≤„ÅßÁΩÆ„ÅçÊèõ„Åà„Çã„ÅÆ„Å†„Åã„Çâ„Éû„Çπ„ÇØ„ÅÆÂ§âÊõ¥„ÅØ„Å™„ÅÑ */
+		}
+		else /* ÁΩÆ„ÅçÊèõ„ÅàÂÖà„ÅåÈÄèÊòéËâ≤ */
+		{
+			if (EqualColor(srcColor,&rgbWhiteColor)) /* ÁΩÆ„ÅçÊèõ„ÅàÂÖÉ„ÅÆËâ≤„ÅåÁôΩ */
+			{
+				OSErr		err;
+				GWorldPtr	maskGWorld;
+				
+				err=CreateMask2(eWinRec->editDataPtr,&maskGWorld);
+				if (err==noErr)
+				{
+					MySetGWorld(currentMask);
+					CopyBits(GetPortBitMapForCopyBits(maskGWorld),
+						GetPortBitMapForCopyBits(eWinRec->currentMask),
+						&effectRect,&effectRect,srcCopy,nil);
+					SetGWorld(cPort,cDevice);
+					
+					DisposeGWorld(maskGWorld);
+				}
+				else
+				{
+					SysBeep(0);
+				}
+			}
+			else
+			{
+				OSErr		err;
+				GWorldPtr	oldMask,newMask;
+				
+				err=CreateMask2(eWinRec->tempDataPtr,&oldMask);
+				if (err==noErr)
+				{
+					err=CreateMask2(eWinRec->editDataPtr,&newMask);
+					if (err==noErr)
+					{
+						SetGWorld(newMask,0);
+						CopyBits(GetPortBitMapForCopyBits(oldMask),
+							GetPortBitMapForCopyBits(newMask),
+							&effectRect,&effectRect,notSrcXor,nil);
+						MySetGWorld(currentMask);
+						CopyBits(GetPortBitMapForCopyBits(newMask),
+							GetPortBitMapForCopyBits(eWinRec->currentMask),
+							&effectRect,&effectRect,notSrcBic,nil);
+						
+						DisposeGWorld(oldMask);
+						DisposeGWorld(newMask);
+					}
+					else
+					{
+						SysBeep(0);
+						DisposeGWorld(oldMask);
+					}
+				}
+				else
+					SysBeep(0);
+			}
+		}
+	}
+	else /* ÁΩÆ„ÅçÊèõ„ÅàÂÖÉ„ÅåÈÄèÊòéËâ≤‚ÜíÂÖ®‰Ωì„ÇíÂ°ó„Çä„Å§„Å∂„Åó„ÄÅ„Éû„Çπ„ÇØÂÜÖ„Å†„ÅëÂÖÉ„Å´Êàª„Åô */
+	{
+		RgnHandle	selectedRgn=NewRgn();
+		Rect		tempRect;
+		
+		MySetGWorld(editDataPtr);
+		MyLockPixels(editDataPtr);
+		RGBForeColor(dstColor);
+		PaintRect(&effectRect);
+		
+		ForeColor(blackColor);
+		
+		SafeCopyDeepMask(GetPortBitMapForCopyBits(eWinRec->tempDataPtr),
+			GetPortBitMapForCopyBits(eWinRec->currentMask),
+			GetPortBitMapForCopyBits(eWinRec->editDataPtr),
+			&effectRect,&effectRect,&effectRect,
+			srcCopy,nil);
+		
+		MyUnlockPixels(editDataPtr);
+		
+		CopyRgn(eWinRec->selectionPos,selectedRgn);
+		GetRegionBounds(eWinRec->selectionPos,&tempRect);
+		MapRgn(selectedRgn,&tempRect,&effectRect);
+		MySetGWorld(currentMask);
+		MyLockPixels(currentMask);
+		PaintRgn(selectedRgn);
+		MyUnlockPixels(currentMask);
+		DisposeRgn(selectedRgn);
+	}
+	
+	CopyRgn(eWinRec->selectionPos,eWinRec->updateRgn);
+	SetGWorld(cPort,cDevice);
+	DispOffPort(theWindow);
+	
+	eWinRec->replacedColor=*srcColor;
+	eWinRec->replacedTransparent=srcIsTransparent;
+	gUsedCount.replaceNum++;
+	UpdateTransparentMenu();
+	SetUndoMode(umReplaceColor);
+	if (gPaletteCheck == kPaletteCheckUsed) /* „Éë„É¨„ÉÉ„Éà„ÅÆ„ÉÅ„Çß„ÉÉ„ÇØ„Çí„Ç¢„ÉÉ„Éó„Éá„Éº„Éà */
+		UpdatePaletteCheck();
+}
+
+/* Ëá™ÂãïÈÅ∏Êäû */
+void DoAutoSelect(WindowPtr theWindow)
+{
+	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
+	Rect	tempRect;
+	GWorldPtr	cPort;
+	GDHandle	cDevice;
+	
+	GetGWorld(&cPort,&cDevice);
+	
+	if (eWinRec->undoMode == umPaint)
+	{
+		RgnHandle	tempRgn=NewRgn();
+		
+		ResetDot(theWindow);
+		GoOffPort(theWindow);
+		
+		if (eWinRec->isSelected) /* ÈÅ∏Êäû„Åï„Çå„Å¶„ÅÑ„Çã */
+		{
+			if (eWinRec->showSelection)
+				DispSelection(theWindow);
+			
+			DiffRgn(eWinRec->selectionPos,eWinRec->updateRgn,tempRgn);
+			OffsetRgn(tempRgn,-eWinRec->selectionOffset.h,-eWinRec->selectionOffset.v);
+			
+			SetGWorld(eWinRec->selectedDataPtr,0);
+			if (eWinRec->selectionBlend==blend)
+				OpColor(&rgbGrayColor);
+			GetRegionBounds(eWinRec->selectionPos,&tempRect);
+			SafeCopyDeepMask(GetPortBitMapForCopyBits(eWinRec->tempDataPtr),
+				GetPortBitMapForCopyBits(eWinRec->pCurrentMask),
+				GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),
+				&eWinRec->selectedRect,&eWinRec->selectedRect,&tempRect,
+				eWinRec->selectionBlend,eWinRec->selectionPos);
+			
+			SetGWorld(eWinRec->selectionMask,0);
+			CopyBits(GetPortBitMapForCopyBits(eWinRec->pCurrentMask),
+				GetPortBitMapForCopyBits(eWinRec->selectionMask),
+				&eWinRec->selectedRect,&tempRect,srcOr,eWinRec->selectionPos);
+		}
+		else /* ÈÅ∏Êäû„Åï„Çå„Å¶„ÅÑ„Å™„ÅÑ */
+		{
+			RectRgn(tempRgn,&eWinRec->iconSize);
+			DiffRgn(tempRgn,eWinRec->updateRgn,tempRgn);
+			
+			SetGWorld(eWinRec->selectedDataPtr,0);
+			CopyBits(GetPortBitMapForCopyBits(eWinRec->tempDataPtr),
+				GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),
+				&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);
+			SetGWorld(eWinRec->selectionMask,0);
+			CopyBits(GetPortBitMapForCopyBits(eWinRec->pCurrentMask),
+				GetPortBitMapForCopyBits(eWinRec->selectionMask),
+				&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);
+			
+			SetPt(&eWinRec->selectionOffset,0,0);
+			
+			eWinRec->isSelected=true;
+			eWinRec->selectionBlend=srcCopy;
+		}
+		
+		/* ÈÅ∏ÊäûÈÉ®ÂàÜ„ÅÆÊõ¥Êñ∞ */
+		SetGWorld(eWinRec->editDataPtr,0);
+		MyLockPixels(editDataPtr);
+		EraseRgn(tempRgn);
+		MyUnlockPixels(editDataPtr);
+		SetGWorld(eWinRec->currentMask,0);
+		MyLockPixels(currentMask);
+		EraseRgn(tempRgn);
+		MyUnlockPixels(currentMask);
+		DisposeRgn(tempRgn);
+		
+		/* ÈÅ∏ÊäûÁØÑÂõ≤„ÅÆÊõ¥Êñ∞ */
+		CopyRgn(eWinRec->updateRgn,eWinRec->selectionPos);
+		GetRegionBounds(eWinRec->selectionPos,&eWinRec->selectedRect);
+		if (eWinRec->isSelected)
+			OffsetRect(&eWinRec->selectedRect,-eWinRec->selectionOffset.h,-eWinRec->selectionOffset.v);
+		CopyRgn(eWinRec->updateRgn,eWinRec->eSelectedRgn);
+		MapRgn(eWinRec->eSelectedRgn,&eWinRec->iconSize,&eWinRec->iconEditSize);
+		RectRgn(eWinRec->prevSelectionPos,&eWinRec->iconSize);
+		SetEmptyRgn(eWinRec->ePrevSelectedRgn);
+		eWinRec->prevSelectedRect=eWinRec->iconSize;
+		
+		SetPt(&eWinRec->prevMovement,0,0);
+		eWinRec->showSelection=true;
+		
+		SetGWorld(cPort,cDevice);
+		DispOffPort(theWindow);
+		ToolSelect(kMarqueeTool);
+		SetUndoMode(umSelect);
+		UpdateClipMenu();
+		UpdateSelectionMenu();
+		UpdateTransparentMenu();
+	}
+	else
+	{
+		if (eWinRec->isSelected) /* ÈÅ∏Êäû„Åï„Çå„Å¶„ÅÑ„Çã */
+		{
+			MyBitMapRec	selectBM;
+			OSErr	err;
+			RgnHandle	tempRgn=NewRgn();
+			
+			err=CreateMask(eWinRec->editDataPtr,&eWinRec->selectedRect,&eWinRec->selectedRect,&selectBM);
+			if (err==noErr)
+			{
+				err=BitMapToRegion(tempRgn,&selectBM.bmp);
+				DisposeBitMap(&selectBM);
+			}
+			if (err!=noErr || EmptyRgn(tempRgn))
+			{
+				DisposeRgn(tempRgn);
+				SysBeep(0);
+				return;
+			}
+			
+			/* ÈÅ∏ÊäûÈ†òÂüü„É™„Éº„Ç∏„Éß„É≥ÂàùÊúüÂåñ */
+			OffsetRgn(tempRgn,eWinRec->selectionOffset.h,eWinRec->selectionOffset.v);
+			SectRgn(tempRgn,eWinRec->selectionPos,tempRgn);
+			if (EqualRgn(tempRgn,eWinRec->selectionPos))
+			{
+				DisposeRgn(tempRgn);
+				return;
+			}
+			
+			if (eWinRec->showSelection)
+				DispSelection(theWindow);
+			
+			UpdatePSRgn(eWinRec);
+			GoOffPort(theWindow);
+			
+			/* „É™„Éº„Ç∏„Éß„É≥„ÇíË®≠ÂÆö„Åô„Çã */
+			CopyRgn(tempRgn,eWinRec->selectionPos);
+			OffsetRgn(tempRgn,-eWinRec->selectionOffset.h,-eWinRec->selectionOffset.v);
+			GetRegionBounds(tempRgn,&eWinRec->selectedRect);
+			SetPt(&eWinRec->prevMovement,0,0);
+			
+			CopyRgn(eWinRec->selectionPos,eWinRec->eSelectedRgn);
+			MapRgn(eWinRec->eSelectedRgn,&eWinRec->iconSize,&eWinRec->iconEditSize);
+			
+			eWinRec->showSelection=true;
+			
+			CopyRgn(eWinRec->selectionPos,eWinRec->updateRgn);
+			
+			/* „Éû„Çπ„ÇØ„ÅÆÊõ¥Êñ∞ */
+			/* ÈÅ∏ÊäûÁØÑÂõ≤ÂÜÖ */
+			SetGWorld(eWinRec->currentMask,0);
+			MyLockPixels(currentMask);
+			EraseRect(&eWinRec->iconSize);
+			CopyBits(GetPortBitMapForCopyBits(eWinRec->pCurrentMask),
+				GetPortBitMapForCopyBits(eWinRec->currentMask),
+				&eWinRec->selectedRect,&eWinRec->selectedRect,srcCopy,tempRgn);
+			DisposeRgn(tempRgn);
+			MyUnlockPixels(currentMask);
+			
+			CopyRgn(eWinRec->prevSelectionPos,eWinRec->updateRgn);
+			SetGWorld(cPort,cDevice);
+			DispOffPort(theWindow);
+			
+			SetUndoMode(umSelect);
+			UpdateClipMenu();
+			UpdateSelectionMenu();
+			UpdateTransparentMenu();
+		}
+		else
+		{
+			MyBitMapRec	selectBM;
+			OSErr	err;
+			RgnHandle	tempRgn=NewRgn();
+			
+			err=CreateMask(eWinRec->editDataPtr,&eWinRec->iconSize,&eWinRec->iconSize,&selectBM);
+			if (err==noErr)
+			{
+				err=BitMapToRegion(tempRgn,&selectBM.bmp);
+				DisposeBitMap(&selectBM);
+			}
+			if (err!=noErr || EmptyRgn(tempRgn))
+			{
+				DisposeRgn(tempRgn);
+				SysBeep(0);
+				return;
+			}
+			
+			UpdatePSRgn(eWinRec);
+			GoOffPort(theWindow);
+			
+			DoSelectMain(theWindow,tempRgn);
+		}
+	}
+}
+
+/* ÈÅ∏ÊäûÁØÑÂõ≤„ÅÆÁßªÂãï */
+void MoveSelection(WindowPtr theWindow,short dx,short dy,Boolean redrawFlag)
+{
+	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
+	
+	GoOffPort(theWindow);
+	
+	CopyRgn(eWinRec->selectionPos,eWinRec->prevSelectionPos);
+	CopyRgn(eWinRec->eSelectedRgn,eWinRec->ePrevSelectedRgn);
+	
+	OffsetRgn(eWinRec->selectionPos,dx,dy);
+	OffsetRgn(eWinRec->eSelectedRgn,dx<<eWinRec->ratio,dy<<eWinRec->ratio);
+	
+	/* „Éû„Çπ„ÇØ„Å´Èñ¢„Åó„Å¶„ÅØ„ÄÅÂá¶ÁêÜ„Åô„ÇãÂøÖË¶Å„Å™„Åó */
+	
+	SetPt(&eWinRec->prevMovement,dx,dy);
+	AddPt(eWinRec->prevMovement,&eWinRec->selectionOffset);
+		
+	UnionRgn(eWinRec->selectionPos,eWinRec->prevSelectionPos,eWinRec->updateRgn);
+	
+	if (redrawFlag)
+		DispOffPort(theWindow);
+	if (eWinRec->showSelection)
+		DispSelection(theWindow);
+	
+	SetUndoMode(umMove);
+	if (gPaletteCheck == kPaletteCheckUsed) /* „Éë„É¨„ÉÉ„Éà„ÅÆ„ÉÅ„Çß„ÉÉ„ÇØ„Çí„Ç¢„ÉÉ„Éó„Éá„Éº„Éà */
+		UpdatePaletteCheck();
+}
+
+/* ÈÅ∏ÊäûÁØÑÂõ≤„ÅÆÂõ∫ÂÆö */
+void FixSelection(WindowPtr theWindow)
+{
+	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
+	GWorldFlags	flags;
+	OSErr		err;
+	Rect		tempRect;
+	GWorldPtr	cPort;
+	GDHandle	cDevice;
+	
+	GetGWorld(&cPort,&cDevice);
+	
+	/* Êû†„ÇíÊ∂à„Åô */
+	if (eWinRec->showSelection)
+		DispSelection(theWindow);
+	
+	err=GoOffPort(theWindow);
+	if (err!=noErr)
+	{
+		ErrorAlertFromResource(PAINTERR_RESID,PAINTERR2);
+		SetUndoMode(umCannot);
+		return;
+	}
+	
+	GetPortBounds(eWinRec->editDataPtr,&tempRect);
+	if (!EqualRect(&tempRect,&eWinRec->iconSize))
+	{
+		flags=UpdateGWorld(&eWinRec->editDataPtr,eWinRec->iconDepth,&eWinRec->iconSize,0,0,0);
+		flags=UpdateGWorld(&eWinRec->currentMask,1,&eWinRec->iconSize,0,0,0);
+	}
+	
+	SetGWorld(eWinRec->editDataPtr,0);
+	/* ÁîªÈù¢Ë°®Á§∫Áî®„ÅÆ„ÉÜ„É≥„Éù„É©„É™„Åã„ÇâÂèñ„ÇäÂá∫„ÅôÔºàÊâãÊäú„Åç„Å†„Å™Ôºâ */
+	CopyBits(GetPortBitMapForCopyBits(eWinRec->dispTempPtr),
+		GetPortBitMapForCopyBits(eWinRec->editDataPtr),
+		&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);
+	
+	/* „Éû„Çπ„ÇØ„ÅÆÊõ¥Êñ∞ */
+	SetGWorld(eWinRec->currentMask,0);
+	CopyBits(GetPortBitMapForCopyBits(eWinRec->selectionMask),
+		GetPortBitMapForCopyBits(eWinRec->currentMask),
+		&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);
+	GetRegionBounds(eWinRec->selectionPos,&tempRect);
+	CopyBits(GetPortBitMapForCopyBits(eWinRec->pCurrentMask),
+		GetPortBitMapForCopyBits(eWinRec->currentMask),
+		&eWinRec->selectedRect,&tempRect,srcOr,nil);
+	
+	/* ÈÅ∏ÊäûÁØÑÂõ≤„ÅÆÊõ¥Êñ∞ */
+	CopyRgn(eWinRec->selectionPos,eWinRec->prevSelectionPos);
+	CopyRgn(eWinRec->eSelectedRgn,eWinRec->ePrevSelectedRgn);
+	RectRgn(eWinRec->selectionPos,&eWinRec->iconSize);
+	SetEmptyRgn(eWinRec->eSelectedRgn);
+	eWinRec->isSelected=false;
+	eWinRec->selectedRect=eWinRec->iconSize;
+	
+	/* Âèñ„ÇäÊ∂à„Åó„ÅÆ„Åü„ÇÅ„Å´selectionMask„ÅØÊÆã„Åó„Å¶„Åä„Åè */
+	
+	/* ÂâçÂõû„ÅÆÈÅ∏ÊäûÁØÑÂõ≤„ÅåÊõ¥Êñ∞ÁØÑÂõ≤ */
+	CopyRgn(eWinRec->prevSelectionPos,eWinRec->updateRgn);
+	
+	SetGWorld(cPort,cDevice);
+	UpdateClipMenu();
+	UpdateSelectionMenu();
+	UpdateTransparentMenu();
+	
+	SetUndoMode(umDeselect);
+}
+
+/* ÈÅ∏ÊäûÁØÑÂõ≤„Å®ËÉåÊôØ„Çí‰∫§Êèõ */
+void ExchangeSelection(WindowPtr theWindow)
+{
+	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
+	Rect	tempRect,tempRect2,tempRect3;
+	GWorldPtr	cPort;
+	GDHandle	cDevice;
+	
+	/* „Å©„Åì„ÇÇÈÅ∏Êäû„Åï„Çå„Å¶„ÅÑ„Å™„Åë„Çå„Å∞„Ç®„É©„Éº */
+	if (!eWinRec->isSelected)
+	{
+		SysBeep(0);
+		UpdateClipMenu();
+		return;
+	}
+	
+	GetGWorld(&cPort,&cDevice);
+	GoOffPort(theWindow);
+	
+	/* ËÉåÊôØ„Åå„Å™„ÅÑÈÉ®ÂàÜ„ÅÆ„Åü„ÇÅ„ÅÆÂá¶ÁêÜ */
+	tempRect=eWinRec->iconSize;
+	GetRegionBounds(eWinRec->selectionPos,&tempRect2);
+	OffsetRect(&tempRect,eWinRec->selectedRect.left-tempRect2.left,
+				eWinRec->selectedRect.top-tempRect2.top);
+	
+	/* ‰∫§Êèõ„Åô„Çã */
+	SetGWorld(eWinRec->editDataPtr,0);
+	ClipRect(&tempRect);
+	CopyBits(GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),
+		GetPortBitMapForCopyBits(eWinRec->editDataPtr),
+		&tempRect2,&eWinRec->selectedRect,
+		srcCopy,nil);
+	GetPortBounds(eWinRec->editDataPtr,&tempRect3);
+	ClipRect(&tempRect3);
+	
+	SetGWorld(eWinRec->selectedDataPtr,0);
+	CopyBits(GetPortBitMapForCopyBits(eWinRec->tempDataPtr),
+		GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),
+		&eWinRec->selectedRect,&tempRect2,
+		srcCopy,eWinRec->selectionPos);
+	
+	/* „Éû„Çπ„ÇØ„ÅÆÂá¶ÁêÜ */
+	SetGWorld(eWinRec->currentMask,0);
+	ClipRect(&tempRect);
+	CopyBits(GetPortBitMapForCopyBits(eWinRec->selectionMask),
+		GetPortBitMapForCopyBits(eWinRec->currentMask),
+		&tempRect2,&eWinRec->selectedRect,
+		srcCopy,nil);
+	GetPortBounds(eWinRec->currentMask,&tempRect3);
+	ClipRect(&tempRect3);
+	
+	SetGWorld(eWinRec->selectionMask,0);
+	CopyBits(GetPortBitMapForCopyBits(eWinRec->pCurrentMask),
+		GetPortBitMapForCopyBits(eWinRec->selectionMask),
+		&eWinRec->selectedRect,&tempRect2,
+		srcCopy,eWinRec->selectionPos);
+	
+	CopyRgn(eWinRec->selectionPos,eWinRec->updateRgn);
+	
+	SetGWorld(cPort,cDevice);
+	DispOffPort(theWindow);
+	
+	UpdateTransparentMenu();
+	SetUndoMode(umExchange);
+	if (gPaletteCheck == kPaletteCheckUsed) /* „Éë„É¨„ÉÉ„Éà„ÅÆ„ÉÅ„Çß„ÉÉ„ÇØ„Çí„Ç¢„ÉÉ„Éó„Éá„Éº„Éà */
+		UpdatePaletteCheck();
+}	
+
+static RGBColor	gSearchColor;
+
+/* ÊåáÂÆö„ÅÆËâ≤„ÅÆÈ†òÂüü„ÇíÈÅ∏Êäû */
+void DoSelectColorArea(WindowPtr theWindow,RGBColor *color,Boolean isTransparent)
+{
+	PaintWinRec	*eWinRec;
+	GWorldPtr	selectGWorld;
+	OSErr		err;
+	RgnHandle	selectRgn;
+	ColorSearchUPP	csUPP;
+	GWorldPtr	cPort;
+	GDHandle	cDevice;
+	
+	if (theWindow==nil) return;
+	eWinRec=GetPaintWinRec(theWindow);
+	
+	if (eWinRec->isSelected) /* ÈÅ∏ÊäûÁØÑÂõ≤„Åå„ÅÇ„Çå„Å∞Âõ∫ÂÆö„Åô„Çã */
+		FixSelection(theWindow);
+	
+	UpdatePSRgn(eWinRec);
+	GetGWorld(&cPort,&cDevice);
+	err=GoOffPort(theWindow);
+	
+	if (isTransparent) /* „Éû„Çπ„ÇØÂ§ñ„ÅÆ„Åø */
+	{
+		RgnHandle	tempRgn;
+		
+		selectRgn=NewRgn();
+		err=BitMapToRegion(selectRgn,GetPortBitMapForCopyBits(eWinRec->currentMask));
+		if (err!=noErr)
+		{
+			DisposeRgn(selectRgn);
+			DispOffPort(theWindow);
+			SetUndoMode(umCannot);
+			SysBeep(0);
+			return;
+		}
+		
+		tempRgn=NewRgn();
+		RectRgn(tempRgn,&eWinRec->iconSize);
+		DiffRgn(tempRgn,selectRgn,selectRgn);
+		DisposeRgn(tempRgn);
+	}
+	else
+	{
+		err=NewGWorld(&selectGWorld,1,&eWinRec->iconSize,0,0,useTempMem);
+		if (err!=noErr)
+		{
+			DispOffPort(theWindow);
+			SetUndoMode(umCannot);
+			SysBeep(0);
+			return;
+		}
+		
+		/* ÊåáÂÆö„Åó„ÅüËâ≤„Å†„Åë„Çí„Ç≥„Éî„Éº„Åô„Çã */
+		SetGWorld(selectGWorld,0);
+		LockPixels(GetGWorldPixMap(selectGWorld));
+		gSearchColor=*color;
+		csUPP = NewColorSearchUPP(SearchColorAreaProc);
+		AddSearch(csUPP);
+		CopyBits(GetPortBitMapForCopyBits(eWinRec->editDataPtr),GetPortBitMapForCopyBits(selectGWorld),
+			&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);
+		DelSearch(csUPP);
+		DisposeColorSearchUPP(csUPP);
+		
+		selectRgn=NewRgn();
+		err=BitMapToRegion(selectRgn,GetPortBitMapForCopyBits(selectGWorld));
+		if (err!=noErr)
+		{
+			SetEmptyRgn(selectRgn);
+			SysBeep(0);
+		}
+		UnlockPixels(GetGWorldPixMap(selectGWorld));
+		SetGWorld(cPort,cDevice);
+		DisposeGWorld(selectGWorld);
+	}
+	
+	if (EmptyRgn(selectRgn)) /* ÈÅ∏ÊäûÈ†òÂüü„ÅåÁ©∫„Åß„ÅÇ„Çå„Å∞„Å™„Å´„ÇÇ„Åó„Å™„ÅÑ */
+	{
+		DisposeRgn(selectRgn);
+		DispOffPort(theWindow);
+		SetUndoMode(umCannot);
+		
+		UpdateClipMenu();
+		UpdateSelectionMenu();
+		UpdateTransparentMenu();
+	}
+	else
+		DoSelectMain(theWindow,selectRgn);
+}
+
+/* Ëâ≤È†òÂüüÈÅ∏Êäû„ÅÆË£úÂä©„É´„Éº„ÉÅ„É≥ÔºàÊåáÂÆö„ÅÆËâ≤„ÇíÈªí„Åè„Åô„ÇãÔºâ */
+pascal Boolean SearchColorAreaProc(RGBColor *color,long *pos)
+{
+	if (EqualColor(color,&gSearchColor))
+		*pos=1;
+	else
+		*pos=0;
+	return true;
+}
+
+/* „Éû„Çπ„ÇØÂ§âÊõ¥ÔºàÈÄèÊòé„ÄÅ‰∏çÈÄèÊòéÔºâ */
+void ChangeMask(WindowPtr theWindow,short mode)
+{
+	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
+	RgnHandle	maskRgn;
+	OSErr		err;
+	GWorldPtr	maskGWorld;
+	Rect		tempRect;
+	GWorldPtr	cPort;
+	GDHandle	cDevice;
+	
+	GetGWorld(&cPort,&cDevice);
+	GoOffPort(theWindow);
+	
+	GetPortBounds(eWinRec->currentMask,&tempRect);
+	switch (mode)
+	{
+		case srcCopy:
+			/* ‰∏çÈÄèÊòé */
+			maskRgn=NewRgn();
+			CopyRgn(eWinRec->selectionPos,maskRgn);
+			if (eWinRec->isSelected)
+				OffsetRgn(maskRgn,-eWinRec->selectionOffset.h,-eWinRec->selectionOffset.v);
+			
+			MySetGWorld(currentMask);
+			MyLockPixels(currentMask);
+			EraseRect(&tempRect);
+			PaintRgn(maskRgn);
+			MyUnlockPixels(currentMask);
+			DisposeRgn(maskRgn);
+			SetGWorld(cPort,cDevice);
+			break;
+		
+		case transparent:
+			/* ÈÄèÊòé */
+			err=CreateMask2(eWinRec->editDataPtr,&maskGWorld);
+			if (err==noErr)
+			{
+				MySetGWorld(currentMask);
+				MyLockPixels(currentMask);
+				CopyBits(GetPortBitMapForCopyBits(maskGWorld),
+					GetPortBitMapForCopyBits(eWinRec->currentMask),
+					&tempRect,&tempRect,srcCopy,nil);
+				MyUnlockPixels(currentMask);
+				DisposeGWorld(maskGWorld);
+				SetGWorld(cPort,cDevice);
+			}
+			else
+				SysBeep(0);
+			break;
+	}
+	
+	CopyRgn(eWinRec->selectionPos,eWinRec->updateRgn);
+	
+	DispOffPort(theWindow);
+	UpdateTransparentMenu();
+	SetUndoMode(umMaskChange);
+	if (gPaletteCheck == kPaletteCheckUsed) /* „Éë„É¨„ÉÉ„Éà„ÅÆ„ÉÅ„Çß„ÉÉ„ÇØ„Çí„Ç¢„ÉÉ„Éó„Éá„Éº„Éà */
+		UpdatePaletteCheck();
+}
+
+/* ÈÅ∏ÊäûÁØÑÂõ≤„Çí„Ç¢„Ç§„Ç≥„É≥„Å´Â§âÊèõ */
+/* rectMask„ÅØ„ÄÅ„Éó„É¨„Éì„É•„Éº„Ç¢„Ç§„Ç≥„É≥Áî®„Å´ÂõõËßí„ÅÑ„Éû„Çπ„ÇØ„Çí‰ΩúÊàê„Åô„Çã„Åã„Å©„ÅÜ„Åã */
+Handle GetSelectionIconHandle(WindowPtr theWindow,short size,short depth,Boolean rectMask)
+{
+	Handle	resHandle;
+	GWorldPtr	iconDataPtr;
+	PixMapHandle	iconDataPix;
+	Ptr		pixPtr;
+	Ptr		iconPtr;
+	Rect	iconRect;
+	Rect	realIconRect;
+	OSErr	err;
+	short	i;
+	MyBitMapRec	maskBM;
+	long	s;
+	long	iconRowBytes=size*depth/8,rowBytes;
+	Boolean	isMaskAvailable;
+	GWorldPtr	tempGWorld;
+	GWorldPtr	cPort;
+	GDHandle	cDevice;
+	
+	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
+	Rect	selectedRect=eWinRec->selectedRect;
+	
+	/* „Ç¢„Ç§„Ç≥„É≥Áî®„ÅÆÊèèÁîªÈ†òÂüü„Çí‰ΩúÊàê */
+	SetRect(&iconRect,0,0,size,size);
+	if (eWinRec->isSelected)
+		isMaskAvailable=false;
+	else
+		isMaskAvailable=(eWinRec->backgroundGWorld != nil);
+	
+	GetGWorld(&cPort,&cDevice);
+	
+	if (isMaskAvailable)
+	{
+		SetGWorld(eWinRec->selectedDataPtr,0);
+		LockPixels(GetGWorldPixMap(eWinRec->selectedDataPtr));
+		EraseRect(&eWinRec->iconSize);
+		UnlockPixels(GetGWorldPixMap(eWinRec->selectedDataPtr));
+		CopyBits(GetPortBitMapForCopyBits(eWinRec->backgroundGWorld),
+			GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),
+			&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);
+		
+		if (eWinRec->foreTransparency != kForeTrans0)
+		{
+			short	foreMode=SetForeBlend(eWinRec);
+			
+			SafeCopyDeepMask(GetPortBitMapForCopyBits(eWinRec->editDataPtr),
+				GetPortBitMapForCopyBits(eWinRec->currentMask),
+				GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),
+				&eWinRec->iconSize,&eWinRec->iconSize,&eWinRec->iconSize,foreMode,nil);
+		}
+		SetGWorld(cPort,cDevice);
+		
+		tempGWorld=eWinRec->selectedDataPtr;
+	}
+	else
+		tempGWorld=eWinRec->editDataPtr;
+	
+	realIconRect=selectedRect;
+	ReduceRect(&realIconRect,size);
+	
+	err=NewGWorld(&iconDataPtr,depth,&iconRect,0,0,useTempMem);
+	if (err<0)
+	{
+		ErrorAlertFromResource(PAINTERR_RESID,PAINTERR1);
+		return (Handle)0;
+	}
+	iconDataPix=GetGWorldPixMap(iconDataPtr);
+	
+	/* „Ç¢„Ç§„Ç≥„É≥„ÅÆ„Éá„Éº„Çø„ÇíÂèé„ÇÅ„Çã„Åü„ÇÅ„ÅÆ„Éè„É≥„Éâ„É´„Çí‰ΩúÊàê */
+	resHandle=NewHandle(size*size/8*(depth==1?2:depth));
+	if (resHandle==0)
+	{
+		DisposeGWorld(iconDataPtr);
+		ErrorAlertFromResource(PAINTERR_RESID,PAINTERR1);
+		return (Handle)0;
+	}
+	
+	/* „Ç¢„Ç§„Ç≥„É≥„Éá„Éº„ÇøÁî®„ÅÆÊèèÁîªÈ†òÂüü„Å´„Ç≥„Éî„Éº */
+	SetGWorld(iconDataPtr,0);
+	
+	LockPixels(iconDataPix);
+	EraseRect(&iconRect);
+	ForeColor(blackColor);
+	BackColor(whiteColor);
+	
+	CopyBits(GetPortBitMapForCopyBits(tempGWorld),
+		GetPortBitMapForCopyBits(iconDataPtr),
+		&selectedRect,&realIconRect,(rectMask ? ditherCopy : srcCopy),0); /* „É™„Éº„Ç∏„Éß„É≥„Å´„Å§„ÅÑ„Å¶„ÅØ‰øùÁïô */
+	
+	if (rectMask)
+	{
+		IconSuiteRef	theIconSuite;
+		
+		FrameRect(&realIconRect);
+		
+		err=GetIconSuite(&theIconSuite,135,kSelectorAllAvailableData);
+		err=PlotIconSuite(&iconRect,kAlignNone,kTransformNone,theIconSuite);
+		err=DisposeIconSuite(theIconSuite,true);
+	}
+	
+	/* ÊèèÁîªÈ†òÂüü„Åã„Çâ„Ç¢„Ç§„Ç≥„É≥„ÅÆ„Éá„Éº„Çø„Å∏„Ç≥„Éî„Éº */
+	HLock(resHandle);
+	rowBytes=MyGetPixRowBytes(iconDataPix) & 0x3fff;
+	iconPtr=*resHandle;
+	pixPtr=MyGetPixBaseAddr(iconDataPix);
+	
+	for (i=0; i<size; i++)
+	{
+		BlockMoveData(pixPtr,iconPtr,iconRowBytes);
+		iconPtr+=iconRowBytes;
+		pixPtr+=rowBytes;
+	}
+	
+	UnlockPixels(iconDataPix);
+	
+	SetGWorld(cPort,cDevice);
+	
+	DisposeGWorld(iconDataPtr);
+	
+	if (depth==kICNDepth) /* ÁôΩÈªí„Å™„Çâ„Å∞„Éû„Çπ„ÇØ„Éë„Çø„Éº„É≥„Çí‰ΩúÊàê */
+	{
+		if (rectMask)
+		{
+			Rect	logoRect;
+			
+			err=NewGWorld(&iconDataPtr,1,&iconRect,0,0,useTempMem);
+			if (err!=0)
+			{
+				DisposeHandle(resHandle);
+				return nil;
+			}
+			iconDataPix=GetGWorldPixMap(iconDataPtr);
+			
+			SetGWorld(iconDataPtr,0);
+			
+			LockPixels(iconDataPix);
+			EraseRect(&iconRect);
+			ForeColor(blackColor);
+			
+			PaintRect(&realIconRect);
+			
+			if (size == 32)
+				SetRect(&logoRect,19,21,32,32);
+			else
+				SetRect(&logoRect,8,9,32,32);
+			PaintRect(&logoRect);
+			//UnlockPixels(iconDataPix);
+			SetGWorld(cPort,cDevice);
+			
+			rowBytes=(**iconDataPix).rowBytes & 0x7fff;
+			pixPtr=(**iconDataPix).baseAddr;
+		}
+		else
+		{
+			/* „Éû„Çπ„ÇØ„Éë„Çø„Éº„É≥Áî®„ÅÆÊèèÁîªÈ†òÂüü„Çí‰ΩúÊàê */
+			err=NewGWorld(&iconDataPtr,8,&iconRect,0,0,useTempMem);
+			if (err!=0)
+			{
+				DisposeHandle(resHandle);
+				return nil;
+			}
+			iconDataPix=GetGWorldPixMap(iconDataPtr);
+			
+			SetGWorld(iconDataPtr,0);
+			
+			LockPixels(iconDataPix);
+			EraseRect(&iconRect);
+			ForeColor(blackColor);
+			BackColor(whiteColor);
+			
+			CopyBits(GetPortBitMapForCopyBits(tempGWorld),
+				GetPortBitMapForCopyBits(iconDataPtr),
+				&selectedRect,&realIconRect,srcCopy,NULL); /* „É™„Éº„Ç∏„Éß„É≥„Å´„Å§„ÅÑ„Å¶„ÅØ‰øùÁïô */
+			
+			UnlockPixels(iconDataPix);
+			
+			SetGWorld(cPort,cDevice);
+			
+			/* „Éû„Çπ„ÇØ„Éë„Çø„Éº„É≥„Çí‰ΩúÊàê */
+			err=CreateMask(iconDataPtr,&iconRect,&iconRect,&maskBM);
+			if (err!=noErr)
+			{
+				DisposeHandle(resHandle);
+				DisposeGWorld(iconDataPtr);
+				return nil;
+			}
+			
+			rowBytes=maskBM.bmp.rowBytes & 0x7fff;
+			pixPtr=maskBM.bmp.baseAddr;
+			
+			/* ËÉåÊôØ„Åå„Å™„ÅÑ„Å®„Åç„ÅØ„ÄÅ„Éö„Ç§„É≥„Éà„Ç¶„Ç£„É≥„Éâ„Ç¶„ÅÆ„Éû„Çπ„ÇØ„ÇíËÄÉÊÖÆ„Åô„Çã */
+			while (eWinRec->backgroundGWorld == nil)
+			{
+				GWorldPtr		maskDataPtr;
+				PixMapHandle	maskDataPix;
+				Ptr				src,dst,temp1,temp2;
+				short			srcRowBytes,dstRowBytes,j;
+				
+				err=NewGWorld(&maskDataPtr,1,&iconRect,0,0,useTempMem);
+				if (err!=noErr) break; /* „Ç®„É©„Éº„ÅÆÊôÇ„ÅØ„ÄÅ„Å™„Åã„Å£„Åü„Åì„Å®„Å´„Åô„Çã */
+				maskDataPix=GetGWorldPixMap(maskDataPtr);
+				
+				SetGWorld(maskDataPtr,0);
+				
+				LockPixels(maskDataPix);
+				EraseRect(&iconRect);
+				ForeColor(blackColor);
+				BackColor(whiteColor);
+				
+				CopyBits(GetPortBitMapForCopyBits(eWinRec->currentMask),
+					GetPortBitMapForCopyBits(maskDataPtr),
+					&selectedRect,&realIconRect,srcCopy,NULL);
+				
+				src = (**maskDataPix).baseAddr;
+				dst = pixPtr;
+				srcRowBytes = (**maskDataPix).rowBytes & 0x7fff;
+				dstRowBytes = rowBytes;
+				
+				for (i=0; i<size; i++)
+				{
+					temp1 = src;
+					temp2 = dst;
+					
+					for (j=0; j<size/8; j++)
+						*temp2++ &= *temp1++;
+					
+					src += srcRowBytes;
+					dst += dstRowBytes;
+				}
+				
+				UnlockPixels(maskDataPix);
+				SetGWorld(cPort,cDevice);
+				
+				DisposeGWorld(maskDataPtr);
+				
+				break;
+			}
+		}
+		
+		for (i=0; i<size; i++)
+		{
+			BlockMoveData(pixPtr,iconPtr,size/8);
+			iconPtr+=size/8;
+			pixPtr+=rowBytes;
+		}
+		
+		if (rectMask)
+		{
+			UnlockPixels(iconDataPix);
+		}
+		else
+		{
+			DisposeBitMap(&maskBM);
+		}
+		s=GetHandleSize(resHandle);
+		
+		DisposeGWorld(iconDataPtr);
+	}
+	
+	HUnlock(resHandle);
+	return resHandle;
+}
+
+/* È´ò„Åïheight„ÄÅÂπÖwidth„ÅÆRect„Çísize*size„ÅÆÁØÑÂõ≤„Å´Âèé„Åæ„Çã„Çà„ÅÜ„Å´Á∏ÆÂ∞è„Åô„Çã */
+/* result„Å´ÁµêÊûú„ÇíËøî„Åô */
+void ReduceRect(Rect *result,short size)
+{
+	short	destH,destW;
+	short	height,width;
+	
+	height=result->bottom-result->top;
+	width=result->right-result->left;
+	
+	if (height<=size && width<=size)
+	{
+		destH=height;
+		destW=width;
+	}
+	else if (height>width)
+	{
+		destH=size;
+		destW=size*width/height;
+	}
+	else
+	{
+		destH=size*height/width;
+		destW=size;
+	}
+	
+	SetRect(result,(size-destW)>>1,(size-destH)>>1,(size+destW+1)>>1,(size+destH+1)>>1);
+}
+
+/* ÈÅ∏Êäû„Éû„Çπ„ÇØ„Çí‰ΩúÊàê */
+OSErr CreateMask(GWorldPtr gWorld,Rect *srcRect,Rect *dstRect,MyBitMapRec *bmpRec)
+{
+	ColorSearchUPP	upp;
+	OSErr		err;
+	GWorldPtr	maskPtr;
+	PixMapHandle	maskPix,pmh;
+	Rect		gWorldRect;
+	GWorldPtr	cPort;
+	GDHandle	cDevice;
+	
+	GetPortBounds(gWorld,&gWorldRect);
+	pmh=GetGWorldPixMap(gWorld);
+	
+	#if 1
+	/* „Éû„Çπ„ÇØÁî®„ÅÆGWorld„Çí‰ΩúÊàê */
+	err=NewGWorld(&maskPtr,1,dstRect,0,0,useTempMem);
+	if (err!=noErr) return err;
+	
+	/* „Éû„Çπ„ÇØÁî®„ÅÆBitMap‰ΩúÊàê */
+	err=NewBitMap(bmpRec,dstRect);
+	if (err!=noErr)
+	{
+		DisposeGWorld(maskPtr);
+		return err;
+	}
+	
+	maskPix=GetGWorldPixMap(maskPtr);
+	
+	GetGWorld(&cPort,&cDevice);
+	SetGWorld(maskPtr,0);
+	LockPixels(maskPix);
+	EraseRect(dstRect);
+	
+	upp=NewColorSearchUPP(MySearchProc);
+	AddSearch(upp);
+	
+	(**(**pmh).pmTable).ctSeed=GetCTSeed();
+	
+	CopyBits(GetPortBitMapForCopyBits(gWorld),GetPortBitMapForCopyBits(maskPtr),
+		srcRect,dstRect,srcCopy,0);
+	DelSearch(upp);
+	DisposeColorSearchUPP(upp);
+	
+	CalcCMask(GetPortBitMapForCopyBits(maskPtr),&bmpRec->bmp,dstRect,dstRect,
+		&rgbBlackColor,0,0);
+	#else
+	err=NewGWorld(&maskPtr,8,dstRect,0,0,useTempMem);
+	if (err!=noErr) return err;
+	
+	err=NewBitMap(bmpRec,dstRect);
+	if (err!=noErr)
+	{
+		DisposeGWorld(maskPtr);
+		return err;
+	}
+	
+	maskPix=GetGWorldPixMap(maskPtr);
+	
+	GetGWorld(&cPort,&cDevice);
+	SetGWorld(maskPtr,0);
+	LockPixels(maskPix);
+	EraseRect(dstRect);
+	
+	CopyBits(GetPortBitMapForCopyBits(gWorld),GetPortBitMapForCopyBits(maskPtr),
+		srcRect,dstRect,srcCopy,nil);
+	
+	{
+		CTabHandle	ctab=(*maskPix)->pmTable;
+		ColorSpec	*ctTable=(*ctab)->ctTable;
+		short		i;
+		
+		for (i=1; i<255; i++)
+			ctTable[i].rgb=rgbBlackColor;
+		CTabChanged(ctab);
+	}
+	
+	CalcCMask(GetPortBitMapForCopyBits(maskPtr),&bmpRec->bmp,dstRect,dstRect,
+		&rgbBlackColor,nil,0);
+	#endif
+	
+	SetGWorld(cPort,cDevice);
+	DisposeGWorld(maskPtr);
+	
+	return err;
+}
+
+/* „É¨„Ç§„É§„Éº„Éû„Çπ„ÇØ„Çí‰ΩúÊàê */
+OSErr CreateMask2(GWorldPtr gWorld,GWorldPtr *maskGWorld)
+{
+	ColorSearchUPP	upp;
+	OSErr			err;
+	PixMapHandle	maskPix;
+	Rect			r;
+	GWorldPtr		cPort;
+	GDHandle		cDevice;
+	
+	GetPortBounds(gWorld,&r);
+	GetGWorld(&cPort,&cDevice);
+	
+	/* „Éû„Çπ„ÇØÁî®GWorld„Çí‰ΩúÊàê */
+	err=NewGWorld(maskGWorld,1,&r,0,0,useTempMem);
+	if (err!=noErr) return err;
+	
+	maskPix=GetGWorldPixMap(*maskGWorld);
+	SetGWorld(*maskGWorld,0);
+	LockPixels(maskPix);
+	EraseRect(&r);
+	UnlockPixels(maskPix);
+	
+	upp=NewColorSearchUPP(MySearchProc);
+	AddSearch(upp);
+	
+	CopyBits(GetPortBitMapForCopyBits(gWorld),
+		GetPortBitMapForCopyBits(*maskGWorld),
+		&r,&r,srcCopy,nil);
+	DelSearch(upp);
+	DisposeColorSearchUPP(upp);
+	
+	SetGWorld(cPort,cDevice);
+	
+	return noErr;
+}
+
+/* „Éû„Çπ„ÇØ‰ΩúÊàê„ÅÆË£úÂä©„É´„Éº„ÉÅ„É≥ÔºàÁôΩ‰ª•Â§ñ„ÅÆËâ≤„ÇíÈªí„Åè„Åô„ÇãÔºâ */
+pascal Boolean MySearchProc(RGBColor *color,long *pos)
+{
+	#pragma unused(pos)
+	
+	if (color->red!=0xffff || color->blue!=0xffff || color->green!=0xffff)
+		*pos=1;
+	else
+		*pos=0;
+	return true;
+}
+
+/* ÈÅ∏ÊäûÈ†òÂüü„ÅÆ„É™„Éº„Ç∏„Éß„É≥„ÅÆÊõ¥Êñ∞ */
+void UpdatePSRgn(PaintWinRec *eWinRec)
+{
+	CopyRgn(eWinRec->selectionPos,eWinRec->prevSelectionPos);
+	CopyRgn(eWinRec->eSelectedRgn,eWinRec->ePrevSelectedRgn);
+}
+
+/* ÁèæÂú®„ÅÆÁîªÈù¢„Éá„Éº„Çø„Çí‰øùÂ≠ò„Åó„ÄÅ„Ç™„Éï„Éù„Éº„Éà„Çí„Ç´„É¨„É≥„Éà„Å´„Åô„Çã */
+OSErr GoOffPort(WindowPtr theWindow)
+{
+	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
+	Rect	portSize,tempRect;
+	OSErr	result=noErr;
+	GWorldPtr	cPort;
+	GDHandle	cDevice;
+	
+	GetPortBounds(eWinRec->editDataPtr,&portSize);
+	ResetDot(theWindow);
+	
+	GetGWorld(&cPort,&cDevice);
+	
+	GetPortBounds(eWinRec->tempDataPtr,&tempRect);
+	if (!EqualRect(&portSize,&tempRect)) /* „Çµ„Ç§„Ç∫„ÅåÁï∞„Å™„Çã */
+	{
+		GWorldFlags	flags,newFlags;
+		
+		/* „Éû„Çπ„ÇØ„ÇÇÂ§âÂΩ¢ */
+		flags=UpdateGWorld(&eWinRec->pCurrentMask,1,&portSize,0,0,0);
+		
+		MySetGWorld(tempDataPtr);
+		flags=UpdateGWorld(&eWinRec->tempDataPtr,eWinRec->iconDepth,&portSize,0,0,0);
+		if ((flags & gwFlagErr)!=0)
+		{
+			result=(OSErr)flags;
+		}
+		else if (eWinRec->undoMode==umResize)
+		{
+			/* „É™„Çµ„Ç§„Ç∫Âæå„Å™„Çâ„ÉÜ„É≥„Éù„É©„É™„Å™„Å©„ÅÆ„Çµ„Ç§„Ç∫„ÇíÊõ¥Êñ∞ */
+			MySetGWorld(selectedDataPtr);
+			flags=UpdateGWorld(&eWinRec->selectedDataPtr,eWinRec->iconDepth,&portSize,0,0,0);
+			
+			MyLockPixels(selectedDataPtr);
+			EraseRect(&portSize);
+			MyUnlockPixels(selectedDataPtr);
+			
+			/* „Éû„Çπ„ÇØ„ÇÇÊõ¥Êñ∞ */
+			MySetGWorld(selectionMask);
+			flags=UpdateGWorld(&eWinRec->selectionMask,1,&portSize,0,0,0);
+			
+			MyLockPixels(selectionMask);
+			EraseRect(&portSize);
+			MyUnlockPixels(selectionMask);
+			
+			if (eWinRec->backgroundGWorld != nil)
+			{
+				/* ËÉåÊôØ„ÇÇÂ§âÂΩ¢ */
+				SetGWorld(eWinRec->backgroundGWorld,0);
+				newFlags=0 + (eWinRec->resizeImage ? stretchPix + (eWinRec->resizeDither ? ditherPix : 0) : 0);
+				flags=UpdateGWorld(&eWinRec->backgroundGWorld,eWinRec->iconDepth,&portSize,0,0,newFlags);
+			}
+		}
+	}
+	
+	/* Áµµ„ÅÆ„Éê„ÉÉ„ÇØ„Ç¢„ÉÉ„Éó */
+	SetGWorld(eWinRec->tempDataPtr,0);
+	CopyBits(GetPortBitMapForCopyBits(eWinRec->editDataPtr),
+		GetPortBitMapForCopyBits(eWinRec->tempDataPtr),
+		&portSize,&portSize,srcCopy,nil);
+	
+	/* „Éû„Çπ„ÇØ„ÅÆ„Éê„ÉÉ„ÇØ„Ç¢„ÉÉ„Éó */
+	SetGWorld(eWinRec->pCurrentMask,0);
+	CopyBits(GetPortBitMapForCopyBits(eWinRec->currentMask),
+		GetPortBitMapForCopyBits(eWinRec->pCurrentMask),
+		&portSize,&portSize,srcCopy,nil);
+	
+	SetGWorld(cPort,cDevice);
+	
+	return result;
+}
+
+/* ÈâõÁ≠ÜÔºèÊ∂à„Åó„Ç¥„É†„ÉÑ„Éº„É´„Åß„ÅÆÊèèÁîª */
+OSErr PaintOffPort(WindowPtr theWindow,short mode,Point pt,Boolean shiftDown)
+{
+	RGBColor	newColor;
+	Point	mousePt,prevPt;
+	Rect	redrawRect,eRedrawRect;
+	Rect	penRect;
+	Boolean	moveHorizontal=false;
+	short	dh,dv;
+	short	width,height;
+	PenState	pnState;
+	Boolean		transparency;
+	Boolean		usePressure = (isTabletAvailable && ((mode == kPencilMode && gTabletPrefs.usePressure) ||
+								(mode == kEraserMode && gTabletPrefs.useEraserPressure)));
+	RGBColor	blendRatio2;
+	RgnHandle	tempRgn=NewRgn();
+	Point	offsetPt={0,0};
+	
+	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
+	Boolean	isBackMode=(eWinRec->backgroundGWorld==nil && !eWinRec->isBackTransparent);
+	short	ratio=eWinRec->ratio;
+	
+	OSErr		err;
+	GWorldPtr	tempGWorld;
+	PixMapHandle	tempPix;
+	Boolean		selectClip=eWinRec->isSelected;
+	RgnHandle	eRgn=nil,clipRgn=NewRgn();
+	Rect		imageRect,tempRect;
+	
+	RgnHandle	maskRgn=NewRgn(); /* „Éû„Çπ„ÇØÂá¶ÁêÜÁî® */
+	GWorldPtr	maskGWorld;
+	short		foreMode=srcCopy;
+	GWorldPtr	foreTransGWorld;
+	
+	GWorldPtr	cPort;
+	GDHandle	cDevice;
+	
+	GetGWorld(&cPort,&cDevice);
+	
+	GetWindowPortBounds(theWindow,&imageRect);
+	
+	switch (mode)
+	{
+		case kPencilMode:
+			newColor=gCurrentColor.rgb;
+			break;
+		
+		case kEraserMode:
+			if (isBackMode)
+				newColor=gBackColor.rgb;
+			else
+			{
+				mode=kEraseMaskMode;
+				newColor=rgbWhiteColor;
+			}
+			break;
+		
+		case kEraseMaskMode:
+			newColor=rgbWhiteColor;
+			break;
+	}
+	
+	err=NewGWorld(&maskGWorld,1,&eWinRec->iconSize,0,0,useTempMem);
+	if (err!=noErr)
+	{
+		SetGWorld(cPort,cDevice);
+		DisposeRgn(tempRgn);
+		DisposeRgn(maskRgn);
+		DisposeRgn(clipRgn);
+		SysBeep(0);
+		SetUndoMode(umCannot);
+		return err;
+	}
+	LockPixels(GetGWorldPixMap(maskGWorld));
+	
+	if (eWinRec->backgroundGWorld != nil)
+	{
+		switch (eWinRec->foreTransparency)
+		{
+			case kForeTrans100:
+				foreTransGWorld=eWinRec->dispTempPtr;
+			case kForeTrans0:
+				break;
+			
+			default:
+				err=NewGWorld(&foreTransGWorld,eWinRec->iconDepth,&eWinRec->iconSize,0,0,useTempMem);
+				if (err!=noErr)
+				{
+					UnlockPixels(GetGWorldPixMap(maskGWorld));
+					DisposeGWorld(maskGWorld);
+					
+					SetGWorld(cPort,cDevice);
+					DisposeRgn(tempRgn);
+					DisposeRgn(maskRgn);
+					SysBeep(0);
+					SetUndoMode(umCannot);
+				}
+				LockPixels(GetGWorldPixMap(foreTransGWorld));
+		}
+	}
+	else
+		foreTransGWorld=eWinRec->dispTempPtr;
+	
+	SetGWorld(cPort,cDevice);
+	SetPortWindowPort(theWindow);
+	/* ÂÆüÈöõ„Å´Ë°®Á§∫ÂèØËÉΩ„Å™È†òÂüü */
+	imageRect.right-=kScrollBarWidth;
+	imageRect.bottom-=kScrollBarHeight;
+	ClipRect(&imageRect);
+	GetClip(clipRgn);
+	
+	SetGWorld(eWinRec->editDataPtr,0);
+	
+	mousePt=pt;
+	
+	/* „Éö„É≥„Çµ„Ç§„Ç∫„ÇíË®àÁÆó */
+	/* „Åó„Åã„Åó„ÄÅ„Çè„Åñ„Çè„Åñ„Åì„Çì„Å™„Åì„Å®„Åô„Çã„Åè„Çâ„ÅÑ„Å™„ÇâÂºï„ÅçÊï∞„Åß„Çè„Åü„Åó„Å¶„ÇÇ„ÅÑ„ÅÑ„Çà„ÅÜ„Å™Ê∞ó„Åå„Åô„Çã„Åå‚Ä¶ */
+	GetPenState(&pnState);
+	width=(pnState.pnSize).h;
+	height=(pnState.pnSize).v;
+	SetPt(&offsetPt,-width/2,-height/2);
+	AddPt(offsetPt,&mousePt);
+	
+	/* „Éö„É≥„ÅÆËª¢ÈÄÅ„É¢„Éº„Éâ */
+	transparency=(pnState.pnMode == blend);
+	
+	/* „Éû„Çπ„ÇØ„ÅÆÊ∂àÂéª */
+	SetGWorld(maskGWorld,0);
+	EraseRect(&eWinRec->iconSize);
+	PenSize(width,height);
+	
+	/* ÈÅ∏ÊäûÁØÑÂõ≤„ÅÆÂá¶ÁêÜ */
+	if (selectClip)
+	{
+		err=NewGWorld(&tempGWorld,eWinRec->iconDepth,&eWinRec->iconSize,0,0,useTempMem);
+		if (err!=noErr)
+		{
+			if (eWinRec->backgroundGWorld != nil && (eWinRec->foreTransparency != kForeTrans100 &&
+													eWinRec->foreTransparency != kForeTrans0))
+			{
+				UnlockPixels(GetGWorldPixMap(foreTransGWorld));
+				DisposeGWorld(foreTransGWorld);
+			}
+			UnlockPixels(GetGWorldPixMap(maskGWorld));
+			DisposeGWorld(maskGWorld);
+			
+			SetGWorld(cPort,cDevice);
+			DisposeRgn(tempRgn);
+			DisposeRgn(maskRgn);
+			SysBeep(0);
+			SetUndoMode(umCannot);
+			return err;
+		}
+		
+		eRgn=eWinRec->eSelectedRgn;
+		SectRgn(clipRgn,eRgn,clipRgn);
+	}
+	else
+	{
+		tempGWorld=eWinRec->dispTempPtr;
+	}
+	SetGWorld(tempGWorld,0);
+	tempPix=GetGWorldPixMap(tempGWorld);
+	LockPixels(tempPix);
+	
+	SetPenState(&pnState);
+	
+	if (selectClip)
+	{
+		EraseRect(&eWinRec->iconSize);
+		GetRegionBounds(eWinRec->selectionPos,&tempRect);
+		CopyBits(GetPortBitMapForCopyBits(eWinRec->editDataPtr),
+			GetPortBitMapForCopyBits(tempGWorld),
+			&eWinRec->selectedRect,&tempRect,srcCopy,nil);
+	}
+	
+	/* Ëâ≤„ÇíË®≠ÂÆö */
+	RGBForeColor(&newColor);
+	
+	/* Á≠ÜÂúßÂá¶ÁêÜ */
+	if (transparency)
+		if (usePressure && IsTabletInUse())
+		{
+			/* „Çø„Éñ„É¨„ÉÉ„Éà‰ΩøÁî®ÊôÇ */
+			Pressure2Ratio(&blendRatio2);
+			OpColor(&blendRatio2);
+		}
+		else
+			OpColor(&gBlendRatio);
+	
+	prevPt=mousePt;
+	SetGWorld(cPort,cDevice);
+	if (shiftDown) /* „Ç∑„Éï„Éà„ÅåÊäº„Åï„Çå„Å¶„ÅÑ„Çã„Å®„Åç„ÅØÁ∏¶„Åæ„Åü„ÅØÊ®™„Å´„Å†„Åë„Å≤„Åè or ÊúÄÂæå„Å´ÊèèÁîª„Åï„Çå„ÅüÂ†¥ÊâÄ„Åã„ÇâÁõ¥Á∑ö„ÇíÂºï„Åè */
+	{
+		UInt32	t=TickCount()+60;
+		
+		/* „Éû„Ç¶„Çπ„ÅåÂãï„Åè„Åæ„ÅßÂæÖ„Å£„Å¶„ÄÅÂãï„ÅÑ„ÅüÊñπÂêë„Å´„Çà„Å£„Å¶Á∏¶Á∑ö„ÅãÊ®™Á∑ö„Åã„ÇíÊ±∫ÂÆö */
+		while (EqualPt(mousePt,prevPt) && StillDown() && TickCount()<t)
+		{
+			GetMouse(&mousePt);
+			ToRealPos(&mousePt,ratio);
+			AddPt(offsetPt,&mousePt);
+		}
+		if (eWinRec->undoMode == umPaint && EqualPt(mousePt,prevPt))
+		{
+			SetGWorld(tempGWorld,0);
+			RGBForeColor(&newColor);
+			MoveTo(eWinRec->lastPaintPos.h,eWinRec->lastPaintPos.v);
+			LineTo(mousePt.h,mousePt.v);
+			ForeColor(blackColor);
+			
+			SetGWorld(maskGWorld,0);
+			MoveTo(eWinRec->lastPaintPos.h,eWinRec->lastPaintPos.v);
+			LineTo(mousePt.h,mousePt.v);
+			
+			SetRect(&redrawRect,mousePt.h,mousePt.v,eWinRec->lastPaintPos.h+width,eWinRec->lastPaintPos.v+height);
+			SortRect(&redrawRect,false);
+			goto dispStart;
+		}
+		dh=mousePt.h-prevPt.h;
+		dv=mousePt.v-prevPt.v;
+		dh=(dh>0?dh:-dh); /* Áµ∂ÂØæÂÄ§ */
+		dv=(dv>0?dv:-dv);
+		if (dh<dv)
+			moveHorizontal=false;
+		else
+			moveHorizontal=true;
+	}
+	
+	/* „Å®„Çä„ÅÇ„Åà„ÅöÊúÄÂàù„Å´„ÇØ„É™„ÉÉ„ÇØ„Åï„Çå„Åü„Å®„Åì„Çç„Å´ÁÇπ„ÇíÊâì„Å£„Å¶„Åä„Åè */
+	/* „Éû„Çπ„ÇØ„Å´ÁÇπ„ÇíÊâì„Å§ */
+	SetGWorld(maskGWorld,0);
+	MoveTo(mousePt.h,mousePt.v);
+	Line(0,0);
+	
+	SetGWorld(tempGWorld,0);
+	RGBForeColor(&newColor);
+	MoveTo(mousePt.h,mousePt.v);
+	Line(0,0);
+	ForeColor(blackColor);
+	
+	SetRect(&redrawRect,mousePt.h,mousePt.v,mousePt.h+width,mousePt.v+height);
+dispStart:
+	SectRect(&redrawRect,&eWinRec->iconSize,&redrawRect);
+	if (selectClip)
+	{
+		SetGWorld(eWinRec->dispTempPtr,0);
+		CopyBits(GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),
+			GetPortBitMapForCopyBits(eWinRec->dispTempPtr),
+			&redrawRect,&redrawRect,srcCopy,0);
+		
+		/* ÈÅ∏ÊäûÈ†òÂüü„Å®ËÉåÊôØ„ÅÆÈáç„Å≠Âêà„Åõ */
+		if (eWinRec->selectionBlend==blend) /* „Éñ„É¨„É≥„Éâ */
+			OpColor(&rgbGrayColor);
+		CopyBits(GetPortBitMapForCopyBits(tempGWorld),
+			GetPortBitMapForCopyBits(eWinRec->dispTempPtr),
+			&redrawRect,&redrawRect,eWinRec->selectionBlend,eWinRec->selectionPos);
+	}
+	prevPt=mousePt;
+	
+	/* ÁîªÈù¢„Å∏„ÅÆÊèèÁîª */
+	/* „Éó„É¨„Éì„É•„Éº */
+	ForeColor(blackColor);
+	SetGWorld(cPort,cDevice);
+	SetPortWindowPort(gPreviewWindow);
+	if (mode==kEraseMaskMode)
+	{
+		if (eWinRec->backgroundGWorld != nil)
+		{
+			if (selectClip)
+			{
+				SetGWorld(eWinRec->dispTempPtr,0);
+				CopyBits(GetPortBitMapForCopyBits(eWinRec->backgroundGWorld),
+					GetPortBitMapForCopyBits(eWinRec->dispTempPtr),
+					&redrawRect,&redrawRect,srcCopy,eWinRec->selectionPos);
+				SafeCopyDeepMask(GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),
+					GetPortBitMapForCopyBits(eWinRec->selectionMask),
+					GetPortBitMapForCopyBits(eWinRec->dispTempPtr),
+					&redrawRect,&redrawRect,&redrawRect,srcCopy,eWinRec->selectionPos);
+				
+				SetGWorld(cPort,cDevice);
+				SetPortWindowPort(gPreviewWindow);
+				CopyBits(GetPortBitMapForCopyBits(eWinRec->dispTempPtr),
+					GetPortBitMapForCopyBits(GetWindowPort(gPreviewWindow)),
+					&redrawRect,&redrawRect,srcCopy,eWinRec->selectionPos);
+			}
+			else
+				CopyBits(GetPortBitMapForCopyBits(eWinRec->backgroundGWorld),
+					GetPortBitMapForCopyBits(GetWindowPort(gPreviewWindow)),
+					&redrawRect,&redrawRect,srcCopy,eWinRec->selectionPos);
+		}
+		else
+		{
+			CopyBits(GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),
+				GetPortBitMapForCopyBits(GetWindowPort(gPreviewWindow)),
+				&redrawRect,&redrawRect,srcCopy,eWinRec->selectionPos);
+		}
+	}
+	else
+	{
+		if (eWinRec->backgroundGWorld != nil)
+		{
+			switch (eWinRec->foreTransparency)
+			{
+				case kForeTrans100:
+					break;
+				
+				case kForeTrans0:
+					goto dispEnd2;
+					break;
+				
+				default:
+					SetGWorld(foreTransGWorld,0);
+					CopyBits(GetPortBitMapForCopyBits(eWinRec->backgroundGWorld),
+						GetPortBitMapForCopyBits(foreTransGWorld),
+						&redrawRect,&redrawRect,srcCopy,eWinRec->selectionPos);
+					foreMode=SetForeBlend(eWinRec);
+					CopyBits(GetPortBitMapForCopyBits(eWinRec->dispTempPtr),
+						GetPortBitMapForCopyBits(foreTransGWorld),
+						&redrawRect,&redrawRect,foreMode,eWinRec->selectionPos);
+					
+					SetGWorld(cPort,cDevice);
+					SetPortWindowPort(gPreviewWindow);
+			}
+		}
+		CopyBits(GetPortBitMapForCopyBits(foreTransGWorld),
+			GetPortBitMapForCopyBits(GetWindowPort(gPreviewWindow)),
+			&redrawRect,&redrawRect,srcCopy,eWinRec->selectionPos);
+	}
+	
+	/* „Éö„Ç§„É≥„Éà */
+	eRedrawRect=redrawRect;
+	MapRect(&eRedrawRect,&eWinRec->iconSize,&eWinRec->iconEditSize);
+	SetPortWindowPort(theWindow);
+//	SetClip(eRgn);
+	SetClip(clipRgn);
+	if (mode==kEraseMaskMode)
+	{
+		if (eWinRec->backgroundGWorld != nil)
+			if (selectClip)
+				CopyBits(GetPortBitMapForCopyBits(eWinRec->dispTempPtr),
+					GetPortBitMapForCopyBits(GetWindowPort(theWindow)),
+					&redrawRect,&eRedrawRect,srcCopy,eRgn);
+			else
+				CopyBits(GetPortBitMapForCopyBits(eWinRec->backgroundGWorld),
+					GetPortBitMapForCopyBits(GetWindowPort(theWindow)),
+					&redrawRect,&eRedrawRect,srcCopy,eRgn);
+		else
+			CopyBits(GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),
+				GetPortBitMapForCopyBits(GetWindowPort(theWindow)),
+				&redrawRect,&eRedrawRect,srcCopy,eRgn);
+	}
+	else
+	{
+		if (eWinRec->backgroundGWorld != nil)
+		{
+			switch (eWinRec->foreTransparency)
+			{
+				case kForeTrans0:
+					goto dispEnd2;
+					break;
+				
+				case kForeTrans100:
+					break;
+			}
+		}
+		CopyBits(GetPortBitMapForCopyBits(foreTransGWorld),
+			GetPortBitMapForCopyBits(GetWindowPort(theWindow)),
+			&redrawRect,&eRedrawRect,srcCopy,eRgn);
+	}
+dispEnd2:
+	DrawGrid(theWindow);
+	
+	SetGWorld(tempGWorld,0);
+	RGBForeColor(&newColor);
+
+	while(StillDown())
+	{
+		SetGWorld(cPort,cDevice);
+		GetMouse(&mousePt); /* ÊôÆÈÄö„ÅÆ„Ç∞„É©„Éï„Ç£„ÉÉ„ÇØ„Éù„Éº„Éà„Çí„Ç´„É¨„É≥„Éà„Å´„Åó„Å¶„ÅÑ„Å™„ÅÑ„Å®„Éû„Ç¶„Çπ„ÅÆ‰ΩçÁΩÆ„ÅåÊ≠£Á¢∫„Å´Ê±Ç„ÇÅ„Çâ„Çå„Å™„ÅÑ */
+		SetGWorld(tempGWorld,0);
+		ToRealPos(&mousePt,ratio);
+		AddPt(offsetPt,&mousePt);
+		
+		if (shiftDown) /* „Ç∑„Éï„Éà„ÅåÊäº„Åï„Çå„Å¶„ÅÑ„Çå„Å∞„ÄÅ„Åù„Çå„Å™„Çä„ÅÆÂá¶ÁêÜ„Çí„Åô„Çã */
+			if (moveHorizontal)
+				mousePt.v=prevPt.v;
+			else
+				mousePt.h=prevPt.h;
+		
+		if (EqualPt(mousePt,prevPt)) continue; /* ÁµêÊûúÁöÑ„Å´Âãï„ÅÑ„Å¶„ÅÑ„Å™„Åë„Çå„Å∞ÁÑ°Ë¶ñ */
+		
+		if (transparency && PtInRect(prevPt,&eWinRec->iconSize)) /* „ÇØ„É™„ÉÉ„Éî„É≥„Ç∞ */
+		{
+			/* ÈÄèÊòéÂ∫¶„ÅåË®≠ÂÆö„Åï„Çå„Å¶„ÅÑ„Çã„Å®„Åç„ÄÅÈáç„Å™„Å£„ÅüÈ†òÂüü„ÅåÊøÉ„Åè„Å™„Å£„Å¶„Åó„Åæ„ÅÜ„ÅÆ„ÇíÈò≤„Åê */
+			/* Ë®ÄËëâ„ÅßË™¨Êòé„Åô„Çã„ÅÆ„ÅØÈõ£„Åó„ÅÑÂá¶ÁêÜ„Å†„Å™‚Ä¶ */	
+			SetRect(&penRect,prevPt.h,prevPt.v,prevPt.h+width,prevPt.v+height);
+			RectRgn(tempRgn,&penRect);
+			DiffRgn(eWinRec->selectionPos,tempRgn,tempRgn);
+			SetClip(tempRgn);
+			
+			/* Á≠ÜÂúßÂá¶ÁêÜ */
+			if (usePressure && IsTabletInUse())
+			{
+				/* „Çø„Éñ„É¨„ÉÉ„Éà‰ΩøÁî®ÊôÇ */
+				Pressure2Ratio(&blendRatio2);
+				OpColor(&blendRatio2);
+			}
+		}
+		LineTo(mousePt.h,mousePt.v);
+		
+		/* „Éû„Çπ„ÇØ„ÇÇÊèèÁîª */
+		SetGWorld(maskGWorld,0);
+		MoveTo(prevPt.h,prevPt.v);
+		LineTo(mousePt.h,mousePt.v);
+		
+		SetGWorld(tempGWorld,0);
+		
+		/* ÁîªÈù¢„Å´Ë°®Á§∫„Åô„ÇãÈ†òÂüü„ÇíÊ±Ç„ÇÅ„Çã */
+		Pt2Rect(mousePt,prevPt,&redrawRect);
+		redrawRect.right+=width;
+		redrawRect.bottom+=height;
+		SectRect(&redrawRect,&eWinRec->iconSize,&redrawRect);
+		
+		/* ÂøÖË¶Å„Å™„ÇâÈáç„Å≠Âêà„Çè„ÅõÂá¶ÁêÜ„Çí„Åô„Çã */
+		if (selectClip)
+		{
+			SetGWorld(eWinRec->dispTempPtr,0);
+			CopyBits(GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),
+				GetPortBitMapForCopyBits(eWinRec->dispTempPtr),
+				&redrawRect,&redrawRect,srcCopy,0);
+			
+			if (eWinRec->selectionBlend==blend) /* „Éñ„É¨„É≥„Éâ */
+				OpColor(&rgbGrayColor);
+			CopyBits(GetPortBitMapForCopyBits(tempGWorld),
+				GetPortBitMapForCopyBits(eWinRec->dispTempPtr),
+				&redrawRect,&redrawRect,eWinRec->selectionBlend,eWinRec->selectionPos);
+		}
+		
+		/* ÁîªÈù¢„Å´Ë°®Á§∫ */
+		/* „Éó„É¨„Éì„É•„Éº„Ç¶„Ç£„É≥„Éâ„Ç¶„ÅÆÊõ¥Êñ∞ */
+		ForeColor(blackColor);
+		SetGWorld(cPort,cDevice);
+		SetPortWindowPort(gPreviewWindow);
+		err=BitMapToRegion(maskRgn,GetPortBitMapForCopyBits(maskGWorld));
+		SectRgn(maskRgn,eWinRec->selectionPos,maskRgn);
+		if (mode==kEraseMaskMode)
+		{
+			if (eWinRec->backgroundGWorld != nil)
+			{
+				if (selectClip)
+				{
+					SetGWorld(eWinRec->dispTempPtr,0);
+					CopyBits(GetPortBitMapForCopyBits(eWinRec->backgroundGWorld),
+						GetPortBitMapForCopyBits(eWinRec->dispTempPtr),
+						&redrawRect,&redrawRect,srcCopy,eWinRec->selectionPos);
+					SafeCopyDeepMask(GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),
+						GetPortBitMapForCopyBits(eWinRec->selectionMask),
+						GetPortBitMapForCopyBits(eWinRec->dispTempPtr),
+						&redrawRect,&redrawRect,&redrawRect,srcCopy,maskRgn);
+					
+					SetGWorld(cPort,cDevice);
+					SetPortWindowPort(gPreviewWindow);
+					CopyBits(GetPortBitMapForCopyBits(eWinRec->dispTempPtr),
+						GetPortBitMapForCopyBits(GetWindowPort(gPreviewWindow)),
+						&redrawRect,&redrawRect,srcCopy,maskRgn);
+				}
+				else
+					CopyBits(GetPortBitMapForCopyBits(eWinRec->backgroundGWorld),
+						GetPortBitMapForCopyBits(GetWindowPort(gPreviewWindow)),
+						&redrawRect,&redrawRect,srcCopy,maskRgn);
+			}
+			else
+				CopyBits(GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),
+					GetPortBitMapForCopyBits(GetWindowPort(gPreviewWindow)),
+					&redrawRect,&redrawRect,srcCopy,maskRgn);
+		}
+		else
+		{
+			if (eWinRec->backgroundGWorld != nil) {
+				switch (eWinRec->foreTransparency)
+				{
+					case kForeTrans0:
+						goto dispEnd;
+						break;
+					
+					case kForeTrans100:
+						break;
+					
+					default:
+						SetGWorld(foreTransGWorld,0);
+						CopyBits(GetPortBitMapForCopyBits(eWinRec->backgroundGWorld),
+							GetPortBitMapForCopyBits(foreTransGWorld),
+							&redrawRect,&redrawRect,srcCopy,maskRgn);
+						foreMode=SetForeBlend(eWinRec);
+						CopyBits(GetPortBitMapForCopyBits(eWinRec->dispTempPtr),
+							GetPortBitMapForCopyBits(foreTransGWorld),
+							&redrawRect,&redrawRect,foreMode,maskRgn);
+						
+						SetGWorld(cPort,cDevice);
+						SetPortWindowPort(gPreviewWindow);
+				}
+			}
+			
+			CopyBits(GetPortBitMapForCopyBits(foreTransGWorld),
+				GetPortBitMapForCopyBits(GetWindowPort(gPreviewWindow)),
+				&redrawRect,&redrawRect,srcCopy,maskRgn);
+		}
+		
+		eRedrawRect=redrawRect;
+		MapRect(&eRedrawRect,&eWinRec->iconSize,&eWinRec->iconEditSize);
+		MapRgn(maskRgn,&eWinRec->iconSize,&eWinRec->iconEditSize);
+//		SectRgn(maskRgn,clipRgn,maskRgn);
+		
+		/* „Éö„Ç§„É≥„Éà„Ç¶„Ç£„É≥„Éâ„Ç¶„ÅÆÊõ¥Êñ∞ */
+		SetPortWindowPort(theWindow);
+//		SetClip(maskRgn);
+		if (mode==kEraseMaskMode)
+		{
+			if (eWinRec->backgroundGWorld != nil)
+				if (selectClip)
+					CopyBits(GetPortBitMapForCopyBits(eWinRec->dispTempPtr),
+						GetPortBitMapForCopyBits(GetWindowPort(theWindow)),
+						&redrawRect,&eRedrawRect,srcCopy,maskRgn);
+				else
+					CopyBits(GetPortBitMapForCopyBits(eWinRec->backgroundGWorld),
+						GetPortBitMapForCopyBits(GetWindowPort(theWindow)),
+						&redrawRect,&eRedrawRect,srcCopy,maskRgn);
+			else
+				CopyBits(GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),
+					GetPortBitMapForCopyBits(GetWindowPort(theWindow)),
+					&redrawRect,&eRedrawRect,srcCopy,maskRgn);
+		}
+		else
+		{
+			if (eWinRec->backgroundGWorld != nil)
+			{
+				switch (eWinRec->foreTransparency)
+				{
+					case kForeTrans0:
+						goto dispEnd;
+						break;
+					
+					case kForeTrans100:
+						break;
+				}
+			}
+			CopyBits(GetPortBitMapForCopyBits(foreTransGWorld),
+				GetPortBitMapForCopyBits(GetWindowPort(theWindow)),
+				&redrawRect,&eRedrawRect,srcCopy,maskRgn);
+		}
+dispEnd:
+		DrawGrid(theWindow);
+		
+		SetGWorld(tempGWorld,0);
+		
+		RGBForeColor(&newColor);
+		
+		prevPt=mousePt;
+	}
+	
+	ForeColor(blackColor);
+	PenMode(srcCopy);
+	
+	ClipRect(&eWinRec->iconSize);
+	SetGWorld(eWinRec->editDataPtr,0);
+	if (selectClip)
+	{
+		/* Ë°®Á§∫È†òÂüü„ÇíÊ±Ç„ÇÅ„Çã */
+		RectRgn(tempRgn,&eWinRec->iconSize);
+		SectRgn(tempRgn,eWinRec->selectionPos,tempRgn);
+		GetRegionBounds(eWinRec->selectionPos,&tempRect);
+		MapRgn(tempRgn,&tempRect,&eWinRec->selectedRect);
+		
+		CopyBits(GetPortBitMapForCopyBits(tempGWorld),
+			GetPortBitMapForCopyBits(eWinRec->editDataPtr),
+			&tempRect,&eWinRec->selectedRect,srcCopy,
+			tempRgn);
+		
+		UnlockPixels(tempPix);
+		DisposeGWorld(tempGWorld);
+	}
+	else
+	{
+		CopyBits(GetPortBitMapForCopyBits(tempGWorld),
+			GetPortBitMapForCopyBits(eWinRec->editDataPtr),
+			&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);
+		
+		UnlockPixels(tempPix);
+	}
+	
+	DisposeRgn(tempRgn);
+	
+	/* GWorld„ÇíÁ†¥Ê£Ñ */
+	if (eWinRec->backgroundGWorld != nil && (eWinRec->foreTransparency != kForeTrans0 && 
+		eWinRec->foreTransparency != kForeTrans100))
+	{
+		UnlockPixels(GetGWorldPixMap(foreTransGWorld));
+		DisposeGWorld(foreTransGWorld);
+	}
+	
+	/* „Éû„Çπ„ÇØÂá¶ÁêÜ */
+	err=BitMapToRegion(maskRgn,GetPortBitMapForCopyBits(maskGWorld));
+	UnlockPixels(GetGWorldPixMap(maskGWorld));
+	DisposeGWorld(maskGWorld);
+	
+	SectRgn(maskRgn,eWinRec->selectionPos,maskRgn); /* ÈÅ∏ÊäûÁØÑÂõ≤„ÅÆ„Åø */
+	CopyRgn(maskRgn,eWinRec->updateRgn);
+	
+	if (eWinRec->isSelected)
+	{
+		GetRegionBounds(eWinRec->selectionPos,&tempRect);
+		MapRgn(maskRgn,&tempRect,&eWinRec->selectedRect);
+	}
+	
+	MySetGWorld(currentMask);
+	MyLockPixels(currentMask);
+	if (mode==kEraseMaskMode)
+		EraseRgn(maskRgn);
+	else
+		PaintRgn(maskRgn);
+	MyUnlockPixels(currentMask);
+	DisposeRgn(maskRgn);
+	
+	SetGWorld(cPort,cDevice);
+	SetPortWindowPort(theWindow);
+	GetWindowPortBounds(theWindow,&tempRect);
+	ClipRect(&tempRect);
+	DisposeRgn(clipRgn);
+	
+	eWinRec->lastPaintPos = mousePt;
+	
+	DispOffPort(theWindow);
+	
+	return noErr;
+}
+
+/* „Ç™„Éï„Éù„Éº„Éà„ÅÆÁîªÂÉè„ÇíË°®Á§∫ */
+void DispOffPort(WindowPtr theWindow)
+{
+	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
+	RgnHandle	tempRgn;
+	Rect		tempRect;
+	GWorldPtr	cPort;
+	GDHandle	cDevice;
+	
+	GetGWorld(&cPort,&cDevice);
+	
+	SetGWorld(eWinRec->editDataPtr,0);
+	ForeColor(blackColor);
+	SetGWorld(eWinRec->dispTempPtr,0);
+	
+	if (eWinRec->isSelected) /* ÈÅ∏Êäû„Åï„Çå„Å¶„ÅÑ„ÇãÊôÇ */
+	{
+		CopyBits(GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),
+			GetPortBitMapForCopyBits(eWinRec->dispTempPtr),
+			&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);
+		
+		if (eWinRec->selectionBlend==blend) /* „Éñ„É¨„É≥„Éâ */
+			OpColor(&rgbGrayColor);
+		GetRegionBounds(eWinRec->selectionPos,&tempRect);
+		SafeCopyDeepMask(GetPortBitMapForCopyBits(eWinRec->editDataPtr),
+			GetPortBitMapForCopyBits(eWinRec->currentMask),
+			GetPortBitMapForCopyBits(eWinRec->dispTempPtr),
+			&eWinRec->selectedRect,&eWinRec->selectedRect,&tempRect,
+			eWinRec->selectionBlend,eWinRec->selectionPos);
+	}
+	else
+	{
+		CopyBits(GetPortBitMapForCopyBits(eWinRec->editDataPtr),
+			GetPortBitMapForCopyBits(eWinRec->dispTempPtr),
+			&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);
+	}
+	
+	SetGWorld(cPort,cDevice);
+	
+	if (MyFrontNonFloatingWindow() == theWindow)
+	{
+		/* Preview */
+		SetPortWindowPort(gPreviewWindow);
+		MyInvalWindowRgn(gPreviewWindow,eWinRec->updateRgn);
+	}
+	
+	SetPortWindowPort(theWindow);
+	ForeColor(blackColor);
+	tempRgn=NewRgn();
+	CopyRgn(eWinRec->updateRgn,tempRgn);
+	
+	MapRgn(tempRgn,&eWinRec->iconSize,&eWinRec->iconEditSize);
+	MyInvalWindowRgn(theWindow,tempRgn);
+	
+	DisposeRgn(tempRgn);
+
+	if (gToolPrefs.showRuler)
+		SetPt(&gPrevRulerPt,-1,-1);
+}
+
+/* ÈÅ∏ÊäûÈ†òÂüü„ÅÆÊû†„ÇíÊèèÁîª */
+void DispSelection(WindowPtr theWindow)
+{
+	DispSelectionMain(theWindow,true,true);
+}
+
+/* È†òÂüüË°®Á§∫„É°„Ç§„É≥ */
+void DispSelectionMain(WindowPtr theWindow,Boolean dispPaint,Boolean dispPreview)
+{
+	PatHandle	gray;
+	
+	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
+	Rect		editRect;
+	
+	gray=GetPattern(128);
+	
+	if (dispPreview && MyFrontNonFloatingWindow() == theWindow)
+	{
+		SetPortWindowPort(gPreviewWindow);
+		PenMode(patXor);
+		PenPat(*gray);
+		FrameRgn(eWinRec->selectionPos);
+		PenNormal();
+	}
+	if (dispPaint)
+	{
+		RgnHandle	tempRgn=NewRgn();
+		
+		SetPortWindowPort(theWindow);
+		GetWindowPortBounds(theWindow,&editRect);
+		editRect.right-=kScrollBarWidth;
+		editRect.bottom-=kScrollBarHeight;
+		GetClip(tempRgn);
+		ClipRect(&editRect);
+		PenMode(patXor);
+		PenPat(*gray);
+		FrameRgn(eWinRec->eSelectedRgn);
+		PenNormal();
+		SetClip(tempRgn);
+		DisposeRgn(tempRgn);
+	}
+	
+	ReleaseResource((Handle)gray);
+}
+
+/* ÈÅ∏ÊäûÈ†òÂüü„ÅÆ„Éâ„É©„ÉÉ„Ç∞ÔºàËøî„ÇäÂÄ§„ÅØ„ÄÅÂÆüÈöõ„Å´„Éâ„É©„ÉÉ„Ç∞„Åï„Çå„Åü„Åã„Å©„ÅÜ„ÅãÔºâ */
+Boolean DragSelection(WindowPtr theWindow,Point pt,Point *resultPt,Boolean shiftDown)
+{
+	Point	mousePt;
+	Point	prevMousePt;
+	RgnHandle	dragRgn;
+	RgnHandle	prevDragRgn;
+	GrafPtr	port;
+	KeyMap	theKeys;
+	Boolean		horizFlag=true;
+	Boolean		vertFlag=true;
+	Point	offsetPt;
+	
+	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
+	short	ratio=eWinRec->ratio;
+	
+	GWorldPtr	eDispTempPtr=(GWorldPtr)0L; /* Á∑®ÈõÜÁîªÈù¢„ÅÆ„Ç∞„É™„ÉÉ„ÉâÁî® */
+	PixMapHandle	eDispTempPix=NULL;
+	OSErr		err;
+	
+	Rect	imageRect,tempRect;
+	Boolean	result=false;
+	
+	GWorldPtr	tempGWorld;
+	GWorldPtr	cPort;
+	GDHandle	cDevice;
+	
+	#define		abs(x)	((x>0 ? x : -x))
+	
+	if (eWinRec->backgroundGWorld != nil)
+		err=NewGWorld(&tempGWorld,eWinRec->iconDepth,&eWinRec->iconSize,0,0,useTempMem);
+	else
+		tempGWorld=eWinRec->dispTempPtr;
+	
+	GetPort(&port);
+	GetGWorld(&cPort,&cDevice);
+	SetPortWindowPort(theWindow);
+	
+	GetWindowPortBounds(theWindow,&imageRect);
+	imageRect.right-=kScrollBarWidth;
+	imageRect.bottom-=kScrollBarHeight;
+	ClipRect(&imageRect);
+	
+	GetKeys(theKeys);
+	if (BitTst(theKeys,61)) /* „Ç™„Éó„Ç∑„Éß„É≥„Ç≠„Éº */
+		MySetCursor(kCursorHandOnPlus);
+	else
+		MySetCursor(kCursorHandOn);
+	
+	/* „Éû„Ç¶„Çπ„ÅåÂãï„Åè„Åæ„ÅßÂæÖ„Å§ */
+	if (eWinRec->showSelection)
+		DispSelection(theWindow);
+	GetMouse(&prevMousePt);
+	mousePt=prevMousePt;
+	while (EqualPt(prevMousePt,mousePt) && StillDown())
+	{
+		GetMouse(&mousePt);
+	}
+	if (EqualPt(prevMousePt,mousePt))
+	{
+		/* Âãï„Åã„Åï„Çå„Å¶„ÅÑ„Å™„ÅÑ */
+		SetPt(resultPt,0,0);
+		goto exit;
+	}
+	
+	/* Â∑¶Âè≥„ÄÅ‰∏ä‰∏ã„Å´ÁßªÂãï„Åß„Åç„Çã„Åã */
+	if (shiftDown)
+	{
+		SubPt(mousePt,&prevMousePt);
+		if (abs(prevMousePt.h) > abs(prevMousePt.v))
+			vertFlag=false;
+		else
+			horizFlag=false;
+	}
+	
+	prevMousePt=pt;
+	
+	prevDragRgn=NewRgn();
+	
+	dragRgn=eWinRec->selectionPos;
+	CopyRgn(eWinRec->selectionPos,prevDragRgn);
+	
+	GetRegionBounds(eWinRec->selectionPos,&tempRect);
+	SetPt(&offsetPt,tempRect.left,tempRect.top);
+	SubPt(pt,&offsetPt);
+	
+	if (gToolPrefs.gridMode!=iGNone)
+	{
+		err=NewGWorld(&eDispTempPtr,eWinRec->iconDepth,&eWinRec->iconEditSize,0,0,useTempMem);
+		eDispTempPix=GetGWorldPixMap(eDispTempPtr);
+		LockPixels(eDispTempPix);
+		
+		SetGWorld(eDispTempPtr,0);
+		EraseRect(&eWinRec->iconEditSize);
+		SetGWorld(cPort,cDevice);
+	}
+	
+	while (StillDown())
+	{
+		GetMouse(&mousePt);
+		GetKeys(theKeys);
+		ToRealPos(&mousePt,ratio);
+		long temp;
+#if TARGET_RT_LITTLE_ENDIAN
+		temp = EndianS32_BtoN (theKeys[1].bigEndianValue);
+#else
+		temp = theKeys[1];
+#endif	
+		if ((temp & 0x00000001) != 0 && !shiftDown)
+		{
+			AddPt(offsetPt,&mousePt);
+			FixToGrid2(&mousePt);
+			SubPt(offsetPt,&mousePt);
+		}
+		
+		if (!EqualPt(prevMousePt,mousePt))
+		{
+			SubPt(mousePt,&prevMousePt);
+			OffsetRgn(dragRgn,-prevMousePt.h*horizFlag,-prevMousePt.v*vertFlag);
+			
+			/* ËÉåÊôØ„ÅÆÂÜçÊèèÁîª */
+			UnionRgn(prevDragRgn,dragRgn,prevDragRgn);
+			SetGWorld(eWinRec->dispTempPtr,0);
+			GetRegionBounds(prevDragRgn,&tempRect);
+			CopyBits(GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),
+				GetPortBitMapForCopyBits(eWinRec->dispTempPtr),
+				&tempRect,&tempRect,srcCopy,prevDragRgn);
+			
+			/* ÈÅ∏ÊäûÈ†òÂüü„ÅÆÂÜçÊèèÁîª */
+			if (eWinRec->selectionBlend==blend)
+				OpColor(&rgbGrayColor);
+			GetRegionBounds(dragRgn,&tempRect);
+			SafeCopyDeepMask(GetPortBitMapForCopyBits(eWinRec->editDataPtr),
+				GetPortBitMapForCopyBits(eWinRec->currentMask),
+				GetPortBitMapForCopyBits(eWinRec->dispTempPtr),
+				&eWinRec->selectedRect,&eWinRec->selectedRect,&tempRect,
+				eWinRec->selectionBlend,nil);
+			
+			/* „Éó„É¨„Éì„É•„ÉºÁîªÈù¢„ÅÆÂÜçÊèèÁîª */
+			if (eWinRec->backgroundGWorld != nil)
+			{
+				GWorldPtr	maskGWorld;
+				
+				err=NewGWorld(&maskGWorld,1,&eWinRec->iconSize,0,0,useTempMem);
+				SetGWorld(maskGWorld,0);
+				LockPixels(GetGWorldPixMap(maskGWorld));
+				EraseRect(&eWinRec->iconSize);
+				GetRegionBounds(eWinRec->selectionPos,&tempRect);
+				CopyBits(GetPortBitMapForCopyBits(eWinRec->currentMask),
+					GetPortBitMapForCopyBits(maskGWorld),
+					&eWinRec->selectedRect,&tempRect,srcCopy,nil);
+				CopyBits(GetPortBitMapForCopyBits(eWinRec->selectionMask),
+					GetPortBitMapForCopyBits(maskGWorld),
+					&eWinRec->iconSize,&eWinRec->iconSize,srcOr,nil);
+				UnlockPixels(GetGWorldPixMap(maskGWorld));
+				
+				SetGWorld(tempGWorld,0);
+				/* ËÉåÊôØË°®Á§∫ */
+				if (eWinRec->dispBackground)
+				{
+					GetRegionBounds(prevDragRgn,&tempRect);
+					CopyBits(GetPortBitMapForCopyBits(eWinRec->backgroundGWorld),
+						GetPortBitMapForCopyBits(tempGWorld),
+						&tempRect,&tempRect,srcCopy,prevDragRgn);
+				}
+				
+				/* ÂâçÊôØË°®Á§∫ */
+				if (eWinRec->foreTransparency != kForeTrans0)
+				{
+					SafeCopyDeepMask(GetPortBitMapForCopyBits(eWinRec->dispTempPtr),
+						GetPortBitMapForCopyBits(maskGWorld),
+						GetPortBitMapForCopyBits(tempGWorld),
+						&eWinRec->iconSize,&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);
+				}
+				
+				DisposeGWorld(maskGWorld);
+			}
+			
+			SetGWorld(cPort,cDevice);
+			SetPortWindowPort(gPreviewWindow);
+			
+			GetRegionBounds(prevDragRgn,&tempRect);
+			CopyBits(GetPortBitMapForCopyBits(tempGWorld),
+				GetPortBitMapForCopyBits(GetWindowPort(gPreviewWindow)),
+				&tempRect,&tempRect,srcCopy,prevDragRgn);
+			
+			/* Á∑®ÈõÜÁîªÈù¢„ÅÆÂÜçÊèèÁîª */
+			MapRgn(prevDragRgn,&eWinRec->iconSize,&eWinRec->iconEditSize);
+			
+			if (eDispTempPtr==nil)
+			{
+				SetPortWindowPort(theWindow);
+				SetClip(prevDragRgn);
+				CopyBits(GetPortBitMapForCopyBits(tempGWorld),
+					GetPortBitMapForCopyBits(GetWindowPort(theWindow)),
+					&eWinRec->iconSize,&eWinRec->iconEditSize,srcCopy,prevDragRgn);
+				DrawGrid(theWindow);
+			}
+			else
+			{
+				SetGWorld(eDispTempPtr,0);
+				SetClip(prevDragRgn);
+				CopyBits(GetPortBitMapForCopyBits(tempGWorld),
+					GetPortBitMapForCopyBits(eDispTempPtr),
+					&eWinRec->iconSize,&eWinRec->iconEditSize,srcCopy,prevDragRgn);
+				
+				DrawGridMain(eWinRec->ratio,&eWinRec->iconSize);
+				
+				SetGWorld(cPort,cDevice);
+				SetPortWindowPort(theWindow);
+				CopyBits(GetPortBitMapForCopyBits(eDispTempPtr),
+					GetPortBitMapForCopyBits(GetWindowPort(theWindow)),
+					&eWinRec->iconEditSize,&eWinRec->iconEditSize,srcCopy,prevDragRgn);
+			}
+			
+			CopyRgn(dragRgn,prevDragRgn);
+			
+			prevMousePt=mousePt;
+		}
+	}
+	
+	SubPt(pt,&prevMousePt);
+	if (!horizFlag) prevMousePt.h=0;
+	if (!vertFlag) prevMousePt.v=0;
+	*resultPt=prevMousePt;
+	
+	DisposeRgn(prevDragRgn);
+	
+	if (eDispTempPtr!=nil)
+	{
+		UnlockPixels(eDispTempPix);
+		DisposeGWorld(eDispTempPtr);
+	}
+	
+	OffsetRgn(eWinRec->selectionPos,-resultPt->h,-resultPt->v);
+	
+	result=true;
+	
+exit:
+	if (eWinRec->backgroundGWorld != nil)
+		DisposeGWorld(tempGWorld);
+	
+	SetGWorld(cPort,cDevice);
+	SetPortWindowPort(theWindow);
+	GetWindowPortBounds(theWindow,&tempRect);
+	ClipRect(&tempRect);
+	SetPort(port);
+	
+	return result;
+}
+
+#define	dResizeIcon		144
+enum {
+	diWidth=3,
+	diHeight,
+	diResizeImage,
+	diResizeDither,
+	diWidthUnit,
+	diHeightUnit,
+	diConstRatio,
+	diResizeBackground,
+};
+
+/* ÁîªÂÉè„Çµ„Ç§„Ç∫„ÅÆÂ§âÊõ¥ */
+void ChangeIconSize(WindowPtr theWindow)
+{
+	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
+	DialogPtr	dp;
+	short	width=eWinRec->iconSize.right,height=eWinRec->iconSize.bottom;
+	long	newWidth,newHeight;
+	Str255	widthStr,heightStr;
+	short	item;
+	ResizeDataRec	newResizeData;
+	short	tempUnit;
+	short	a[2],b[2];
+	short	background=0;
+	ModalFilterUPP	mfUPP=NewModalFilterUPP(MyModalDialogFilter);
+	
+	/* „Éê„ÉÉ„ÇØ„Ç∞„É©„Ç¶„É≥„Éâ„ÅåÂ≠òÂú®„Åô„ÇãÊôÇ„ÅØ‰ΩøÁî®‰∏çÂèØ */
+	if (eWinRec->backgroundGWorld!=nil || eWinRec->foregroundGWorld!=nil)
+	{
+		SysBeep(0);
+		UpdateEffectMenu();
+		return;
+	}
+	
+	DeactivateFloatersAndFirstDocumentWindow();
+	dp=GetNewDialog(dResizeIcon,nil,kFirstWindowOfClass);
+	
+	/* ÂêÑ„Ç¢„Ç§„ÉÜ„É†„ÅÆÂàùÊúüÂåñ */
+	SetDialogControlValue(dp,diResizeImage,gResizeData.resizeImage);
+	if (!gResizeData.resizeImage)
+		SetDialogControlHilite(dp,diResizeDither,255);
+	SetDialogControlValue(dp,diResizeDither,gResizeData.dither);
+	
+	SetDialogControlValue(dp,diWidthUnit,gResizeData.unit[0]);
+	SetDialogControlValue(dp,diHeightUnit,gResizeData.unit[1]);
+	SetDialogControlValue(dp,diConstRatio,gResizeData.constRatio);
+	
+	SetDialogControlValue(dp,diResizeBackground,(eWinRec->isBackTransparent ? 
+								2 : gPaintWinPrefs.background+1));
+	SetDialogControlHilite(dp,diResizeBackground,255);
+	
+	newResizeData=gResizeData;
+	
+	a[0]=height;
+	a[1]=100;
+	b[0]=width;
+	b[1]=100;
+	
+	NumToString(b[gResizeData.unit[0]-1],widthStr);
+	NumToString(a[gResizeData.unit[1]-1],heightStr);
+	
+	SetDialogItemText2(dp,diWidth,widthStr);
+	SetDialogItemText2(dp,diHeight,heightStr);
+	
+	SetDialogDefaultItem(dp,ok);
+	SetDialogCancelItem(dp,cancel);
+	
+	SelectDialogItemText(dp,diWidth,0,widthStr[0]);
+	ShowWindow(GetDialogWindow(dp));
+	
+	item=3;
+	while (item!=ok && item!=cancel)
+	{
+		ModalDialog(mfUPP,&item);
+		
+		switch (item)
+		{
+			case diConstRatio:
+				newResizeData.constRatio=!newResizeData.constRatio;
+				SetDialogControlValue(dp,diConstRatio,newResizeData.constRatio);
+			case diWidth:
+				if (newResizeData.constRatio)
+				{
+					/* Á∏¶Ê®™ÊØî‰∏ÄÂÆö„Å™„Çâ */
+					GetDialogItemText2(dp,diWidth,widthStr);
+					StringToNum(widthStr,&newWidth);
+					newHeight=newWidth*a[newResizeData.unit[1]-1]/b[newResizeData.unit[0]-1];
+					NumToString(newHeight,heightStr);
+					SetDialogItemText2(dp,diHeight,heightStr);
+				}
+				IsMarginExists(dp,width,height,&newResizeData);
+				break;
+				
+			case diHeight:
+				if (newResizeData.constRatio)
+				{
+					GetDialogItemText2(dp,diHeight,heightStr);
+					StringToNum(heightStr,&newHeight);
+					newWidth=newHeight*b[newResizeData.unit[0]-1]/a[newResizeData.unit[1]-1];
+					NumToString(newWidth,widthStr);
+					SetDialogItemText2(dp,diWidth,widthStr);
+				}
+				IsMarginExists(dp,width,height,&newResizeData);
+				break;
+			
+			case diWidthUnit:
+				tempUnit=newResizeData.unit[0];
+				newResizeData.unit[0]=GetDialogControlValue(dp,diWidthUnit);
+				GetDialogItemText2(dp,diWidth,widthStr);
+				StringToNum(widthStr,&newWidth);
+				newWidth=newWidth*b[newResizeData.unit[0]-1]/b[tempUnit-1];
+				NumToString(newWidth,widthStr);
+				SetDialogItemText2(dp,diWidth,widthStr);
+				SelectDialogItemText(dp,diWidth,0,widthStr[0]);
+				break;
+			
+			case diHeightUnit:
+				tempUnit=newResizeData.unit[1];
+				newResizeData.unit[1]=GetDialogControlValue(dp,diHeightUnit);
+				GetDialogItemText2(dp,diHeight,heightStr);
+				StringToNum(heightStr,&newHeight);
+				newHeight=newHeight*a[newResizeData.unit[1]-1]/a[tempUnit-1];
+				NumToString(newHeight,heightStr);
+				SetDialogItemText2(dp,diHeight,heightStr);
+				SelectDialogItemText(dp,diHeight,0,heightStr[0]);
+				break;
+			
+			case diResizeImage:
+				newResizeData.resizeImage=!newResizeData.resizeImage;
+				SetDialogControlValue(dp,diResizeImage,newResizeData.resizeImage);
+				SetDialogControlHilite(dp,diResizeDither,newResizeData.resizeImage ? 0 : 255);
+				IsMarginExists(dp,width,height,&newResizeData);
+				break;
+			
+			case diResizeDither:
+				newResizeData.dither=!newResizeData.dither;
+				SetDialogControlValue(dp,diResizeDither,newResizeData.dither);
+				break;
+		}
+	}
+	
+	if (item==ok)
+	{
+		GetDialogItemText2(dp,diWidth,widthStr);
+		StringToNum(widthStr,&newWidth);
+		if (newResizeData.unit[0]==unitPercent) newWidth=newWidth*width/100;
+		
+		GetDialogItemText2(dp,diHeight,heightStr);
+		StringToNum(heightStr,&newHeight);
+		if (newResizeData.unit[1]==unitPercent) newHeight=newHeight*height/100;
+		
+		background=GetDialogControlValue(dp,diResizeBackground)-1;
+		
+		gResizeData=newResizeData;
+	}
+	
+	DisposeDialog(dp);
+	DisposeModalFilterUPP(mfUPP);
+	ActivateFloatersAndFirstDocumentWindow();
+	
+	if (item==cancel) return;
+	if (newWidth <= 0 || newWidth > 16383 || newHeight <= 0 || newHeight > 16383)
+	{
+		SysBeep(0);
+		return;
+	}
+	
+	if (width != newWidth || height != newHeight)
+	{
+		Rect	newSize;
+		
+		SetRect(&newSize,0,0,newWidth,newHeight);
+		ChangeIconSizeMain(theWindow,&newSize,background);
+		if (gPaletteCheck == kPaletteCheckUsed) /* „Éë„É¨„ÉÉ„Éà„ÅÆ„ÉÅ„Çß„ÉÉ„ÇØ„Çí„Ç¢„ÉÉ„Éó„Éá„Éº„Éà */
+			UpdatePaletteCheck();
+	}
+}
+
+/* „É™„Çµ„Ç§„Ç∫Âæå„ÅÆ„Ç§„É°„Éº„Ç∏„Å´‰ΩôÁôΩ„Åå„Åß„Åç„Çã„Åã„Å©„ÅÜ„Åã„ÇíÂà§ÂÆö„Åô„Çã */
+void IsMarginExists(DialogPtr dp,short width,short height,ResizeDataRec *resizePrefs)
+{
+	long	newHeight,newWidth;
+	Str255	str;
+	Boolean	result=false;
+	
+	/* „Ç§„É°„Éº„Ç∏„ÇíÂ§âÂûã„Åô„Çã„Å™„ÇâÈñ¢‰øÇ„Å™„ÅÑ */
+	if (!resizePrefs->resizeImage)
+	{
+		/* Ê®™ÂπÖ„ÅåÂ§ß„Åç„Åè„Å™„Å£„Å¶„ÅÑ„Çã„Åã */
+		GetDialogItemText2(dp,diWidth,str);
+		StringToNum(str,&newWidth);
+		switch (resizePrefs->unit[0])
+		{
+			case unitPixels:
+				result=(newWidth > width);
+				break;
+			
+			case unitPercent:
+				result=(newWidth > 100);
+				break;
+		}
+		
+		/* „Åù„ÅÜ„Åß„Å™„Åë„Çå„Å∞Á∏¶„ÅåÂ§ß„Åç„Åè„Å™„Å£„Å¶„ÅÑ„Çã„Åã */
+		if (!result)
+		{
+			GetDialogItemText2(dp,diHeight,str);
+			StringToNum(str,&newHeight);
+			switch(resizePrefs->unit[1])
+			{
+				case unitPixels:
+					result=(newHeight > height);
+					break;
+				
+				case unitPercent:
+					result=(newHeight > 100);
+					break;
+			}
+		}
+	}
+	
+	SetDialogControlHilite(dp,diResizeBackground,(result ? 0 : 255));
+}
+
+/* ÂÆüÈöõ„ÅÆ„É™„Çµ„Ç§„Ç∫ */
+void ChangeIconSizeMain(WindowPtr theWindow,Rect *newSize,short background)
+{
+	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
+	GWorldFlags	newFlags;
+	GrafPtr		port;
+	Rect		copySize;
+	short		tMode=srcCopy;
+	OSErr		err=noErr;
+	
+	long		reqMemSize=(long)newSize->right*(long)newSize->bottom - (long)eWinRec->iconSize.right*(long)eWinRec->iconSize.bottom;
+	Handle		tempH[4]={nil,nil,nil,nil};
+	short		i;
+	GWorldPtr	cPort;
+	GDHandle	cDevice;
+	
+	/* ÊÆã„Çä„É°„É¢„É™„ÉÅ„Çß„ÉÉ„ÇØ */
+	if (reqMemSize>0)
+	{
+		for (i=0; i<4; i++)
+		{
+			tempH[i]=NewHandle(reqMemSize);
+			if (tempH[i]==nil)
+			{
+				err=memFullErr;
+				break;
+			}
+		}
+		for (i=0; i<4; i++)
+			DisposeHandle(tempH[i]);
+	}
+	
+	if (err!=noErr)
+	{
+		ErrorAlertFromResource(PAINTERR_RESID,PAINTERR1);
+		return;
+	}
+	
+	/* ÈÅ∏ÊäûÈ†òÂüü„Åå„ÅÇ„ÇãÂ†¥Âêà„ÅØ„Åæ„ÅöÂõ∫ÂÆö */
+	if (eWinRec->isSelected)
+		FixSelection(theWindow);
+	GetGWorld(&cPort,&cDevice);
+	GoOffPort(theWindow);
+	
+	/* GWorld„ÅÆ„Çµ„Ç§„Ç∫„ÇíÂ§âÊõ¥ */
+	newFlags=UpdateGWorld(&eWinRec->editDataPtr,eWinRec->iconDepth,newSize,0,0,0);
+	if ((newFlags & gwFlagErr)!=0)
+	{
+		Rect	oldRect;
+		
+		GetPortBounds(eWinRec->tempDataPtr,&oldRect);
+		
+		SetGWorld(eWinRec->editDataPtr,0);
+		CopyBits(GetPortBitMapForCopyBits(eWinRec->tempDataPtr),
+			GetPortBitMapForCopyBits(eWinRec->editDataPtr),
+			&oldRect,&oldRect,srcCopy,nil);
+		SetGWorld(cPort,cDevice);
+		DispOffPort(theWindow);
+		if (eWinRec->undoMode == umDeselect) DoUndo();
+		SetUndoMode(umCannot);
+		
+		ErrorAlertFromResource(PAINTERR_RESID,PAINTERR1);
+		return;
+	}
+	newFlags=UpdateGWorld(&eWinRec->currentMask,1,newSize,0,0,0);
+	if ((newFlags & gwFlagErr)!=0)
+	{
+		Rect	oldRect;
+		
+		GetPortBounds(eWinRec->tempDataPtr,&oldRect);
+		
+		newFlags=UpdateGWorld(&eWinRec->editDataPtr,eWinRec->iconDepth,&oldRect,0,0,0);
+		
+		SetGWorld(eWinRec->editDataPtr,0);
+		CopyBits(GetPortBitMapForCopyBits(eWinRec->tempDataPtr),
+			GetPortBitMapForCopyBits(eWinRec->editDataPtr),
+			&oldRect,&oldRect,srcCopy,nil);
+		
+		SetGWorld(eWinRec->currentMask,0);
+		CopyBits(GetPortBitMapForCopyBits(eWinRec->pCurrentMask),
+			GetPortBitMapForCopyBits(eWinRec->currentMask),
+			&oldRect,&oldRect,srcCopy,nil);
+		
+		SetGWorld(cPort,cDevice);
+		DispOffPort(theWindow);
+		if (eWinRec->undoMode == umDeselect) DoUndo();
+		SetUndoMode(umCannot);
+		
+		ErrorAlertFromResource(PAINTERR_RESID,PAINTERR1);
+		return;
+	}
+	
+	/* „Ç≥„Éî„Éº„Åô„Çã„Çµ„Ç§„Ç∫„Å™„Å©„ÇíË®àÁÆó */
+	if (gResizeData.resizeImage)
+	{
+		copySize=*newSize;
+		if (gResizeData.dither)
+			tMode+=ditherCopy;
+	}
+	else
+		copySize=eWinRec->iconSize;
+	
+	/* „É™„Çµ„Ç§„Ç∫„ÄÅ„Ç≥„Éî„Éº„Åô„Çã */
+	SetGWorld(eWinRec->editDataPtr,0);
+	LockPixels(GetGWorldPixMap(eWinRec->editDataPtr));
+	
+	/* ‰ΩôÁôΩ„ÇíÂ°ó„Çã */
+	if (background == 2)
+		RGBBackColor(&gBackColor.rgb);
+	EraseRect(newSize);
+	BackColor(whiteColor);
+	CopyBits(GetPortBitMapForCopyBits(eWinRec->tempDataPtr),
+		GetPortBitMapForCopyBits(eWinRec->editDataPtr),
+		&eWinRec->iconSize,&copySize,tMode,nil);
+	UnlockPixels(GetGWorldPixMap(eWinRec->editDataPtr));
+	
+	SetGWorld(eWinRec->dispTempPtr,0);
+	newFlags=UpdateGWorld(&eWinRec->dispTempPtr,eWinRec->iconDepth,newSize,0,0,0);
+	
+	LockPixels(GetGWorldPixMap(eWinRec->dispTempPtr));
+	
+	/* ‰ΩôÁôΩ„ÇíÂ°ó„Çã */
+	if (background == 2)
+		RGBBackColor(&gBackColor.rgb);
+	EraseRect(newSize);
+	BackColor(whiteColor);
+	CopyBits(GetPortBitMapForCopyBits(eWinRec->editDataPtr),
+		GetPortBitMapForCopyBits(eWinRec->dispTempPtr),
+		newSize,newSize,srcCopy,nil);
+	UnlockPixels(GetGWorldPixMap(eWinRec->dispTempPtr));
+	
+	SetGWorld(cPort,cDevice);
+	
+	/* ÈÅ∏ÊäûÁØÑÂõ≤Êõ¥Êñ∞ */
+	RectRgn(eWinRec->selectionPos,newSize);
+	SetEmptyRgn(eWinRec->eSelectedRgn);
+	eWinRec->isSelected=false;
+	eWinRec->selectedRect=eWinRec->iconSize;
+	
+	eWinRec->resizeImage=gResizeData.resizeImage;
+	eWinRec->resizeDither=gResizeData.dither;
+	
+	/* „Éû„Çπ„ÇØ */
+	if (gResizeData.resizeImage) /* „Ç§„É°„Éº„Ç∏„ÇíÂ§âÂΩ¢ */
+	{
+		GWorldPtr	maskGWorld;
+		
+		MySetGWorld(currentMask);
+		CopyBits(GetPortBitMapForCopyBits(eWinRec->pCurrentMask),
+			GetPortBitMapForCopyBits(eWinRec->currentMask),
+			&eWinRec->iconSize,&copySize,srcCopy,nil);
+		err=CreateMask2(eWinRec->editDataPtr,&maskGWorld);
+		if (err!=noErr)
+			SysBeep(0);
+		else
+		{
+			MySetGWorld(currentMask);
+			CopyBits(GetPortBitMapForCopyBits(maskGWorld),
+				GetPortBitMapForCopyBits(eWinRec->currentMask),
+				&copySize,&copySize,srcOr,nil);
+			
+			DisposeGWorld(maskGWorld);
+		}
+		SetGWorld(cPort,cDevice);
+	}
+	else /* „Ç§„É°„Éº„Ç∏„ÇíÂ§âÂûã„Åó„Å™„ÅÑ */
+	{
+		MySetGWorld(currentMask);
+		MyLockPixels(currentMask);
+		
+		if (background == 1 || (background == 2 && gBackColor.isTransparent))
+			EraseRect(newSize);
+		else
+			PaintRect(newSize);
+		CopyBits(GetPortBitMapForCopyBits(eWinRec->pCurrentMask),
+			GetPortBitMapForCopyBits(eWinRec->currentMask),
+			&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);
+		
+		MyUnlockPixels(currentMask);
+		SetGWorld(cPort,cDevice);
+	}
+	
+	GetPort(&port);
+	SetPortWindowPort(theWindow);
+	eWinRec->iconSize=*newSize;
+	eWinRec->selectedRect=*newSize;
+	UpdatePaintWindow(theWindow);
+	
+	SetPortWindowPort(gPreviewWindow);
+	SizeWindow(gPreviewWindow,newSize->right,newSize->bottom,false);
+	ClipRect(&eWinRec->iconSize);
+	MyInvalWindowRect(gPreviewWindow,&eWinRec->iconSize);
+	SetPort(port);
+	
+	SetUndoMode(umResize);
+}
+
+/* „Éê„ÉÉ„ÇØ„Ç∞„É©„Ç¶„É≥„ÉâÁ∑®ÈõÜ„É¢„Éº„Éâ„Å∏ */
+void GoBackgroundMode(WindowPtr theWindow)
+{
+	PaintWinRec	*eWinRec;
+	OSErr		err;
+	RgnHandle	tempRgn;
+	short		mode=umCannot;
+	Rect		tempRect;
+	GWorldPtr	cPort;
+	GDHandle	cDevice;
+	
+	ResetRuler();
+	eWinRec=GetPaintWinRec(theWindow);
+	
+	GetGWorld(&cPort,&cDevice);
+	GoOffPort(theWindow);
+	
+	/* ÁîªÈù¢„Åã„Çâ„ÅØ„ÅøÂá∫„Å¶„ÅÑ„ÇãÈÉ®ÂàÜ„ÇíÁ†¥Ê£Ñ„Åô„Çã */
+	if (eWinRec->isSelected)
+	{
+		GWorldFlags	flags;
+		
+		tempRgn=NewRgn();
+		RectRgn(tempRgn,&eWinRec->iconSize);
+		SectRgn(tempRgn,eWinRec->selectionPos,eWinRec->selectionPos);
+		DisposeRgn(tempRgn);
+		
+		/* ÁîªÈù¢Ë°®Á§∫Áî®„ÅÆ„É™„Éº„Ç∏„Éß„É≥„ÇÇÊõ¥Êñ∞ */
+		CopyRgn(eWinRec->selectionPos,eWinRec->eSelectedRgn);
+		MapRgn(eWinRec->eSelectedRgn,&eWinRec->iconSize,&eWinRec->iconEditSize);
+		
+		/* „Ç§„É°„Éº„Ç∏„ÄÅ„Éû„Çπ„ÇØ„ÅÆÂ§âÂΩ¢ */
+		flags=UpdateGWorld(&eWinRec->editDataPtr,eWinRec->iconDepth,&eWinRec->iconSize,0,0,0);
+		flags=UpdateGWorld(&eWinRec->currentMask,1,&eWinRec->iconSize,0,0,0);
+		
+		/* „Ç§„É°„Éº„Ç∏„ÄÅ„Éû„Çπ„ÇØ„ÅÆÊèè„ÅçÊàª„Åó */
+		SetGWorld(eWinRec->editDataPtr,0);
+		MyLockPixels(editDataPtr);
+		EraseRect(&eWinRec->iconSize);
+		GetRegionBounds(eWinRec->selectionPos,&tempRect);
+		CopyBits(GetPortBitMapForCopyBits(eWinRec->tempDataPtr),
+			GetPortBitMapForCopyBits(eWinRec->editDataPtr),
+			&eWinRec->selectedRect,&tempRect,srcCopy,nil);
+		MyUnlockPixels(editDataPtr);
+		SetGWorld(eWinRec->currentMask,0);
+		MyLockPixels(currentMask);
+		EraseRect(&eWinRec->iconSize);
+		CopyBits(GetPortBitMapForCopyBits(eWinRec->pCurrentMask),
+			GetPortBitMapForCopyBits(eWinRec->currentMask),
+			&eWinRec->selectedRect,&tempRect,srcCopy,nil);
+		MyUnlockPixels(currentMask);
+		
+		/* „Åù„ÅÆ‰ªñ„ÅÆÂ§âÊï∞„ÇíË™øÊï¥ */
+		eWinRec->selectedRect=tempRect;
+		SetPt(&eWinRec->selectionOffset,0,0);
+	}
+	
+	if (eWinRec->editBackground) /* ËÉåÊôØÁ∑®ÈõÜÊôÇ */
+	{
+		/* ËÉåÊôØGWorld„Çí‰ΩúÊàê */
+		err=NewGWorld(&eWinRec->backgroundGWorld,eWinRec->iconDepth,&eWinRec->iconSize,0,0,useTempMem);
+		SetGWorld(eWinRec->backgroundGWorld,0);
+		LockPixels(GetGWorldPixMap(eWinRec->backgroundGWorld));
+		EraseRect(&eWinRec->iconSize);
+		UnlockPixels(GetGWorldPixMap(eWinRec->backgroundGWorld));
+		
+		/* Á∑®ÈõÜ‰∏≠„ÅÆÁîªÂÉè„ÇíËÉåÊôØ„Å´„Ç≥„Éî„Éº */
+		CopyBits(GetPortBitMapForCopyBits(eWinRec->dispTempPtr),
+			GetPortBitMapForCopyBits(eWinRec->backgroundGWorld),
+			&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);
+		
+		if (eWinRec->foregroundGWorld == nil) /* ÂâçÊôØ„ÅåÂ≠òÂú®„Åó„Å™„Åë„Çå„Å∞ */
+		{
+			EraseOffPort(eWinRec);
+			/* „Éû„Çπ„ÇØ‰ΩúÊàê */
+			err=NewGWorld(&eWinRec->foregroundMask,1,&eWinRec->iconSize,0,0,useTempMem);
+			MySetGWorld(foregroundMask);
+			MyLockPixels(foregroundMask);
+			EraseRect(&eWinRec->iconSize);
+			MyUnlockPixels(foregroundMask);
+			
+			eWinRec->foreTransparency=kForeTrans100;
+			
+			mode=umAddForeground;
+		}
+		else
+		{
+			/* ÂâçÊôØ„ÇíÁ∑®ÈõÜÂèØËÉΩ„Å´ */
+			SetGWorld(eWinRec->editDataPtr,0);
+			CopyBits(GetPortBitMapForCopyBits(eWinRec->foregroundGWorld),
+				GetPortBitMapForCopyBits(eWinRec->editDataPtr),
+				&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);
+			SetGWorld(eWinRec->selectedDataPtr,0);
+			LockPixels(GetGWorldPixMap(eWinRec->selectedDataPtr));
+			CopyBits(GetPortBitMapForCopyBits(eWinRec->foregroundGWorld),
+				GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),
+				&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);
+			EraseRgn(eWinRec->selectionPos);
+			UnlockPixels(GetGWorldPixMap(eWinRec->selectedDataPtr));
+			
+			/* ÂâçÊôØ„ÇíÁ†¥Ê£Ñ */
+			DisposeGWorld(eWinRec->foregroundGWorld);
+			eWinRec->foregroundGWorld=nil;
+		}
+		
+		eWinRec->dispBackground=true;
+		
+		/* „Éû„Çπ„ÇØ */
+		MySetGWorld(currentMask);
+		MyLockPixels(currentMask);
+		EraseRect(&eWinRec->iconSize);
+		CopyBits(GetPortBitMapForCopyBits(eWinRec->foregroundMask),
+			GetPortBitMapForCopyBits(eWinRec->currentMask),
+			&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,eWinRec->selectionPos);
+		MyUnlockPixels(currentMask);
+		
+		MySetGWorld(selectionMask);
+		MyLockPixels(selectionMask);
+		EraseRect(&eWinRec->iconSize);
+		CopyBits(GetPortBitMapForCopyBits(eWinRec->foregroundMask),
+			GetPortBitMapForCopyBits(eWinRec->selectionMask),
+			&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);
+		EraseRgn(eWinRec->selectionPos);
+		MyUnlockPixels(selectionMask);
+		DisposeGWorld(eWinRec->foregroundMask);
+		eWinRec->foregroundMask=nil;
+	}
+	else /* ÂâçÊôØÁ∑®ÈõÜÊôÇ */
+	{
+		/* ÂâçÊôØGWorld„Çí‰ΩúÊàê */
+		err=NewGWorld(&eWinRec->foregroundGWorld,eWinRec->iconDepth,&eWinRec->iconSize,0,0,useTempMem);
+		SetGWorld(eWinRec->foregroundGWorld,0);
+		MyLockPixels(foregroundGWorld);
+		EraseRect(&eWinRec->iconSize);
+		MyUnlockPixels(foregroundGWorld);
+		
+		/* Á∑®ÈõÜ‰∏≠„ÅÆÁîªÂÉè„ÇíÂâçÊôØ„Å´„Ç≥„Éî„Éº */
+		CopyBits(GetPortBitMapForCopyBits(eWinRec->dispTempPtr),
+			GetPortBitMapForCopyBits(eWinRec->foregroundGWorld),
+			&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);
+		
+		/* „Éû„Çπ„ÇØ„Çí„Ç≥„Éî„Éº */
+		err=NewGWorld(&eWinRec->foregroundMask,1,&eWinRec->iconSize,0,0,useTempMem);
+		MySetGWorld(foregroundMask);
+		MyLockPixels(foregroundMask);
+		EraseRect(&eWinRec->iconSize);
+		CopyBits(GetPortBitMapForCopyBits(eWinRec->currentMask),
+			GetPortBitMapForCopyBits(eWinRec->foregroundMask),
+			&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);
+		CopyBits(GetPortBitMapForCopyBits(eWinRec->selectionMask),
+			GetPortBitMapForCopyBits(eWinRec->foregroundMask),
+			&eWinRec->iconSize,&eWinRec->iconSize,srcOr,nil);
+		MyUnlockPixels(foregroundMask);
+		
+		if (eWinRec->backgroundGWorld == nil) /* ËÉåÊôØ„ÅåÂ≠òÂú®„Åó„Å™„Åë„Çå„Å∞ */
+		{
+			EraseOffPort(eWinRec);
+			eWinRec->foreTransparency=kForeTrans100;
+			
+			mode=umAddBackground;
+		}
+		else
+		{
+			/* ËÉåÊôØ„ÇíÁ∑®ÈõÜÂèØËÉΩ„Å´ */
+			SetGWorld(eWinRec->editDataPtr,0);
+			CopyBits(GetPortBitMapForCopyBits(eWinRec->backgroundGWorld),
+				GetPortBitMapForCopyBits(eWinRec->editDataPtr),
+				&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);
+			SetGWorld(eWinRec->selectedDataPtr,0);
+			LockPixels(GetGWorldPixMap(eWinRec->selectedDataPtr));
+			CopyBits(GetPortBitMapForCopyBits(eWinRec->backgroundGWorld),
+				GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),
+				&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);
+			RGBBackColor(&gBackColor.rgb);
+			EraseRgn(eWinRec->selectionPos);
+			BackColor(whiteColor);
+			UnlockPixels(GetGWorldPixMap(eWinRec->selectedDataPtr));
+			
+			/* ËÉåÊôØ„ÇíÁ†¥Ê£Ñ */
+			DisposeGWorld(eWinRec->backgroundGWorld);
+			eWinRec->backgroundGWorld=nil;
+		}
+		
+		/* „Éû„Çπ„ÇØ */
+		MySetGWorld(currentMask);
+		MyLockPixels(currentMask);
+		PaintRgn(eWinRec->selectionPos);
+		MyUnlockPixels(currentMask);
+		
+		MySetGWorld(selectionMask);
+		MyLockPixels(selectionMask);
+		PaintRect(&eWinRec->iconSize);
+		if (gBackColor.isTransparent)
+			EraseRgn(eWinRec->selectionPos);
+		MyUnlockPixels(selectionMask);
+	}
+	
+	RectRgn(eWinRec->updateRgn,&eWinRec->iconSize);
+	
+	SetGWorld(cPort,cDevice);
+	DispOffPort(theWindow);
+	
+	eWinRec->editBackground=!eWinRec->editBackground;
+	UpdateBGMenu();
+	UpdateEffectMenu();
+	UpdateTransparentMenu();
+	UpdateBackInfo(theWindow);
+	SetUndoMode(mode);
+	if (gPaletteCheck == kPaletteCheckUsed) /* „Éë„É¨„ÉÉ„Éà„ÅÆ„ÉÅ„Çß„ÉÉ„ÇØ„Çí„Ç¢„ÉÉ„Éó„Éá„Éº„Éà */
+		UpdatePaletteCheck();
+}
+
+/* „Éê„ÉÉ„ÇØ„Ç∞„É©„Ç¶„É≥„Éâ„ÇíÁµ±Âêà */
+void UnionBackground(WindowPtr theWindow)
+{
+	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
+	short		foreMode;
+	GWorldPtr	cPort;
+	GDHandle	cDevice;
+	
+	if (eWinRec->backgroundGWorld == nil && eWinRec->foregroundGWorld == nil) /* „Éê„ÉÉ„ÇØ„Ç∞„É©„Ç¶„É≥„Éâ„ÅåÂ≠òÂú®„Åó„Å™„ÅÑ */
+	{
+		UpdateBGMenu();
+		return;
+	}
+	
+	GetGWorld(&cPort,&cDevice);
+	
+	/* „Å®„Çä„ÅÇ„Åà„Åö„ÄÅÂõ∫ÂÆö„Åô„Çã */
+	if (eWinRec->isSelected)
+		FixSelection(theWindow);
+	
+	/* ËÉåÊôØË°®Á§∫ÊôÇ„Å´„ÅØÂâçÊôØË°®Á§∫„Å´„Åô„Çã */
+	if (eWinRec->foregroundGWorld != nil)
+		GoBackgroundMode(theWindow);
+	
+	/* ÂâçÊôØ„ÇíÂèñ„ÇäÊ∂à„ÅóÁî®„Éê„ÉÉ„Éï„Ç°„Å´„Éê„ÉÉ„ÇØ„Ç¢„ÉÉ„Éó */
+	GoOffPort(theWindow);
+	
+	/* ËÉåÊôØ„ÅØÈÅ∏ÊäûÈ†òÂüüÂ§ñ„Å´„Éê„ÉÉ„ÇØ„Ç¢„ÉÉ„Éó */
+	SetGWorld(eWinRec->selectedDataPtr,0);
+	CopyBits(GetPortBitMapForCopyBits(eWinRec->backgroundGWorld),
+		GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),
+		&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);
+	
+	if (eWinRec->foreTransparency != kForeTrans0)
+	{
+		SetGWorld(eWinRec->backgroundGWorld,0);
+		foreMode=SetForeBlend(eWinRec);
+		
+		/* Ê¨°„Å´„ÄÅËÉåÊôØ„Å´„Ç≥„Éî„Éº„Åó„Å¶ÂêàÊàê */
+		SafeCopyDeepMask(GetPortBitMapForCopyBits(eWinRec->dispTempPtr),
+			GetPortBitMapForCopyBits(eWinRec->currentMask),
+			GetPortBitMapForCopyBits(eWinRec->backgroundGWorld),
+			&eWinRec->iconSize,&eWinRec->iconSize,&eWinRec->iconSize,foreMode,nil);
+	}
+	
+	/* ËÉåÊôØ„Åã„ÇâÁ∑®ÈõÜÁîªÈù¢„Å´„Ç≥„Éî„Éº */
+	SetGWorld(eWinRec->editDataPtr,0);
+	CopyBits(GetPortBitMapForCopyBits(eWinRec->backgroundGWorld),
+		GetPortBitMapForCopyBits(eWinRec->editDataPtr),
+		&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);
+	
+	/* ËÉåÊôØ„ÇíÁ†¥Ê£Ñ */
+	DisposeGWorld(eWinRec->backgroundGWorld);
+	eWinRec->backgroundGWorld=nil;
+	eWinRec->editBackground=gOtherPrefs.addForeground;
+	
+	/* ËÉåÊôØ„ÅåÈÄèÊòé„Åã„Å©„ÅÜ„Åã„ÅÆ„Éï„É©„Ç∞„Çí„É™„Çª„ÉÉ„Éà */
+	eWinRec->isBackTransparent=false;
+	
+	/* „Éû„Çπ„ÇØ */
+	MySetGWorld(currentMask);
+	MyLockPixels(currentMask);
+	PaintRect(&eWinRec->iconSize);
+	MyUnlockPixels(currentMask);
+	
+	RectRgn(eWinRec->updateRgn,&eWinRec->iconSize);
+	
+	SetGWorld(cPort,cDevice);
+	DispOffPort(theWindow);
+	
+	UpdateBGMenu();
+	UpdateEffectMenu();
+	UpdateBackInfo(theWindow);
+	SetUndoMode(umUnionBackground);
+	if (gPaletteCheck == kPaletteCheckUsed) /* „Éë„É¨„ÉÉ„Éà„ÅÆ„ÉÅ„Çß„ÉÉ„ÇØ„Çí„Ç¢„ÉÉ„Éó„Éá„Éº„Éà */
+		UpdatePaletteCheck();
+}
+
+/* ËÉåÊôØ„ÅÆÂâäÈô§ */
+void DeleteBackground(WindowPtr theWindow)
+{
+	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
+	GWorldPtr	cPort;
+	GDHandle	cDevice;
+	
+	if (eWinRec->backgroundGWorld == nil && eWinRec->foregroundGWorld == nil) /* „Éê„ÉÉ„ÇØ„Ç∞„É©„Ç¶„É≥„Éâ„ÅåÂ≠òÂú®„Åó„Å™„ÅÑ */
+	{
+		UpdateBGMenu();
+		return;
+	}
+	
+	GetGWorld(&cPort,&cDevice);
+	
+	/* „Å®„Çä„ÅÇ„Åà„Åö„ÄÅÂõ∫ÂÆö„Åô„Çã */
+	if (eWinRec->isSelected)
+		FixSelection(theWindow);
+	
+	/* ËÉåÊôØË°®Á§∫ÊôÇ„Å´„ÅØÂâçÊôØË°®Á§∫„Å´„Åô„Çã */
+	if (eWinRec->foregroundGWorld != nil)
+		GoBackgroundMode(theWindow);
+	
+	/* ÂâçÊôØ„Çí„Éê„ÉÉ„ÇØ„Ç¢„ÉÉ„Éó */
+	GoOffPort(theWindow);
+	
+	/* ËÉåÊôØ„Çí„Éê„ÉÉ„ÇØ„Ç¢„ÉÉ„Éó */
+	SetGWorld(eWinRec->selectedDataPtr,0);
+	CopyBits(GetPortBitMapForCopyBits(eWinRec->backgroundGWorld),
+		GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),
+		&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);
+	
+	/* ËÉåÊôØ„ÇíÂâäÈô§ */
+	DisposeGWorld(eWinRec->backgroundGWorld);
+	eWinRec->backgroundGWorld=nil;
+	eWinRec->editBackground=gOtherPrefs.addForeground;
+	
+	RectRgn(eWinRec->updateRgn,&eWinRec->iconSize);
+	
+	SetGWorld(cPort,cDevice);
+	DispOffPort(theWindow);
+	
+	UpdateBGMenu();
+	UpdateEffectMenu();
+	UpdateBackInfo(theWindow);
+	SetUndoMode(umDeleteBackground);
+	if (gPaletteCheck == kPaletteCheckUsed) /* „Éë„É¨„ÉÉ„Éà„ÅÆ„ÉÅ„Çß„ÉÉ„ÇØ„Çí„Ç¢„ÉÉ„Éó„Éá„Éº„Éà */
+		UpdatePaletteCheck();
+}
+
+/* ÂâçÊôØ„ÅÆÂâäÈô§ */
+void DeleteForeground(WindowPtr theWindow)
+{
+	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
+	GWorldPtr	tempGWorld;
+	GWorldPtr	cPort;
+	GDHandle	cDevice;
+	
+	if (eWinRec->backgroundGWorld == nil && eWinRec->foregroundGWorld == nil) /* „Éê„ÉÉ„ÇØ„Ç∞„É©„Ç¶„É≥„Éâ„ÅåÂ≠òÂú®„Åó„Å™„ÅÑ */
+	{
+		UpdateBGMenu();
+		return;
+	}
+	
+	GetGWorld(&cPort,&cDevice);
+	
+	/* „Å®„Çä„ÅÇ„Åà„Åö„ÄÅÂõ∫ÂÆö„Åô„Çã */
+	if (eWinRec->isSelected)
+		FixSelection(theWindow);
+	
+	/* ÂâçÊôØË°®Á§∫ÊôÇ„Å´„ÅØËÉåÊôØË°®Á§∫„Å´„Åô„Çã */
+	if (eWinRec->backgroundGWorld != nil)
+	{
+		OSErr	err;
+		
+		/* „Éû„Çπ„ÇØ„Çí„Éê„ÉÉ„ÇØ„Ç¢„ÉÉ„Éó„Åô„Çã */
+		err=NewGWorld(&tempGWorld,eWinRec->iconDepth,&eWinRec->iconSize,0,0,useTempMem);
+		SetGWorld(tempGWorld,0);
+		CopyBits(GetPortBitMapForCopyBits(eWinRec->currentMask),
+			GetPortBitMapForCopyBits(tempGWorld),
+			&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);
+		SetGWorld(cPort,cDevice);
+		
+		GoBackgroundMode(theWindow);
+		
+		/* „Éû„Çπ„ÇØ„ÇíÂÖÉ„Å´Êàª„Åô */
+		SetGWorld(eWinRec->currentMask,0);
+		CopyBits(GetPortBitMapForCopyBits(tempGWorld),
+			GetPortBitMapForCopyBits(eWinRec->currentMask),
+			&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);
+		SetGWorld(cPort,cDevice);
+		DisposeGWorld(tempGWorld);
+	}
+	
+	/* ËÉåÊôØ„Çí„Éê„ÉÉ„ÇØ„Ç¢„ÉÉ„Éó */
+	GoOffPort(theWindow);
+	
+	/* ÂâçÊôØ„Çí„Éê„ÉÉ„ÇØ„Ç¢„ÉÉ„Éó */
+	SetGWorld(eWinRec->selectedDataPtr,0);
+	CopyBits(GetPortBitMapForCopyBits(eWinRec->foregroundGWorld),
+		GetPortBitMapForCopyBits(eWinRec->selectedDataPtr),
+		&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);
+	
+	/* ÂâçÊôØ„ÇíÂâäÈô§ */
+	DisposeGWorld(eWinRec->foregroundGWorld);
+	eWinRec->foregroundGWorld=nil;
+	eWinRec->editBackground=gOtherPrefs.addForeground;
+	
+	/* „Éû„Çπ„ÇØ */
+	SetGWorld(eWinRec->currentMask,0);
+	MyLockPixels(currentMask);
+	PaintRect(&eWinRec->iconSize);
+	MyUnlockPixels(currentMask);
+	RectRgn(eWinRec->updateRgn,&eWinRec->iconSize);
+	
+	SetGWorld(cPort,cDevice);
+	DispOffPort(theWindow);
+	
+	UpdateBGMenu();
+	UpdateEffectMenu();
+	UpdateBackInfo(theWindow);
+	SetUndoMode(umDeleteForeground);
+	if (gPaletteCheck == kPaletteCheckUsed) /* „Éë„É¨„ÉÉ„Éà„ÅÆ„ÉÅ„Çß„ÉÉ„ÇØ„Çí„Ç¢„ÉÉ„Éó„Éá„Éº„Éà */
+		UpdatePaletteCheck();
+}
+
+/* ËÉåÊôØ„ÅÆË°®Á§∫ÔºèÈùûË°®Á§∫„ÇíÂàá„ÇäÊõø„Åà */
+void ShowHideBackground(WindowPtr theWindow)
+{
+	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
+	Rect		r;
+	
+	if (eWinRec->backgroundGWorld == nil)
+	{
+		UpdateBGMenu();
+		return;
+	}
+	
+	eWinRec->dispBackground=!eWinRec->dispBackground;
+	GetWindowPortBounds(theWindow,&r);
+	r.right-=kScrollBarWidth;
+	r.bottom-=kScrollBarHeight;
+	SetPortWindowPort(theWindow);
+	MyInvalWindowRect(theWindow,&r);
+	SetPortWindowPort(gPreviewWindow);
+	MyInvalWindowPortBounds(gPreviewWindow);
+	SetPortWindowPort(theWindow);
+	
+	UpdateBGMenu();
+}
+
+/* ÈÅ∏Êäû‰∏≠„ÅÆÊû†„ÇíË°®Á§∫ */
+void TrackMarquee(PaintWinRec *eWinRec,Rect *previewRect,Boolean shiftDown)
+{
+	PatHandle	gray;
+	Point	mousePt;
+	Rect 	startRect;
+	Rect	nowRect,prevRect;
+	Rect	pNowRect,pPrevRect;
+	GrafPtr	port;
+	WindowPtr	theWindow;
+	short	ratio=eWinRec->ratio;
+	Rect	imageRect,tempRect;
+	
+	gray=GetPattern(128);
+	
+	theWindow=MyFrontNonFloatingWindow();
+	
+	/* „Éö„É≥„Éë„Çø„Éº„É≥„ÅÆË®≠ÂÆö */
+	GetPort(&port);
+	SetPortWindowPort(theWindow);
+	
+	/* Ë°®Á§∫ÂèØËÉΩÈ†òÂüü */
+	GetWindowPortBounds(theWindow,&imageRect);
+	imageRect.right-=kScrollBarWidth;
+	imageRect.bottom-=kScrollBarHeight;
+	ClipRect(&imageRect);
+	
+	PenNormal();
+	PenMode(patXor);
+	PenPat(*gray);
+	SetPortWindowPort(gPreviewWindow);
+	PenNormal();
+	PenMode(patXor);
+	PenPat(*gray);
+	
+	startRect=*previewRect;
+	MapRect(&startRect,&eWinRec->iconSize,&eWinRec->iconEditSize);
+	nowRect=startRect;
+	pNowRect=*previewRect;
+	SetPortWindowPort(theWindow);
+	FrameRect(&nowRect);
+	SetPortWindowPort(gPreviewWindow);
+	FrameRect(&pNowRect);
+	SetPortWindowPort(theWindow);
+	prevRect=nowRect;
+	pPrevRect=pNowRect;
+	
+	while (StillDown())
+	{
+		GetMouse(&mousePt);
+		ToRealPos(&mousePt,ratio);
+		if (shiftDown)
+			FixToGrid(&mousePt);
+		SetRect(&pNowRect,previewRect->left,previewRect->top,mousePt.h,mousePt.v);
+		SortRect(&pNowRect,shiftDown);
+		if (!EqualRect(&pNowRect,&pPrevRect))
+		{
+			SectRect(&pNowRect,&eWinRec->iconSize,&pNowRect);
+			nowRect=pNowRect;
+			MapRect(&nowRect,&eWinRec->iconSize,&eWinRec->iconEditSize);
+			FrameRect(&prevRect);
+			FrameRect(&nowRect);
+			SetPortWindowPort(gPreviewWindow);
+			FrameRect(&pPrevRect);
+			FrameRect(&pNowRect);
+			SetPortWindowPort(theWindow);
+			prevRect=nowRect;
+			pPrevRect=pNowRect;
+		}
+	}
+	SetPortWindowPort(theWindow);
+	FrameRect(&prevRect);
+	
+	GetWindowPortBounds(theWindow,&tempRect);
+	ClipRect(&tempRect);
+	PenNormal();
+	
+	SetPortWindowPort(gPreviewWindow);
+	FrameRect(&pPrevRect);
+	PenNormal();
+	SetPort(port);
+	*previewRect=pPrevRect;
+}
+
+/* sort rectangle */
+/* shift„ÅåÊäº„Åï„Çå„Å¶„ÅÑ„Çã„Å®„Åç„ÅØ„ÄÅ„Ç∞„É™„ÉÉ„Éâ„ÅÆÂàÜ„Å†„ÅëË£úÊ≠£„Åô„Çã */
+void SortRect(Rect *dragRect,Boolean shiftDown)
+{
+	short	temp;
+	short	h=1;
+	
+	/* 1.20b12‰øÆÊ≠£ */
+	if (shiftDown)
+		if (((gToolPrefs.gridMode>>4)& 0x0f) == 1) /* 32*32 */
+			h = 32;
+		else
+			h = 16;
+	
+	if (dragRect->bottom<dragRect->top)
+	{
+		temp=dragRect->bottom;
+		dragRect->bottom=dragRect->top+h;
+		dragRect->top=temp;
+	}
+	if (dragRect->right<dragRect->left)
+	{
+		temp=dragRect->right;
+		dragRect->right=dragRect->left+h;
+		dragRect->left=temp;
+	}
+}
+
+/* ÊåáÂÆö„Åï„Çå„ÅüÁÇπ„Åå„Éû„Çπ„ÇØÂÜÖ„Åã„Å©„ÅÜ„Åã„ÇíË™ø„Åπ„Çã */
+Boolean PtInMask(Point pt,PaintWinRec *eWinRec)
+{
+	if (eWinRec->isSelected) /* ÈÅ∏ÊäûÁØÑÂõ≤„Åå„ÅÇ„Çã */
+		SubPt(eWinRec->selectionOffset,&pt);
+	
+	return RealPtInMask(pt,eWinRec->currentMask);
+}
+
+/* ÊåáÂÆö„Åï„Çå„ÅüÁÇπ„Åå„Éû„Çπ„ÇØÂÜÖ„Åã„Å©„ÅÜ„ÅãË™ø„Åπ„ÇãÔºí */
+Boolean RealPtInMask(Point pt,GWorldPtr maskGWorld)
+{
+	PixMapHandle	pmh;
+	long	rowBytes;
+	Ptr		baseAddr;
+	Boolean	result;
+	short	left,top;
+	Rect	tempRect;
+	
+	GetPortBounds(maskGWorld,&tempRect);
+	if (!PtInRect(pt,&tempRect)) return false;
+	
+	pmh=GetGWorldPixMap(maskGWorld);
+	LockPixels(pmh);
+	rowBytes=MyGetPixRowBytes(pmh) & 0x3fff;
+	baseAddr=MyGetPixBaseAddr(pmh);
+	
+	left=tempRect.left;
+	top=tempRect.top;
+	result=BitTst(baseAddr+rowBytes * (pt.v - top),(pt.h - left));
+	UnlockPixels(pmh);
+	return result;
+}
+
+/* ÂâçÊôØ„ÅÆ‰∏çÈÄèÊòéÂ∫¶„Å´„Çà„Å£„Å¶„Éñ„É¨„É≥„ÉâÂâ≤„ÇäÂêà„ÅÑ„ÇíÊ±∫ÂÆö„Åô„Çã */
+short SetForeBlend(PaintWinRec *eWinRec)
+{
+	short	foreMode;
+	UInt16	t[]={0xc000,0x8000,0x4000,0x0000},tt;
+	RGBColor	foreTransparency;
+	
+	switch(eWinRec->foreTransparency)
+	{
+		case kForeTrans100:
+			foreMode=srcCopy;
+			break;
+		
+		default:
+			foreMode=blend;
+			tt=t[eWinRec->foreTransparency-kForeTrans75];
+			SetRGBColor(&foreTransparency,tt,tt,tt);
+			OpColor(&foreTransparency);
+	}
+	
+	return foreMode;
+}
+
+/* Â∫ßÊ®ô„ÇíÂÆüÈöõ„ÅÆ‰ΩçÁΩÆ„Å´Â§âÊèõ„Åô„Çã */
+void ToRealPos(Point *mousePt,short ratio)
+{
+	mousePt->h>>=ratio;
+	mousePt->v>>=ratio;
+}
+
+/* Â∫ßÊ®ô„ÇíÁîªÈù¢‰∏ä„ÅÆ‰ΩçÁΩÆ„Å´Â§âÊèõ„Åô„Çã */
+void ToGridPos(Point *mousePt,short ratio)
+{
+	mousePt->h<<=ratio;
+	mousePt->v<<=ratio;
+}
+
+/* „Ç∞„É™„ÉÉ„Éâ„Å´„Åù„Å£„Åü‰ΩçÁΩÆ„Å´Âãï„Åã„Åô */
+void FixToGrid(Point *mousePt)
+{
+	switch ((gToolPrefs.gridMode>>4)& 0x0f)
+	{
+		case 0:
+		case 2:
+			mousePt->h&=0xFFF0;
+			mousePt->v&=0xFFF0;
+			break;
+		
+		case 1:
+			mousePt->h&=0xFFE0;
+			mousePt->v&=0xFFE0;
+			break;
+	}
+}
+
+/* „Ç∞„É™„ÉÉ„Éâ„Å´„Åù„Å£„Åü‰ΩçÁΩÆ„Å´Âãï„Åã„Åô */
+/* ÂõõÊç®‰∫îÂÖ•„Åô„ÇãÁâà */
+void FixToGrid2(Point *mousePt)
+{
+	switch ((gToolPrefs.gridMode>>4)& 0x0f)
+	{
+		case 0:
+		case 2:
+			mousePt->h = ((mousePt->h + 8) & 0xFFF0);
+			mousePt->v = ((mousePt->v + 8) & 0xFFF0);
+			break;
+		
+		case 1:
+			mousePt->h = ((mousePt->h + 16) & 0xFFE0);
+			mousePt->v = ((mousePt->v + 16) & 0xFFE0);
+			break;
+	}
+}
+
+/* BitMap„Çí‰ΩúÊàê */
+OSErr NewBitMap(MyBitMapRec *bmpRec,Rect *rect)
+{
+	long	size;
+	short	rowBytes;
+	Ptr		baseAddr;
+	OSErr	err;
+	Ptr		temp;
+	
+	/* „Çµ„Ç§„Ç∫„ÉÅ„Çß„ÉÉ„ÇØ */
+	if (EmptyRect(rect)) return paramErr;
+	rowBytes=((rect->right-rect->left+31)>>5)<<2;
+	size=(long)rowBytes*(long)(rect->bottom-rect->top);
+	
+	/* „É°„É¢„É™Á¢∫‰øù */
+	bmpRec->bmpDataH=TempNewHandle(size,&err);
+	if (err!=noErr) return err;
+	TempHLock(bmpRec->bmpDataH,&err);
+	
+	/* „Éá„Éº„Çø„Çí„ÇØ„É™„Ç¢ */
+	baseAddr=*bmpRec->bmpDataH;
+	temp=baseAddr;
+	for ( ; size>0; size--)
+		*temp++=0;
+	
+	bmpRec->bmp.baseAddr=baseAddr;
+	bmpRec->bmp.rowBytes=rowBytes;
+	bmpRec->bmp.bounds=*rect;
+	
+	return noErr;
+}
+
+/* BitMap„ÇíÁ†¥Ê£Ñ */
+OSErr DisposeBitMap(MyBitMapRec *bmpRec)
+{
+	OSErr	err;
+	
+	TempHUnlock(bmpRec->bmpDataH,&err);
+	TempDisposeHandle(bmpRec->bmpDataH,&err);
+	
+	return err;
+}
+
+/* „É™„Éº„Ç∏„Éß„É≥„Å®Rect„ÅÆÁµêÂêà */
+void UnionRectRgn(RgnHandle dstRgn,Rect *srcRect)
+{
+	RgnHandle	tempRgn=NewRgn();
+	
+	RectRgn(tempRgn,srcRect);
+	UnionRgn(dstRgn,tempRgn,dstRgn);
+	DisposeRgn(tempRgn);
+}

@@ -1,1 +1,479 @@
-/* ------------------------------------------------------------ *//*  Definition.h                                                *//*     ’è”A\‘¢‘Ì‚È‚Ç‚Ì’è‹`                                   *//*                                                              *//*                 97.1.24 - 99.5.24  naoki iimura              *//* ------------------------------------------------------------ */#pragma once#ifndef	_IconParty_	#define		_IconParty_ #endif/* includes */#ifdef __APPLE_CC__#include	<Carbon/Carbon.h>#else#include	<TSMTE.h>#include	<Lists.h>#include	<MacTypes.h>#endif#include	"WindowExtensions.h"/* difinitions */#ifndef LONG_MAX#define		LONG_MAX	2147483647L#endif#define		kSleep		6#define		kGestaltMask	1L/* definitions */#define 	kMyButtonDelay				8#define 	kReturnKey					(char)0x0D	#define 	kEnterKey					(char)0x03	#define 	kEscapeKey					(char)0x1B	#define 	kPeriod						'.'#define		kUpArrowKey					(char)0x1E#define		kDownArrowKey				(char)0x1F#define		kDeleteKey					(char)0x08enum { kFinderType='FNDR', kFinderCreator='MACS'};enum { kResEditType='APPL', kResEditCreator='RSED'};enum { kClip2gifType='APPL', kClip2gifCreator='c2gf'};enum { kIconPartyCreator='Ipty'};enum { kGraphicConverterCreator='GKON'};enum {	kPICTFileType='PICT',	kGIFFileType='GIFf',	kPNGFileType='PNGf',	kResourceFileType='rsrc',	kDotModeLibFileType='iPat',	kBlendPaletteFileType='iBld',	kTemporaryFileType='temp',	kWinIconFileType='ICO ',	kXIconFileType='icns',	kPreferencesFileType='pref',	kFolderType='fold',		kDeleteIconInfoType='iDel',	kUpdateIconInfoType='iUpd',};#define		kRatioWidth			30#define		kBackWidth			13#define		kScrollBarWidth		15#define		kScrollBarHeight	15#define		kBaseResID	128#define		kDotCommandMaxLength	30#if TARGET_API_MAC_CARBON#define		kDefaultWinPos	{113,42}#else#define		kDefaultWinPos	{110,45}#endif#define		kWinOffset		{30,20}#define 	kCustomComment	100#define 	kSubSelection	200#define		kSubLayerInfo	201/* WIND resource ID */enum {	kPaintWindowResID=kBaseResID,	kColorPalette1ResID,	kColorPalette2ResID,	kPreviewWindowResID,	kToolPaletteResID,	kBlendPaletteResID,	kTitleWindowResID,	kInfoWindowResID,	kIconListWindowResID,	kIconFamilyWindowResID,	kPatternPaletteWindowResID,	kDotModePaletteWindowResID,	kFavoritePaletteResID,};/* Window refCon */enum {	kWindowTypePaintWindow=kBaseResID,	kWindowTypePreviewWindow,	kWindowTypeToolPalette,	kWindowTypeColorPalette1,	kWindowTypeColorPalette2,	kWindowTypeBlendPalette,	kWindowTypeTitleWindow,	kWindowTypeInfoWindow,	kWindowTypePatternPalette,	kWindowTypeDotModePalette,	kWindowTypeIconListWindow,	kWindowTypeIconFamilyWindow,	kWindowTypeFavoritePalette,};enum {	kFirstPaletteRefCon = kWindowTypeFavoritePalette,	kLastPaletteRefCon = kWindowTypeFavoritePalette,};/* Pictures */enum {	kColorPalette1PictureResID=kBaseResID,	kColorPalette2PictureResID,	kToolPalettePictureResID=132,	kBlendPalettePictureResID,	kInfoWindow0pPictureResID,	kTitleWindowPictureResID=139,	kDotModePalettePictureResID=131,};/* Cursors */#define		kCursorHandOff		133#define		kCursorHandOn		134#define		kCursorHandOffPlus	135#define		kCursorHandOnPlus	136/* •Û‘¶‚µ‚Ü‚·‚©‚Ìƒ_ƒCƒAƒƒO */#define		kDialogItemDontSave	3/* •Û‘¶‚µ‚Ü‚·‚©ƒ_ƒCƒAƒƒO‚Ìƒtƒ‰ƒO */#define		kSaveChangedCloseWindow		1#define		kSaveChangedQuitApplication	2/* Strings */enum {	sUndoString=kBaseResID,	sRedoString,	sFileKind,	sFileSuffix,	sUntitled,	sLoadAlertString,	sPrefFileString,	sGifVersionString,	sChangeSizeName,	sIconIDString};/* file suffix */enum {	siPICTFile=1,	siPNGFile,	siIconFile,	siWIconFile,};/* Tools */enum {	kPencilTool=0,	kEraserTool,	kMarqueeTool,	kSpoitTool,	kBucketTool};#define		nTools		kBucketTool/* ƒpƒŒƒbƒg‚Ìƒ`ƒFƒbƒN */enum {	kPaletteCheckNone=0,	kPaletteCheckAIC,	kPaletteCheck16,	kPaletteCheckUsed,};/* Undo mode */enum {	umCannot=0,	umPaint,	umSelect,	umMove,	umEffect,	umDeselect,	umDuplicate,	umCut,	umPaste,	umDelete,	umExchange,	umResize,	umRotate,	umColorChange,	umReplaceColor,	umFlip,	umInputText,	umMaskChange,	umDotPaint,		umAddBackground,	umAddForeground,	umUnionBackground,	umDeleteForeground,	umDeleteBackground,	umChangeTransparency,		umAddIcon,	umDeleteIcon,	umChangeIconInfo,		umPasteIconData,	umChangeIconName,	umDeleteIconData,	umAddIconData,		undoModeNum};#define	kIconPreviewWidth	0x7f#define	kIconPreviewHeight	0xad/* icon color */enum {	kicl8Depth=8,	kicl4Depth=4,	kICNDepth=1};/* scroll bar */enum {	kHScroll=1,	kVScroll=2,};/* foreground transparency */enum {	kForeTrans100,	kForeTrans75,	kForeTrans50,	kForeTrans25,	kForeTrans0};/* PNG‚Ì‚½‚ß‚Ì’è” */enum {	kPNGTransNone=0,	kPNGTransWhite,	kPNGTransBottomRight,	kPNGTransPenColor,	kPNGTransBlack,	kPNGTransEraserColor,	kPNGTransTransColor,};/* Fƒ‚[ƒh‚Ì’è” */enum {	kNormal8BitColorMode = k8IndexedPixelFormat,	k32BitColorMode = k24RGBPixelFormat,};/* structures *//* ƒhƒ‰ƒbƒO‚ÌƒOƒ[ƒoƒ‹ */typedef struct MyDragGlobalsRec{	Boolean	canAcceptDrag;	Boolean	isInContent;} MyDragGlobalsRec;/* BitMap */typedef struct MyBitMapRec {	BitMap	bmp;	Handle	bmpDataH;} MyBitMapRec;/* Drag&DropAƒAƒNƒeƒBƒx[ƒg‚È‚Ç‚Ìƒnƒ“ƒhƒ‰ */typedef struct DragHandlerRec {	DragTrackingHandlerUPP	trackUPP;	DragReceiveHandlerUPP	receiveUPP;		MyDragGlobalsRec	dragGlobals;		ActivateHandlerUPP	activateUPP;} DragHandlerRec;/* IconParty‚ÅƒAƒCƒRƒ“‚ğˆµ‚¤“à•”Œ`®ithumbnail‘Î‰j */typedef struct IPIconRec {	IconSuiteRef	iconSuite;	Handle			it32Data;	Handle			t8mkData;} IPIconRec;/* ƒAƒCƒRƒ“ƒŠƒXƒgƒEƒBƒ“ƒhƒE‚Å‚Ìæ‚èÁ‚µˆ——pƒf[ƒ^ */typedef struct IconListDataRec {	short	resID;	ResType	resType;} IconListDataRec;typedef struct IconFileUndoRec{	short	undoMode;				/* æ‚èÁ‚µƒ‚[ƒh */		short	iconNum;				/* æ‚èÁ‚µ—p‚ÌƒAƒCƒRƒ“‚Ì” */	IconListDataRec	*iconList;		/* æ‚èÁ‚µ—p‚ÌIDƒŠƒXƒg */		Str255	name;					/* æ‚èÁ‚µ—p‚ÌƒAƒCƒRƒ“‚Ì–¼‘Oiî•ñ•ÏXj */} IconFileUndoRec;/* ƒAƒCƒRƒ“ƒŠƒXƒgƒEƒBƒ“ƒhƒE‚É•t‘®‚·‚é\‘¢‘Ì */typedef struct IconListWinRec{	ListHandle	iconList;			/* ƒAƒCƒRƒ“ID‚ÌƒŠƒXƒg */	short	refNum;					/* ƒAƒCƒRƒ“ƒtƒ@ƒCƒ‹‚ÌƒŠƒtƒ@ƒŒƒ“ƒXƒiƒ“ƒo */	FSSpec	iconFileSpec;			/* ƒAƒCƒRƒ“ƒtƒ@ƒCƒ‹‚Ì•Û‘¶êŠ */	short	tempRefNum;				/* ƒeƒ“ƒ|ƒ‰ƒŠƒtƒ@ƒCƒ‹‚ÌƒŠƒtƒ@ƒŒƒ“ƒXƒiƒ“ƒo */	FSSpec	tempFileSpec;			/* ƒeƒ“ƒ|ƒ‰ƒŠƒtƒ@ƒCƒ‹ */	Boolean	wasSaved;				/* •Û‘¶‚³‚ê‚Ä‚¢‚é‚©‚Ç‚¤‚© */	Boolean	wasChanged;				/* •ÏX‚³‚ê‚Ä‚¢‚é‚©‚Ç‚¤‚© */		Boolean	cmdDown;				/* Finder‚Ö‚ÌƒhƒƒbƒvAWinƒAƒCƒRƒ“‚ğ‘‚«o‚·ƒtƒ‰ƒO */		IconFileUndoRec	undoData;		/* æ‚èÁ‚µ—p‚Ìƒf[ƒ^ */		DragHandlerRec	dragHandlers;	/* ƒhƒ‰ƒbƒO—p */} IconListWinRec;/* ƒAƒCƒRƒ“ƒtƒ@ƒ~ƒŠƒEƒBƒ“ƒhƒE‚Å‚Ìæ‚èÁ‚µˆ——pƒf[ƒ^ */typedef struct IconFamilyUndoRec{	short	undoMode;				/* æ‚èÁ‚µƒ‚[ƒh */		short	iconKind;				/* æ‚èÁ‚µ—p‚ÌƒAƒCƒRƒ“‚Ìí—Ş */	Handle	iconData;				/* æ‚èÁ‚µ—p‚ÌƒAƒCƒRƒ“ƒf[ƒ^ */} IconFamilyUndoRec;#pragma mark __IconFamilyWinRec__/* ƒAƒCƒRƒ“ƒtƒ@ƒ~ƒŠƒEƒBƒ“ƒhƒE‚É•t‘®‚·‚é\‘¢‘Ì */typedef struct IconFamilyWinRec{	WindowPtr	parentWindow;		/* eƒEƒBƒ“ƒhƒEiƒAƒCƒRƒ“ƒŠƒXƒgƒEƒBƒ“ƒhƒEj‚Ö‚Ìƒ|ƒCƒ“ƒ^ */	OSType		iconType;			/* ƒAƒCƒRƒ“ƒ^ƒCƒv */	 /* parentWindow == nilA	 		'icns'		X—pƒAƒCƒRƒ“	 		'wIco'		Win—pƒAƒCƒRƒ“	 		'Icon'		ƒAƒCƒRƒ“•t‚«ƒtƒHƒ‹ƒ_	 	parentWindow != nilA	 		'icns'		ƒAƒCƒRƒ“ƒtƒ@ƒ~ƒŠƒŠƒ\[ƒX	 		'ICN#'		ƒAƒCƒRƒ“ƒŠƒ\[ƒX */	FSSpec		theIconSpec;		/* ƒAƒCƒRƒ“‚Â‚«ƒtƒHƒ‹ƒ_^ƒtƒ@ƒCƒ‹‚ÌˆÊ’uiparentWindow==nilj */	Boolean		isSaved;			/* •Û‘¶‚³‚ê‚Ä‚¢‚é‚©‚Ç‚¤‚© */	Boolean		isFolder;			/* ƒtƒHƒ‹ƒ_‚©ƒtƒ@ƒCƒ‹‚©‚ğ¦‚·ƒtƒ‰ƒO *///	Handle		iconSuite;			/* ƒAƒCƒRƒ“‚Ìƒf[ƒ^©‘Ì */	IPIconRec	ipIcon;				/* ƒAƒCƒRƒ“‚Ìƒf[ƒ^ */	short		iconID;				/* ƒAƒCƒRƒ“‚ÌID *///	ResType		resType;			/* Œ³‚ÌƒAƒCƒRƒ“ƒ^ƒCƒvi'ICN#'‚©'icns'j */	Str255		iconName;			/* ƒAƒCƒRƒ“‚Ì–¼‘O */	short		selectedIcon;		/* ‘I‘ğ’†‚ÌƒAƒCƒRƒ“ */	TEHandle	iconNameTE;			/* ƒAƒCƒRƒ“‚Ì–¼‘O‚ğ•ÒW‚·‚é‚½‚ß‚ÌTE */	Boolean		wasNameTEActive;	/* ƒAƒCƒRƒ“‚Ì–¼‘OTE‚ªƒAƒNƒeƒBƒu‚¾‚Á‚½‚©‚Ç‚¤‚© */	TSMDocumentID	docID;			/* ƒCƒ“ƒ‰ƒCƒ““ü—Í—p */	TSMTERecHandle	docTSMRecH;		/* ƒCƒ“ƒ‰ƒCƒ““ü—Í—p */	Boolean		wasChanged;			/* •ÏX‚³‚ê‚½‚©‚Ç‚¤‚©‚Ìƒtƒ‰ƒO */		Boolean		show32Icons;		/* 8.5—p‚ÌƒAƒCƒRƒ“‚ğ•\¦‚·‚é‚©‚Ç‚¤‚© */	Boolean		showXIcons;			/* X—p‚ÌƒAƒCƒRƒ“‚ğ•\¦‚·‚é‚©‚Ç‚¤‚© */		short		largeWindowWidth;		short		largeWindowHeight;			IconFamilyUndoRec	undoData;	/* æ‚èÁ‚µ—pƒf[ƒ^ */		DragHandlerRec	dragHandlers;	/* ƒhƒ‰ƒbƒO—p */} IconFamilyWinRec;typedef struct IconInfoRec{	OSType	fileType;	OSType	creatorCode;} IconInfoRec;#pragma mark __PaintWinRec__/* •ÒWƒEƒBƒ“ƒhƒE‚É•t‘®‚·‚é\‘¢‘Ì */typedef struct PaintWinRec{	Rect		iconSize;			/* ƒAƒCƒRƒ“‚Ì‘å‚«‚³ */	Rect		iconEditSize;		/* •ÒW—Ìˆæ‚Ì‘å‚«‚³ */	short		ratio;				/* ”{—¦i2^ratio”{j */	Rect		editRect;			/* •ÒWƒEƒBƒ“ƒhƒE‚Ì•`‰æ‰Â”\—Ìˆæ */	ControlHandle	hScroll;		/* …•½ƒXƒNƒ[ƒ‹ƒo[ */	ControlHandle	vScroll;		/* ‚’¼ƒXƒNƒ[ƒ‹ƒo[ */		short		colorMode;			/* Fƒ‚[ƒhi8 or 32j */	short		iconDepth;			/* F[“xi8 or 32j */		GWorldPtr	editDataPtr;		/* •ÒW—p */	GWorldPtr	tempDataPtr;		/* æÁ—p */	GWorldPtr	dispTempPtr;		/* •\¦—p */	GWorldPtr	selectedDataPtr;	/* ‘I‘ğ—ÌˆæŠO */		GWorldPtr	foregroundGWorld;	/* ‘OŒi */	GWorldPtr	foregroundMask;		/* ‘OŒi‚Ìƒ}ƒXƒN */	GWorldPtr	currentMask;		/* •ÒW‰æ–Ê‚Ìƒ}ƒXƒN */	GWorldPtr	pCurrentMask;		/* ‘O‰ñ‚Ì•ÒW‰æ–Ê‚Ìƒ}ƒXƒN */	GWorldPtr	selectionMask;		/* ‘I‘ğ—ÌˆæŠO‚Ìƒ}ƒXƒN */	GWorldPtr	backgroundGWorld;	/* ”wŒi */	GWorldPtr	backgroundMask;		/* ”wŒi‚Ìƒ}ƒXƒNi•sg—pj */		Boolean		isBackTransparent;	/* ”wŒi‚ª“§–¾‚©‚Ç‚¤‚©iƒŒƒCƒ„[‚ª‘¶İ‚µ‚È‚¢ê‡‚Ì‚İj */		Boolean		editBackground;		/* ƒoƒbƒNƒOƒ‰ƒEƒ“ƒh‚ğ•ÒW */	Boolean		dispBackground;		/* ƒoƒbƒNƒOƒ‰ƒEƒ“ƒh‚ğ•\¦ */	short		foreTransparency;	/* ‘OŒi‚Ì•s“§–¾“x */	short		pForeTransparency;	/* ‘O‰ñ‚Ì‘OŒi‚Ì•s“§–¾“x */		Boolean		resizeImage;		/* ’¼‘O‚ÌƒŠƒTƒCƒY‚Ìİ’è */	Boolean		resizeDither;		RgnHandle	eSelectedRgn;		/* ƒyƒCƒ“ƒgƒEƒBƒ“ƒhƒE‚Å‚Ì‘I‘ğ—Ìˆæ */ 	RgnHandle	ePrevSelectedRgn;	/* ‘O‰ñ‚Ì‘I‘ğ—Ìˆæ */	RgnHandle	selectionPos;		/* ÀÛ‚Ì‘I‘ğˆÊ’u */	RgnHandle	prevSelectionPos;	/* ‘O‰ñ‚Ì‘I‘ğˆÊ’u */	Rect		selectedRect;		/* ‘I‘ğ—ÌˆæiÀÛj */	Rect		prevSelectedRect;	/* ‘O‰ñ‚Ì‘I‘ğ—Ìˆæ */	Point		selectionOffset;	/* ‘I‘ğ—Ìˆæ‚ÌÀÛ‚ÌˆÊ’u‚Æ‚Ì‚¸‚ê */	Point		prevMovement;			short		prevRotate;			/* ‘O‰ñ‰ñ“]‚³‚ê‚½Šp“x */		Boolean		isSelected;			/* ‘I‘ğó‘Ô‚©‚Ç‚¤‚© */		RGBColor	replacedColor;	Boolean		replacedTransparent;		RgnHandle	updateRgn;			/* Ä•`‰æ‚·‚é—Ìˆæ */		short		selectionBlend;		/* ‘I‘ğ—Ìˆæ‚Æ”wŒi‚Ìd‚Ë‡‚¹ */	Boolean		showSelection;		/* ‘I‘ğ˜g‚ğ•\¦‚·‚é‚©‚Ç‚¤‚© */		Boolean		iconHasChanged;		/* ƒAƒCƒRƒ“‚ª•ÏX‚³‚ê‚Ä‚¢‚é‚©‚Ç‚¤‚© */	Boolean		iconHasSaved;		/* ƒAƒCƒRƒ“‚ª•Û‘¶‚³‚ê‚Ä‚¢‚é‚©‚Ç‚¤‚© */		IconInfoRec	iconType;			/* •Û‘¶‚·‚éÛ‚Ìƒtƒ@ƒCƒ‹ƒ^ƒCƒv^ƒAƒCƒRƒ“‚Ìƒ^ƒCƒv */	FSSpec		saveFileSpec;		/* ƒAƒCƒRƒ“‚ğ•Û‘¶‚·‚éêŠ */	WindowPtr	parentWindow;		/* eƒEƒBƒ“ƒhƒEiƒtƒ@ƒ~ƒŠƒEƒBƒ“ƒhƒEj‚Ìƒ|ƒCƒ“ƒ^ */	short		iconKind;		FSSpec		tempFileSpec;	short		tempFileRefNum;		/* ƒeƒ“ƒ|ƒ‰ƒŠƒtƒ@ƒCƒ‹ */		/* •`‰æ“_ƒ‚[ƒh—p */	Boolean		isDotMode;			/* •`‰æ“_ƒ‚[ƒh‚©‚Ç‚¤‚© */	Point		dotPos;				/* •`‰æ“_‚ÌˆÊ’u */	Boolean		isInverted;			/* •`‰æ“_‚ª”½“]‚³‚ê‚Ä‚¢‚é‚©‚Ç‚¤‚© */	UInt32		lastInvertedTime;	/* •`‰æ“_‚ªÅŒã‚É“_–Å‚µ‚½ŠÔ */	Str31		dotCommand;			/* ‹L˜^‚³‚ê‚Ä‚¢‚é•`‰æ“_ƒRƒ}ƒ“ƒh */		Point		firstDotPos;		/* •`‰æ“_ƒ‚[ƒh‚É“ü‚Á‚½‚ÌˆÊ’u */	Str31		prevDotCommand;		/* ‹L˜^‚³‚ê‚Ä‚¢‚é•`‰æ“_ƒRƒ}ƒ“ƒhiæ‚èÁ‚µ—pj */		/* ƒVƒtƒgƒ‰ƒCƒ“—p */	Point	lastPaintPos;			/* ‰”•MAÁ‚µƒSƒ€‚ÅÅŒã‚É•`‰æ‚µ‚½êŠ */		short	undoMode;				/* æ‚èÁ‚µ‚Ìƒ‚[ƒh */		DragHandlerRec	dragHandlers;	/* ƒhƒ‰ƒbƒO—p */} PaintWinRec;
+/* ------------------------------------------------------------ */
+/*  Definition.h                                                */
+/*     å®šæ•°ã€æ§‹é€ ä½“ãªã©ã®å®šç¾©                                   */
+/*                                                              */
+/*                 97.1.24 - 99.5.24  naoki iimura              */
+/* ------------------------------------------------------------ */
+
+#pragma once
+#ifndef	_IconParty_
+	#define		_IconParty_ 
+#endif
+
+/* includes */
+#ifdef __APPLE_CC__
+#include	<Carbon/Carbon.h>
+#else
+#include	<TSMTE.h>
+#include	<Lists.h>
+#include	<MacTypes.h>
+#endif
+#include	"WindowExtensions.h"
+
+/* difinitions */
+#ifndef LONG_MAX
+#define		LONG_MAX	2147483647L
+#endif
+#define		kSleep		6
+
+#define		kGestaltMask	1L
+
+/* definitions */
+#define 	kMyButtonDelay				8
+#define 	kReturnKey					(char)0x0D	
+#define 	kEnterKey					(char)0x03	
+#define 	kEscapeKey					(char)0x1B	
+#define 	kPeriod						'.'
+#define		kUpArrowKey					(char)0x1E
+#define		kDownArrowKey				(char)0x1F
+#define		kDeleteKey					(char)0x08
+
+enum { kFinderType='FNDR', kFinderCreator='MACS'};
+enum { kResEditType='APPL', kResEditCreator='RSED'};
+enum { kClip2gifType='APPL', kClip2gifCreator='c2gf'};
+enum { kIconPartyCreator='Ipty'};
+enum { kGraphicConverterCreator='GKON'};
+enum {
+	kPICTFileType='PICT',
+	kGIFFileType='GIFf',
+	kPNGFileType='PNGf',
+	kResourceFileType='rsrc',
+	kDotModeLibFileType='iPat',
+	kBlendPaletteFileType='iBld',
+	kTemporaryFileType='temp',
+	kWinIconFileType='ICO ',
+	kXIconFileType='icns',
+	kPreferencesFileType='pref',
+	kFolderType='fold',
+	
+	kDeleteIconInfoType='iDel',
+	kUpdateIconInfoType='iUpd',
+};
+
+#define		kRatioWidth			30
+#define		kBackWidth			13
+#define		kScrollBarWidth		15
+#define		kScrollBarHeight	15
+
+#define		kBaseResID	128
+
+#define		kDotCommandMaxLength	30
+
+#if TARGET_API_MAC_CARBON
+#define		kDefaultWinPos	{113,42}
+#else
+#define		kDefaultWinPos	{110,45}
+#endif
+#define		kWinOffset		{30,20}
+
+#define 	kCustomComment	100
+#define 	kSubSelection	200
+#define		kSubLayerInfo	201
+
+/* WIND resource ID */
+enum {
+	kPaintWindowResID=kBaseResID,
+	kColorPalette1ResID,
+	kColorPalette2ResID,
+	kPreviewWindowResID,
+	kToolPaletteResID,
+	kBlendPaletteResID,
+	kTitleWindowResID,
+	kInfoWindowResID,
+	kIconListWindowResID,
+	kIconFamilyWindowResID,
+	kPatternPaletteWindowResID,
+	kDotModePaletteWindowResID,
+	kFavoritePaletteResID,
+};
+
+
+/* Window refCon */
+enum {
+	kWindowTypePaintWindow=kBaseResID,
+	kWindowTypePreviewWindow,
+	kWindowTypeToolPalette,
+	kWindowTypeColorPalette1,
+	kWindowTypeColorPalette2,
+	kWindowTypeBlendPalette,
+	kWindowTypeTitleWindow,
+	kWindowTypeInfoWindow,
+	kWindowTypePatternPalette,
+	kWindowTypeDotModePalette,
+	kWindowTypeIconListWindow,
+	kWindowTypeIconFamilyWindow,
+	kWindowTypeFavoritePalette,
+};
+
+enum {
+	kFirstPaletteRefCon = kWindowTypeFavoritePalette,
+	kLastPaletteRefCon = kWindowTypeFavoritePalette,
+};
+
+
+/* Pictures */
+enum {
+	kColorPalette1PictureResID=kBaseResID,
+	kColorPalette2PictureResID,
+	kToolPalettePictureResID=132,
+	kBlendPalettePictureResID,
+	kInfoWindow0pPictureResID,
+	kTitleWindowPictureResID=139,
+	kDotModePalettePictureResID=131,
+};
+
+
+
+/* Cursors */
+#define		kCursorHandOff		133
+#define		kCursorHandOn		134
+#define		kCursorHandOffPlus	135
+#define		kCursorHandOnPlus	136
+
+
+/* ä¿å­˜ã—ã¾ã™ã‹ã®ãƒ€ã‚¤ã‚¢ãƒ­ã‚° */
+#define		kDialogItemDontSave	3
+
+/* ä¿å­˜ã—ã¾ã™ã‹ãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã®ãƒ•ãƒ©ã‚° */
+#define		kSaveChangedCloseWindow		1
+#define		kSaveChangedQuitApplication	2
+
+
+/* Strings */
+enum {
+	sUndoString=kBaseResID,
+	sRedoString,
+	sFileKind,
+	sFileSuffix,
+	sUntitled,
+	sLoadAlertString,
+	sPrefFileString,
+	sGifVersionString,
+	sChangeSizeName,
+	sIconIDString
+};
+
+/* file suffix */
+enum {
+	siPICTFile=1,
+	siPNGFile,
+	siIconFile,
+	siWIconFile,
+};
+
+/* Tools */
+enum {
+	kPencilTool=0,
+	kEraserTool,
+	kMarqueeTool,
+	kSpoitTool,
+	kBucketTool
+};
+
+#define		nTools		kBucketTool
+
+/* ãƒ‘ãƒ¬ãƒƒãƒˆã®ãƒã‚§ãƒƒã‚¯ */
+enum {
+	kPaletteCheckNone=0,
+	kPaletteCheckAIC,
+	kPaletteCheck16,
+	kPaletteCheckUsed,
+};
+
+/* Undo mode */
+enum {
+	umCannot=0,
+	umPaint,
+	umSelect,
+	umMove,
+	umEffect,
+	umDeselect,
+	umDuplicate,
+	umCut,
+	umPaste,
+	umDelete,
+	umExchange,
+	umResize,
+	umRotate,
+	umColorChange,
+	umReplaceColor,
+	umFlip,
+	umInputText,
+	umMaskChange,
+	umDotPaint,
+	
+	umAddBackground,
+	umAddForeground,
+	umUnionBackground,
+	umDeleteForeground,
+	umDeleteBackground,
+	umChangeTransparency,
+	
+	umAddIcon,
+	umDeleteIcon,
+	umChangeIconInfo,
+	
+	umPasteIconData,
+	umChangeIconName,
+	umDeleteIconData,
+	umAddIconData,
+	
+	undoModeNum
+};
+
+#define	kIconPreviewWidth	0x7f
+#define	kIconPreviewHeight	0xad
+
+/* icon color */
+enum {
+	kicl8Depth=8,
+	kicl4Depth=4,
+	kICNDepth=1
+};
+
+/* scroll bar */
+enum {
+	kHScroll=1,
+	kVScroll=2,
+};
+
+/* foreground transparency */
+enum {
+	kForeTrans100,
+	kForeTrans75,
+	kForeTrans50,
+	kForeTrans25,
+	kForeTrans0
+};
+
+/* PNGã®ãŸã‚ã®å®šæ•° */
+enum {
+	kPNGTransNone=0,
+	kPNGTransWhite,
+	kPNGTransBottomRight,
+	kPNGTransPenColor,
+	kPNGTransBlack,
+	kPNGTransEraserColor,
+	kPNGTransTransColor,
+};
+
+/* è‰²ãƒ¢ãƒ¼ãƒ‰ã®å®šæ•° */
+enum {
+	kNormal8BitColorMode = k8IndexedPixelFormat,
+	k32BitColorMode = k24RGBPixelFormat,
+};
+
+/* structures */
+/* ãƒ‰ãƒ©ãƒƒã‚°ã®ã‚°ãƒ­ãƒ¼ãƒãƒ« */
+typedef struct MyDragGlobalsRec
+{
+	Boolean	canAcceptDrag;
+	Boolean	isInContent;
+} MyDragGlobalsRec;
+
+/* BitMap */
+typedef struct MyBitMapRec {
+	BitMap	bmp;
+	Handle	bmpDataH;
+} MyBitMapRec;
+
+/* Drag&Dropã€ã‚¢ã‚¯ãƒ†ã‚£ãƒ™ãƒ¼ãƒˆãªã©ã®ãƒãƒ³ãƒ‰ãƒ© */
+typedef struct DragHandlerRec {
+	DragTrackingHandlerUPP	trackUPP;
+	DragReceiveHandlerUPP	receiveUPP;
+	
+	MyDragGlobalsRec	dragGlobals;
+	
+	ActivateHandlerUPP	activateUPP;
+} DragHandlerRec;
+
+/* IconPartyã§ã‚¢ã‚¤ã‚³ãƒ³ã‚’æ‰±ã†å†…éƒ¨å½¢å¼ï¼ˆthumbnailå¯¾å¿œï¼‰ */
+typedef struct IPIconRec {
+	IconSuiteRef	iconSuite;
+	Handle			it32Data;
+	Handle			t8mkData;
+} IPIconRec;
+
+/* ã‚¢ã‚¤ã‚³ãƒ³ãƒªã‚¹ãƒˆã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã§ã®å–ã‚Šæ¶ˆã—å‡¦ç†ç”¨ãƒ‡ãƒ¼ã‚¿ */
+typedef struct IconListDataRec {
+	short	resID;
+	ResType	resType;
+} IconListDataRec;
+
+typedef struct IconFileUndoRec
+{
+	short	undoMode;				/* å–ã‚Šæ¶ˆã—ãƒ¢ãƒ¼ãƒ‰ */
+	
+	short	iconNum;				/* å–ã‚Šæ¶ˆã—ç”¨ã®ã‚¢ã‚¤ã‚³ãƒ³ã®æ•° */
+	IconListDataRec	*iconList;		/* å–ã‚Šæ¶ˆã—ç”¨ã®IDãƒªã‚¹ãƒˆ */
+	
+	Str255	name;					/* å–ã‚Šæ¶ˆã—ç”¨ã®ã‚¢ã‚¤ã‚³ãƒ³ã®åå‰ï¼ˆæƒ…å ±å¤‰æ›´æ™‚ï¼‰ */
+} IconFileUndoRec;
+
+/* ã‚¢ã‚¤ã‚³ãƒ³ãƒªã‚¹ãƒˆã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã«ä»˜å±ã™ã‚‹æ§‹é€ ä½“ */
+typedef struct IconListWinRec
+{
+	ListHandle	iconList;			/* ã‚¢ã‚¤ã‚³ãƒ³IDã®ãƒªã‚¹ãƒˆ */
+	short	refNum;					/* ã‚¢ã‚¤ã‚³ãƒ³ãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒªãƒ•ã‚¡ãƒ¬ãƒ³ã‚¹ãƒŠãƒ³ãƒ */
+	FSSpec	iconFileSpec;			/* ã‚¢ã‚¤ã‚³ãƒ³ãƒ•ã‚¡ã‚¤ãƒ«ã®ä¿å­˜å ´æ‰€ */
+	short	tempRefNum;				/* ãƒ†ãƒ³ãƒãƒ©ãƒªãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒªãƒ•ã‚¡ãƒ¬ãƒ³ã‚¹ãƒŠãƒ³ãƒ */
+	FSSpec	tempFileSpec;			/* ãƒ†ãƒ³ãƒãƒ©ãƒªãƒ•ã‚¡ã‚¤ãƒ« */
+	Boolean	wasSaved;				/* ä¿å­˜ã•ã‚Œã¦ã„ã‚‹ã‹ã©ã†ã‹ */
+	Boolean	wasChanged;				/* å¤‰æ›´ã•ã‚Œã¦ã„ã‚‹ã‹ã©ã†ã‹ */
+	
+	Boolean	cmdDown;				/* Finderã¸ã®ãƒ‰ãƒ­ãƒƒãƒ—æ™‚ã€Winã‚¢ã‚¤ã‚³ãƒ³ã‚’æ›¸ãå‡ºã™ãƒ•ãƒ©ã‚° */
+	
+	IconFileUndoRec	undoData;		/* å–ã‚Šæ¶ˆã—ç”¨ã®ãƒ‡ãƒ¼ã‚¿ */
+	
+	DragHandlerRec	dragHandlers;	/* ãƒ‰ãƒ©ãƒƒã‚°ç”¨ */
+} IconListWinRec;
+
+/* ã‚¢ã‚¤ã‚³ãƒ³ãƒ•ã‚¡ãƒŸãƒªã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã§ã®å–ã‚Šæ¶ˆã—å‡¦ç†ç”¨ãƒ‡ãƒ¼ã‚¿ */
+typedef struct IconFamilyUndoRec
+{
+	short	undoMode;				/* å–ã‚Šæ¶ˆã—ãƒ¢ãƒ¼ãƒ‰ */
+	
+	short	iconKind;				/* å–ã‚Šæ¶ˆã—ç”¨ã®ã‚¢ã‚¤ã‚³ãƒ³ã®ç¨®é¡ */
+	Handle	iconData;				/* å–ã‚Šæ¶ˆã—ç”¨ã®ã‚¢ã‚¤ã‚³ãƒ³ãƒ‡ãƒ¼ã‚¿ */
+} IconFamilyUndoRec;
+
+#pragma mark __IconFamilyWinRec__
+/* ã‚¢ã‚¤ã‚³ãƒ³ãƒ•ã‚¡ãƒŸãƒªã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã«ä»˜å±ã™ã‚‹æ§‹é€ ä½“ */
+typedef struct IconFamilyWinRec
+{
+	WindowPtr	parentWindow;		/* è¦ªã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ï¼ˆã‚¢ã‚¤ã‚³ãƒ³ãƒªã‚¹ãƒˆã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ï¼‰ã¸ã®ãƒã‚¤ãƒ³ã‚¿ */
+	OSType		iconType;			/* ã‚¢ã‚¤ã‚³ãƒ³ã‚¿ã‚¤ãƒ— */
+	 /* parentWindow == nilæ™‚ã€
+	 		'icns'		Xç”¨ã‚¢ã‚¤ã‚³ãƒ³
+	 		'wIco'		Winç”¨ã‚¢ã‚¤ã‚³ãƒ³
+	 		'Icon'		ã‚¢ã‚¤ã‚³ãƒ³ä»˜ããƒ•ã‚©ãƒ«ãƒ€
+	 	parentWindow != nilæ™‚ã€
+	 		'icns'		ã‚¢ã‚¤ã‚³ãƒ³ãƒ•ã‚¡ãƒŸãƒªãƒªã‚½ãƒ¼ã‚¹
+	 		'ICN#'		ã‚¢ã‚¤ã‚³ãƒ³ãƒªã‚½ãƒ¼ã‚¹ */
+	FSSpec		theIconSpec;		/* ã‚¢ã‚¤ã‚³ãƒ³ã¤ããƒ•ã‚©ãƒ«ãƒ€ï¼ãƒ•ã‚¡ã‚¤ãƒ«ã®ä½ç½®ï¼ˆparentWindow==nilæ™‚ï¼‰ */
+	Boolean		isSaved;			/* ä¿å­˜ã•ã‚Œã¦ã„ã‚‹ã‹ã©ã†ã‹ */
+	Boolean		isFolder;			/* ãƒ•ã‚©ãƒ«ãƒ€ã‹ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚’ç¤ºã™ãƒ•ãƒ©ã‚° */
+//	Handle		iconSuite;			/* ã‚¢ã‚¤ã‚³ãƒ³ã®ãƒ‡ãƒ¼ã‚¿è‡ªä½“ */
+	IPIconRec	ipIcon;				/* ã‚¢ã‚¤ã‚³ãƒ³ã®ãƒ‡ãƒ¼ã‚¿ */
+	short		iconID;				/* ã‚¢ã‚¤ã‚³ãƒ³ã®ID */
+//	ResType		resType;			/* å…ƒã®ã‚¢ã‚¤ã‚³ãƒ³ã‚¿ã‚¤ãƒ—ï¼ˆ'ICN#'ã‹'icns'ï¼‰ */
+	Str255		iconName;			/* ã‚¢ã‚¤ã‚³ãƒ³ã®åå‰ */
+	short		selectedIcon;		/* é¸æŠä¸­ã®ã‚¢ã‚¤ã‚³ãƒ³ */
+	TEHandle	iconNameTE;			/* ã‚¢ã‚¤ã‚³ãƒ³ã®åå‰ã‚’ç·¨é›†ã™ã‚‹ãŸã‚ã®TE */
+	Boolean		wasNameTEActive;	/* ã‚¢ã‚¤ã‚³ãƒ³ã®åå‰TEãŒã‚¢ã‚¯ãƒ†ã‚£ãƒ–ã ã£ãŸã‹ã©ã†ã‹ */
+	TSMDocumentID	docID;			/* ã‚¤ãƒ³ãƒ©ã‚¤ãƒ³å…¥åŠ›ç”¨ */
+	TSMTERecHandle	docTSMRecH;		/* ã‚¤ãƒ³ãƒ©ã‚¤ãƒ³å…¥åŠ›ç”¨ */
+	Boolean		wasChanged;			/* å¤‰æ›´ã•ã‚ŒãŸã‹ã©ã†ã‹ã®ãƒ•ãƒ©ã‚° */
+	
+	Boolean		show32Icons;		/* 8.5ç”¨ã®ã‚¢ã‚¤ã‚³ãƒ³ã‚’è¡¨ç¤ºã™ã‚‹ã‹ã©ã†ã‹ */
+	Boolean		showXIcons;			/* Xç”¨ã®ã‚¢ã‚¤ã‚³ãƒ³ã‚’è¡¨ç¤ºã™ã‚‹ã‹ã©ã†ã‹ */
+	
+	short		largeWindowWidth;	
+	short		largeWindowHeight;	
+	
+	IconFamilyUndoRec	undoData;	/* å–ã‚Šæ¶ˆã—ç”¨ãƒ‡ãƒ¼ã‚¿ */
+	
+	DragHandlerRec	dragHandlers;	/* ãƒ‰ãƒ©ãƒƒã‚°ç”¨ */
+} IconFamilyWinRec;
+
+typedef struct IconInfoRec
+{
+	OSType	fileType;
+	OSType	creatorCode;
+} IconInfoRec;
+
+#pragma mark __PaintWinRec__
+/* ç·¨é›†ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã«ä»˜å±ã™ã‚‹æ§‹é€ ä½“ */
+typedef struct PaintWinRec
+{
+	Rect		iconSize;			/* ã‚¢ã‚¤ã‚³ãƒ³ã®å¤§ãã• */
+	Rect		iconEditSize;		/* ç·¨é›†é ˜åŸŸã®å¤§ãã• */
+	short		ratio;				/* å€ç‡ï¼ˆ2^ratioå€ï¼‰ */
+	Rect		editRect;			/* ç·¨é›†ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®æç”»å¯èƒ½é ˜åŸŸ */
+	ControlHandle	hScroll;		/* æ°´å¹³ã‚¹ã‚¯ãƒ­ãƒ¼ãƒ«ãƒãƒ¼ */
+	ControlHandle	vScroll;		/* å‚ç›´ã‚¹ã‚¯ãƒ­ãƒ¼ãƒ«ãƒãƒ¼ */
+	
+	short		colorMode;			/* è‰²ãƒ¢ãƒ¼ãƒ‰ï¼ˆ8 or 32ï¼‰ */
+	short		iconDepth;			/* è‰²æ·±åº¦ï¼ˆ8 or 32ï¼‰ */
+	
+	GWorldPtr	editDataPtr;		/* ç·¨é›†ç”¨ */
+	GWorldPtr	tempDataPtr;		/* å–æ¶ˆç”¨ */
+	GWorldPtr	dispTempPtr;		/* è¡¨ç¤ºç”¨ */
+	GWorldPtr	selectedDataPtr;	/* é¸æŠé ˜åŸŸå¤– */
+	
+	GWorldPtr	foregroundGWorld;	/* å‰æ™¯ */
+	GWorldPtr	foregroundMask;		/* å‰æ™¯ã®ãƒã‚¹ã‚¯ */
+	GWorldPtr	currentMask;		/* ç·¨é›†ç”»é¢ã®ãƒã‚¹ã‚¯ */
+	GWorldPtr	pCurrentMask;		/* å‰å›ã®ç·¨é›†ç”»é¢ã®ãƒã‚¹ã‚¯ */
+	GWorldPtr	selectionMask;		/* é¸æŠé ˜åŸŸå¤–ã®ãƒã‚¹ã‚¯ */
+	GWorldPtr	backgroundGWorld;	/* èƒŒæ™¯ */
+	GWorldPtr	backgroundMask;		/* èƒŒæ™¯ã®ãƒã‚¹ã‚¯ï¼ˆä¸ä½¿ç”¨ï¼‰ */
+	
+	Boolean		isBackTransparent;	/* èƒŒæ™¯ãŒé€æ˜ã‹ã©ã†ã‹ï¼ˆãƒ¬ã‚¤ãƒ¤ãƒ¼ãŒå­˜åœ¨ã—ãªã„å ´åˆã®ã¿ï¼‰ */
+	
+	Boolean		editBackground;		/* ãƒãƒƒã‚¯ã‚°ãƒ©ã‚¦ãƒ³ãƒ‰ã‚’ç·¨é›† */
+	Boolean		dispBackground;		/* ãƒãƒƒã‚¯ã‚°ãƒ©ã‚¦ãƒ³ãƒ‰ã‚’è¡¨ç¤º */
+	short		foreTransparency;	/* å‰æ™¯ã®ä¸é€æ˜åº¦ */
+	short		pForeTransparency;	/* å‰å›ã®å‰æ™¯ã®ä¸é€æ˜åº¦ */
+	
+	Boolean		resizeImage;		/* ç›´å‰ã®ãƒªã‚µã‚¤ã‚ºã®è¨­å®š */
+	Boolean		resizeDither;
+	
+	RgnHandle	eSelectedRgn;		/* ãƒšã‚¤ãƒ³ãƒˆã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã§ã®é¸æŠé ˜åŸŸ */ 
+	RgnHandle	ePrevSelectedRgn;	/* å‰å›ã®é¸æŠé ˜åŸŸ */
+	RgnHandle	selectionPos;		/* å®Ÿéš›ã®é¸æŠä½ç½® */
+	RgnHandle	prevSelectionPos;	/* å‰å›ã®é¸æŠä½ç½® */
+	Rect		selectedRect;		/* é¸æŠé ˜åŸŸï¼ˆå®Ÿéš›ï¼‰ */
+	Rect		prevSelectedRect;	/* å‰å›ã®é¸æŠé ˜åŸŸ */
+	Point		selectionOffset;	/* é¸æŠé ˜åŸŸã®å®Ÿéš›ã®ä½ç½®ã¨ã®ãšã‚Œ */
+	Point		prevMovement;		
+	short		prevRotate;			/* å‰å›å›è»¢ã•ã‚ŒãŸè§’åº¦ */
+	
+	Boolean		isSelected;			/* é¸æŠçŠ¶æ…‹ã‹ã©ã†ã‹ */
+	
+	RGBColor	replacedColor;
+	Boolean		replacedTransparent;
+	
+	RgnHandle	updateRgn;			/* å†æç”»ã™ã‚‹é ˜åŸŸ */
+	
+	short		selectionBlend;		/* é¸æŠé ˜åŸŸã¨èƒŒæ™¯ã®é‡ã­åˆã› */
+	Boolean		showSelection;		/* é¸æŠæ ã‚’è¡¨ç¤ºã™ã‚‹ã‹ã©ã†ã‹ */
+	
+	Boolean		iconHasChanged;		/* ã‚¢ã‚¤ã‚³ãƒ³ãŒå¤‰æ›´ã•ã‚Œã¦ã„ã‚‹ã‹ã©ã†ã‹ */
+	Boolean		iconHasSaved;		/* ã‚¢ã‚¤ã‚³ãƒ³ãŒä¿å­˜ã•ã‚Œã¦ã„ã‚‹ã‹ã©ã†ã‹ */
+	
+	IconInfoRec	iconType;			/* ä¿å­˜ã™ã‚‹éš›ã®ãƒ•ã‚¡ã‚¤ãƒ«ã‚¿ã‚¤ãƒ—ï¼ã‚¢ã‚¤ã‚³ãƒ³ã®ã‚¿ã‚¤ãƒ— */
+	FSSpec		saveFileSpec;		/* ã‚¢ã‚¤ã‚³ãƒ³ã‚’ä¿å­˜ã™ã‚‹å ´æ‰€ */
+	WindowPtr	parentWindow;		/* è¦ªã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ï¼ˆãƒ•ã‚¡ãƒŸãƒªã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ï¼‰ã®ãƒã‚¤ãƒ³ã‚¿ */
+	short		iconKind;
+	
+	FSSpec		tempFileSpec;
+	short		tempFileRefNum;		/* ãƒ†ãƒ³ãƒãƒ©ãƒªãƒ•ã‚¡ã‚¤ãƒ« */
+	
+	/* æç”»ç‚¹ãƒ¢ãƒ¼ãƒ‰ç”¨ */
+	Boolean		isDotMode;			/* æç”»ç‚¹ãƒ¢ãƒ¼ãƒ‰ã‹ã©ã†ã‹ */
+	Point		dotPos;				/* æç”»ç‚¹ã®ä½ç½® */
+	Boolean		isInverted;			/* æç”»ç‚¹ãŒåè»¢ã•ã‚Œã¦ã„ã‚‹ã‹ã©ã†ã‹ */
+	UInt32		lastInvertedTime;	/* æç”»ç‚¹ãŒæœ€å¾Œã«ç‚¹æ»…ã—ãŸæ™‚é–“ */
+	Str31		dotCommand;			/* è¨˜éŒ²ã•ã‚Œã¦ã„ã‚‹æç”»ç‚¹ã‚³ãƒãƒ³ãƒ‰ */
+	
+	Point		firstDotPos;		/* æç”»ç‚¹ãƒ¢ãƒ¼ãƒ‰ã«å…¥ã£ãŸæ™‚ã®ä½ç½® */
+	Str31		prevDotCommand;		/* è¨˜éŒ²ã•ã‚Œã¦ã„ã‚‹æç”»ç‚¹ã‚³ãƒãƒ³ãƒ‰ï¼ˆå–ã‚Šæ¶ˆã—ç”¨ï¼‰ */
+	
+	/* ã‚·ãƒ•ãƒˆãƒ©ã‚¤ãƒ³ç”¨ */
+	Point	lastPaintPos;			/* é‰›ç­†ã€æ¶ˆã—ã‚´ãƒ ã§æœ€å¾Œã«æç”»ã—ãŸå ´æ‰€ */
+	
+	short	undoMode;				/* å–ã‚Šæ¶ˆã—ã®ãƒ¢ãƒ¼ãƒ‰ */
+	
+	DragHandlerRec	dragHandlers;	/* ãƒ‰ãƒ©ãƒƒã‚°ç”¨ */
+} PaintWinRec;

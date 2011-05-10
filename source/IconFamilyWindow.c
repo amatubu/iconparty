@@ -36,7 +36,7 @@
 #endif
 
 
-/* ƒtƒ@ƒ~ƒŠƒEƒBƒ“ƒhƒE‚Ìˆ— */
+/* ãƒ•ã‚¡ãƒŸãƒªã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®å‡¦ç† */
 #if !TARGET_API_MAC_CARBON
 static pascal void	ActivateFamilyWindow(WindowPtr fWindow,Boolean activateWindow);
 #endif
@@ -176,12 +176,12 @@ void OpenFolderIcon(FSSpec *theFolderSpec,Boolean isFolder)
 	OSErr			err;
 	IPIconRec		ipIcon;
 	Boolean			is32Exist=false;		/* true, if 32bits icon exists */
-	short			alertMode=0;			/* ƒAƒCƒRƒ“•ÒW‚ÉŠÖ‚µ‚Ä‚È‚ñ‚ç‚©‚ÌƒAƒ‰[ƒg‚ğo‚·•K—v‚ª‚ ‚é */
+	short			alertMode=0;			/* ã‚¢ã‚¤ã‚³ãƒ³ç·¨é›†ã«é–¢ã—ã¦ãªã‚“ã‚‰ã‹ã®ã‚¢ãƒ©ãƒ¼ãƒˆã‚’å‡ºã™å¿…è¦ãŒã‚ã‚‹ */
 	Str255			name;
 	
 	Point			windPos=kDefaultWinPos;
 	
-	/* ŠJ‚±‚¤‚Æ‚µ‚Ä‚¢‚éƒAƒCƒRƒ“‚ª‚·‚Å‚ÉŠJ‚©‚ê‚Ä‚¢‚È‚¢‚©‚Ç‚¤‚©‚ğƒ`ƒFƒbƒN */
+	/* é–‹ã“ã†ã¨ã—ã¦ã„ã‚‹ã‚¢ã‚¤ã‚³ãƒ³ãŒã™ã§ã«é–‹ã‹ã‚Œã¦ã„ãªã„ã‹ã©ã†ã‹ã‚’ãƒã‚§ãƒƒã‚¯ */
 	fWindow=MyFrontNonFloatingWindow();
 	while (fWindow!=nil)
 	{
@@ -261,7 +261,7 @@ void OpenXIconFile(FSSpec *theFile)
 	
 	if (!isIconServicesAvailable) return;
 	
-	/* ŠJ‚±‚¤‚Æ‚µ‚Ä‚¢‚éƒAƒCƒRƒ“‚ª‚·‚Å‚ÉŠJ‚©‚ê‚Ä‚¢‚È‚¢‚©‚Ç‚¤‚©‚ğƒ`ƒFƒbƒN */
+	/* é–‹ã“ã†ã¨ã—ã¦ã„ã‚‹ã‚¢ã‚¤ã‚³ãƒ³ãŒã™ã§ã«é–‹ã‹ã‚Œã¦ã„ãªã„ã‹ã©ã†ã‹ã‚’ãƒã‚§ãƒƒã‚¯ */
 	fWindow=MyFrontNonFloatingWindow();
 	while (fWindow!=nil)
 	{
@@ -279,7 +279,7 @@ void OpenXIconFile(FSSpec *theFile)
 		return;
 	}
 	
-	/* ƒAƒCƒRƒ“‚ğŠJ‚­ */
+	/* ã‚¢ã‚¤ã‚³ãƒ³ã‚’é–‹ã */
 	err=XIconToIPIcon(theFile,&ipIcon);
 	if (err!=noErr)
 	{
@@ -289,7 +289,7 @@ void OpenXIconFile(FSSpec *theFile)
 		
 	err=IPIconHas32Icons(&ipIcon,&is32Exist);
 	
-	/* ƒtƒ@ƒ~ƒŠƒEƒBƒ“ƒhƒE‚ğì¬ */
+	/* ãƒ•ã‚¡ãƒŸãƒªã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚’ä½œæˆ */
 	UseResFile(gApplRefNum);
 	fWindow=MakeFamilyWindow(windPos,is32Exist,theFile,'icns',&ipIcon,theFile->name);
 	if (fWindow==nil)
@@ -310,7 +310,7 @@ OSErr XIconToIconSuite(FSSpec *theFile,IconSuiteRef *iconSuite)
 	
 	if (gSystemVersion >= 0x0850)
 	{
-		/* ƒAƒCƒRƒ“‚ğŠJ‚­ */
+		/* ã‚¢ã‚¤ã‚³ãƒ³ã‚’é–‹ã */
 		err=FSpOpenDF(theFile,fsRdPerm,&refNum);
 		if (err!=noErr) return err;
 		
@@ -335,7 +335,7 @@ OSErr XIconToIconSuite(FSSpec *theFile,IconSuiteRef *iconSuite)
 		return -1;
 }
 
-/* ico‚ğŠJ‚­ */
+/* icoã‚’é–‹ã */
 void OpenWinIconFile(FSSpec *theFile)
 {
 	WindowPtr	fWindow;
@@ -346,7 +346,7 @@ void OpenWinIconFile(FSSpec *theFile)
 	
 	Point			windPos=kDefaultWinPos;
 	
-	/* ŠJ‚±‚¤‚Æ‚µ‚Ä‚¢‚éƒAƒCƒRƒ“‚ª‚·‚Å‚ÉŠJ‚©‚ê‚Ä‚¢‚È‚¢‚©‚Ç‚¤‚©‚ğƒ`ƒFƒbƒN */
+	/* é–‹ã“ã†ã¨ã—ã¦ã„ã‚‹ã‚¢ã‚¤ã‚³ãƒ³ãŒã™ã§ã«é–‹ã‹ã‚Œã¦ã„ãªã„ã‹ã©ã†ã‹ã‚’ãƒã‚§ãƒƒã‚¯ */
 	fWindow=MyFrontNonFloatingWindow();
 	while (fWindow!=nil)
 	{
@@ -364,12 +364,12 @@ void OpenWinIconFile(FSSpec *theFile)
 		return;
 	}
 	
-	/* ƒAƒCƒRƒ“‚ğŠJ‚­ */
+	/* ã‚¢ã‚¤ã‚³ãƒ³ã‚’é–‹ã */
 	err=WinIconToIconSuite(theFile,&ipIcon.iconSuite);
 	if (err!=noErr) return;
 	ipIcon.it32Data = ipIcon.t8mkData = NULL;
 	
-	/* ƒtƒ@ƒ~ƒŠƒEƒBƒ“ƒhƒE‚ğì¬ */
+	/* ãƒ•ã‚¡ãƒŸãƒªã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚’ä½œæˆ */
 	UseResFile(gApplRefNum);
 	fWindow=MakeFamilyWindow(windPos,false,theFile,'wIco',&ipIcon,theFile->name);
 //	if (fWindow==nil) return;
@@ -377,7 +377,7 @@ void OpenWinIconFile(FSSpec *theFile)
 //	InitIconFamilyWinRec(fWindow,theFile,'wIco',&ipIcon,theFile->name);
 }
 
-/* ƒAƒCƒRƒ“ƒtƒ@ƒ~ƒŠƒEƒBƒ“ƒhƒE‚ğì¬ */
+/* ã‚¢ã‚¤ã‚³ãƒ³ãƒ•ã‚¡ãƒŸãƒªã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚’ä½œæˆ */
 WindowPtr MakeFamilyWindow(Point windPos,Boolean is32Exist,FSSpec *theFile,
 	OSType iconType,const IPIconRec *ipIcon,const StringPtr iconName)
 {
@@ -396,8 +396,8 @@ WindowPtr MakeFamilyWindow(Point windPos,Boolean is32Exist,FSSpec *theFile,
 	TSMDocumentID	docID;
 	TSMTERecHandle	docTSMRecH;
 	
-	/* 0.90b7•ÏX•”•ª */
-	/* ƒƒ‚ƒŠƒ`ƒFƒbƒNB2000‚ÍƒAƒCƒRƒ“—ÌˆæA1024‚Í‚»‚Ì‘¼ */
+	/* 0.90b7å¤‰æ›´éƒ¨åˆ† */
+	/* ãƒ¡ãƒ¢ãƒªãƒã‚§ãƒƒã‚¯ã€‚2000ã¯ã‚¢ã‚¤ã‚³ãƒ³é ˜åŸŸã€1024ã¯ãã®ä»– */
 	PurgeSpace(&total,&contig);
 	if (total < sizeof(IconFamilyWinRec)+2000+1024+512) return 0L;
 	
@@ -419,14 +419,14 @@ WindowPtr MakeFamilyWindow(Point windPos,Boolean is32Exist,FSSpec *theFile,
 	SetExtWRefCon(fWindow,(long)fWinHandle);
 	fWinRec=*fWinHandle;
 	
-	/* ƒAƒNƒeƒBƒx[ƒgƒ‹[ƒ`ƒ“‚Ìİ’è */
+	/* ã‚¢ã‚¯ãƒ†ã‚£ãƒ™ãƒ¼ãƒˆãƒ«ãƒ¼ãƒãƒ³ã®è¨­å®š */
 	#if !TARGET_API_MAC_CARBON
 	activateUPP=NewActivateHandlerProc((ProcPtr)ActivateFamilyWindow);
 	SetActivateHandlerProc(fWindow,activateUPP);
 	fWinRec->dragHandlers.activateUPP=activateUPP;
 	#endif
 	
-	/* ƒhƒ‰ƒbƒOó‚¯“ü‚êƒ‹[ƒ`ƒ“‚Ìİ’è */
+	/* ãƒ‰ãƒ©ãƒƒã‚°å—ã‘å…¥ã‚Œãƒ«ãƒ¼ãƒãƒ³ã®è¨­å®š */
 	if (isDragMgrPresent)
 	{
 		DragTrackingHandlerUPP	dragTrackUPP;
@@ -452,7 +452,7 @@ WindowPtr MakeFamilyWindow(Point windPos,Boolean is32Exist,FSSpec *theFile,
 		}
 	}
 	
-	/* ‰Šúİ’è */
+	/* åˆæœŸè¨­å®š */
 	fWinRec->selectedIcon=-1;
 	fWinRec->wasChanged=false;
 	fWinRec->show32Icons=false;
@@ -464,14 +464,14 @@ WindowPtr MakeFamilyWindow(Point windPos,Boolean is32Exist,FSSpec *theFile,
 	fWinRec->largeWindowWidth = kFamilyWindowSmallWidth;
 	fWinRec->largeWindowHeight = kFamilyWindowSmallHeight;
 	
-	/* ƒEƒBƒ“ƒhƒE‚Ì‘å‚«‚³ */
+	/* ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®å¤§ãã• */
 	if (isIconServicesAvailable)
 	{
-		/* •ÒW‚·‚éƒAƒCƒRƒ“‚Ìí—Ş‚É‚æ‚Á‚Äê‡‚í‚¯ */
+		/* ç·¨é›†ã™ã‚‹ã‚¢ã‚¤ã‚³ãƒ³ã®ç¨®é¡ã«ã‚ˆã£ã¦å ´åˆã‚ã‘ */
 		switch (iconType)
 		{
-			case 'Icon': /* ƒAƒCƒRƒ“•t‚«ƒtƒHƒ‹ƒ_ */
-			case 'icns': /* X—pƒAƒCƒRƒ“ */
+			case 'Icon': /* ã‚¢ã‚¤ã‚³ãƒ³ä»˜ããƒ•ã‚©ãƒ«ãƒ€ */
+			case 'icns': /* Xç”¨ã‚¢ã‚¤ã‚³ãƒ³ */
 			case 0L:
 				if (isIconServicesAvailable)
 				{
@@ -483,7 +483,7 @@ WindowPtr MakeFamilyWindow(Point windPos,Boolean is32Exist,FSSpec *theFile,
 				}
 				break;
 			
-			case 'wIco': /* Windows—pƒAƒCƒRƒ“ */
+			case 'wIco': /* Windowsç”¨ã‚¢ã‚¤ã‚³ãƒ³ */
 				break;
 			
 			case kLarge1BitMask:
@@ -506,7 +506,7 @@ WindowPtr MakeFamilyWindow(Point windPos,Boolean is32Exist,FSSpec *theFile,
 		}
 	}
 	
-	/* ƒEƒBƒ“ƒhƒE‚Ì•\¦‰Â”\‚ÈˆÊ’u */
+	/* ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®è¡¨ç¤ºå¯èƒ½ãªä½ç½® */
 	GetRegionBounds(GetGrayRgn(),&validRect);
 	validRect.left=windPos.h;
 	validRect.top=windPos.v;
@@ -517,7 +517,7 @@ WindowPtr MakeFamilyWindow(Point windPos,Boolean is32Exist,FSSpec *theFile,
 	StackWindowPos(&windPos,windOffset,&validRect);
 	MoveWindow(fWindow,windPos.h,windPos.v,false);
 	
-	/* –¼‘O‚ÌTE */
+	/* åå‰ã®TE */
 	SetPortWindowPort(fWindow);
 	TextSize(9);
 	hTE=TENew(&familyNameTERect,&familyNameTERect);
@@ -526,7 +526,7 @@ WindowPtr MakeFamilyWindow(Point windPos,Boolean is32Exist,FSSpec *theFile,
 	TEAutoView(true,hTE);
 	fWinRec->iconNameTE=hTE;
 	
-	/* ƒCƒ“ƒ‰ƒCƒ““ü—Í */
+	/* ã‚¤ãƒ³ãƒ©ã‚¤ãƒ³å…¥åŠ› */
 	if (isTSMTEAvailable)
 	{
 		TEFeatureFlag(teFInlineInput,TEBitSet,hTE);
@@ -554,14 +554,14 @@ WindowPtr MakeFamilyWindow(Point windPos,Boolean is32Exist,FSSpec *theFile,
 	fWinRec->iconID=kCustomIconResource;
 	PStrCpy(iconName,fWinRec->iconName);
 	
-	/* –¼‘O‚ğ“ü‚êA‘I‘ğ */
+	/* åå‰ã‚’å…¥ã‚Œã€é¸æŠ */
 	TEActivate(fWinRec->iconNameTE);
 	if (isTSMTEAvailable)
 		ActivateTSMDocument(fWinRec->docID);
 	TESetText(&fWinRec->iconName[1],fWinRec->iconName[0],fWinRec->iconNameTE);
 	TESetSelect(0,fWinRec->iconName[0],fWinRec->iconNameTE);
 	
-	/* ƒ^ƒCƒgƒ‹‚Ìİ’è */
+	/* ã‚¿ã‚¤ãƒˆãƒ«ã®è¨­å®š */
 	SetIconFamilyWinTitle(fWindow);
 	
 	ShowReferencedWindow(fWindow);
@@ -572,7 +572,7 @@ WindowPtr MakeFamilyWindow(Point windPos,Boolean is32Exist,FSSpec *theFile,
 }
 
 #if !TARGET_API_MAC_CARBON
-/* ƒAƒCƒRƒ“ƒtƒ@ƒ~ƒŠƒEƒBƒ“ƒhƒE‚ÌƒAƒNƒeƒBƒx[ƒgƒ‹[ƒ`ƒ“ */
+/* ã‚¢ã‚¤ã‚³ãƒ³ãƒ•ã‚¡ãƒŸãƒªã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ã‚¢ã‚¯ãƒ†ã‚£ãƒ™ãƒ¼ãƒˆãƒ«ãƒ¼ãƒãƒ³ */
 pascal void	ActivateFamilyWindow(WindowPtr fWindow,Boolean activateWindow)
 {
 	IconFamilyWinRec	*fWinRec=GetIconFamilyRec(fWindow);
@@ -583,7 +583,7 @@ pascal void	ActivateFamilyWindow(WindowPtr fWindow,Boolean activateWindow)
 	
 	if (activateWindow)
 	{
-		/* ƒAƒNƒeƒBƒx[ƒg‚Ì‚ÍTE‚ªƒAƒNƒeƒBƒu‚¾‚Á‚½‚¾‚¯ƒAƒNƒeƒBƒx[ƒg */
+		/* ã‚¢ã‚¯ãƒ†ã‚£ãƒ™ãƒ¼ãƒˆã®æ™‚ã¯TEãŒã‚¢ã‚¯ãƒ†ã‚£ãƒ–ã ã£ãŸæ™‚ã ã‘ã‚¢ã‚¯ãƒ†ã‚£ãƒ™ãƒ¼ãƒˆ */
 		if (fWinRec->wasNameTEActive)
 		{
 			TEActivate(fWinRec->iconNameTE);
@@ -593,7 +593,7 @@ pascal void	ActivateFamilyWindow(WindowPtr fWindow,Boolean activateWindow)
 	}
 	else
 	{
-		/* ƒfƒAƒNƒeƒBƒx[ƒg‚Ì‚ÍTE‚ªƒAƒNƒeƒBƒu‚¾‚Á‚½‚©‚Ç‚¤‚©‚ğ‹L˜^ */
+		/* ãƒ‡ã‚¢ã‚¯ãƒ†ã‚£ãƒ™ãƒ¼ãƒˆã®æ™‚ã¯TEãŒã‚¢ã‚¯ãƒ†ã‚£ãƒ–ã ã£ãŸã‹ã©ã†ã‹ã‚’è¨˜éŒ² */
 		fWinRec->wasNameTEActive=((**fWinRec->iconNameTE).active !=0);
 		TEDeactivate(fWinRec->iconNameTE);
 		if (isTSMTEAvailable)
@@ -603,7 +603,7 @@ pascal void	ActivateFamilyWindow(WindowPtr fWindow,Boolean activateWindow)
 #endif
 
 #if 0
-/* ƒAƒCƒRƒ“ƒtƒ@ƒ~ƒŠƒEƒBƒ“ƒhƒE\‘¢‘Ì‚Ì‰Šú‰» */
+/* ã‚¢ã‚¤ã‚³ãƒ³ãƒ•ã‚¡ãƒŸãƒªã‚¦ã‚£ãƒ³ãƒ‰ã‚¦æ§‹é€ ä½“ã®åˆæœŸåŒ– */
 void InitIconFamilyWinRec(WindowPtr fWindow,FSSpec *theFile,OSType iconType,
 	const IPIconRec *ipIcon,const StringPtr iconName)
 {
@@ -618,14 +618,14 @@ void InitIconFamilyWinRec(WindowPtr fWindow,FSSpec *theFile,OSType iconType,
 	fWinRec->iconID=kCustomIconResource;
 	PStrCpy(iconName,fWinRec->iconName);
 	
-	/* –¼‘O‚ğ“ü‚êA‘I‘ğ */
+	/* åå‰ã‚’å…¥ã‚Œã€é¸æŠ */
 	TEActivate(fWinRec->iconNameTE);
 	if (isTSMTEAvailable)
 		ActivateTSMDocument(fWinRec->docID);
 	TESetText(&fWinRec->iconName[1],fWinRec->iconName[0],fWinRec->iconNameTE);
 	TESetSelect(0,fWinRec->iconName[0],fWinRec->iconNameTE);
 	
-	/* ƒ^ƒCƒgƒ‹‚Ìİ’è */
+	/* ã‚¿ã‚¤ãƒˆãƒ«ã®è¨­å®š */
 	SetIconFamilyWinTitle(fWindow);
 	
 	ShowReferencedWindow(fWindow);
@@ -634,7 +634,7 @@ void InitIconFamilyWinRec(WindowPtr fWindow,FSSpec *theFile,OSType iconType,
 }
 #endif
 
-/* ƒAƒCƒRƒ“ƒtƒ@ƒ~ƒŠƒEƒBƒ“ƒhƒE‚Ìƒ^ƒCƒgƒ‹ */
+/* ã‚¢ã‚¤ã‚³ãƒ³ãƒ•ã‚¡ãƒŸãƒªã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ã‚¿ã‚¤ãƒˆãƒ« */
 void SetIconFamilyWinTitle(WindowPtr fWindow)
 {
 	IconFamilyWinRec	*fWinRec=GetIconFamilyRec(fWindow);
@@ -642,14 +642,14 @@ void SetIconFamilyWinTitle(WindowPtr fWindow)
 	
 	switch (fWinRec->iconType)
 	{
-		case 'Icon': /* ƒAƒCƒRƒ“•t‚«ƒtƒHƒ‹ƒ_ */
+		case 'Icon': /* ã‚¢ã‚¤ã‚³ãƒ³ä»˜ããƒ•ã‚©ãƒ«ãƒ€ */
 			GetIndString(title,sFamilyWinTitle,3);
 			PStrCat(fWinRec->theIconSpec.name,title);
 			SetWTitle(fWindow,title);
 			break;
 		
-		case 'icns': /* X—pƒAƒCƒRƒ“ or IconFamily */
-		case 'wIco': /* Win—pƒAƒCƒRƒ“ */
+		case 'icns': /* Xç”¨ã‚¢ã‚¤ã‚³ãƒ³ or IconFamily */
+		case 'wIco': /* Winç”¨ã‚¢ã‚¤ã‚³ãƒ³ */
 		case 'ICN#': 
 			SetWTitle(fWindow,fWinRec->theIconSpec.name);
 			break;
@@ -660,7 +660,7 @@ void SetIconFamilyWinTitle(WindowPtr fWindow)
 	}
 }	
 
-/* ƒAƒCƒRƒ“ƒtƒ@ƒ~ƒŠƒEƒBƒ“ƒhƒE‚ğ•Â‚¶‚é */
+/* ã‚¢ã‚¤ã‚³ãƒ³ãƒ•ã‚¡ãƒŸãƒªã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚’é–‰ã˜ã‚‹ */
 OSErr CloseFamilyWindow(WindowPtr theWindow,Boolean saveFlag,Boolean deleteFlag)
 {
 	IconFamilyWinRec	**fWinRec;
@@ -673,7 +673,7 @@ OSErr CloseFamilyWindow(WindowPtr theWindow,Boolean saveFlag,Boolean deleteFlag)
 	
 	if (theWindow==nil) return noErr;
 	
-	/* ‚±‚ÌƒEƒBƒ“ƒhƒE‚ğe‚É‚ÂƒyƒCƒ“ƒgƒEƒBƒ“ƒhƒE‚ª‚È‚¢‚©‚Ç‚¤‚©‚ğƒ`ƒFƒbƒN */
+	/* ã“ã®ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚’è¦ªã«æŒã¤ãƒšã‚¤ãƒ³ãƒˆã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ãŒãªã„ã‹ã©ã†ã‹ã‚’ãƒã‚§ãƒƒã‚¯ */
 	eWindow=MyFrontNonFloatingWindow();
 	while (eWindow != nil)
 	{
@@ -709,7 +709,7 @@ OSErr CloseFamilyWindow(WindowPtr theWindow,Boolean saveFlag,Boolean deleteFlag)
 	{
 		if ((**fWinRec).parentWindow!=nil)
 		{
-			/* TE‚Ì“à—e‚ğæ‚èo‚· */
+			/* TEã®å†…å®¹ã‚’å–ã‚Šå‡ºã™ */
 			newNameH=TEGetText((**fWinRec).iconNameTE);
 			l=(**(**fWinRec).iconNameTE).teLength;
 			if (l>255) l=255;
@@ -743,7 +743,7 @@ OSErr CloseFamilyWindow(WindowPtr theWindow,Boolean saveFlag,Boolean deleteFlag)
 					item=SaveYN(kind,(**fWinRec).theIconSpec.name,kSaveChangedCloseWindow);
 				}
 				
-				/* •Û‘¶Šm”F‚Æ•Û‘¶ƒ‹[ƒ`ƒ“ */
+				/* ä¿å­˜ç¢ºèªã¨ä¿å­˜ãƒ«ãƒ¼ãƒãƒ³ */
 				switch (item)
 				{
 					case ok:
@@ -770,10 +770,10 @@ OSErr CloseFamilyWindow(WindowPtr theWindow,Boolean saveFlag,Boolean deleteFlag)
 	
 	if (err == noErr)
 	{
-		/* æ‚èÁ‚µ—pƒnƒ“ƒhƒ‹‚Ì”jŠü */
+		/* å–ã‚Šæ¶ˆã—ç”¨ãƒãƒ³ãƒ‰ãƒ«ã®ç ´æ£„ */
 		DisposeHandle((**fWinRec).undoData.iconData);
 		
-		/* ƒhƒ‰ƒbƒOó‚¯“ü‚êƒ‹[ƒ`ƒ“‚Ìíœ */
+		/* ãƒ‰ãƒ©ãƒƒã‚°å—ã‘å…¥ã‚Œãƒ«ãƒ¼ãƒãƒ³ã®å‰Šé™¤ */
 		if (isDragMgrPresent)
 		{
 			err=RemoveTrackingHandler((**fWinRec).dragHandlers.trackUPP,theWindow);
@@ -798,7 +798,7 @@ OSErr CloseFamilyWindow(WindowPtr theWindow,Boolean saveFlag,Boolean deleteFlag)
 	return err;
 }
 
-/* ƒAƒCƒRƒ“ƒtƒ@ƒ~ƒŠƒEƒBƒ“ƒhƒE‚ÌƒAƒbƒvƒf[ƒg */
+/* ã‚¢ã‚¤ã‚³ãƒ³ãƒ•ã‚¡ãƒŸãƒªã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆ */
 void UpdateFamilyWindow(WindowPtr theWindow)
 {
 	IconFamilyWinRec	*fWinRec;
@@ -821,8 +821,8 @@ void UpdateFamilyWindow(WindowPtr theWindow)
 	UseResFile(gApplRefNum);
 }
 
-/* ƒtƒ@ƒ~ƒŠƒEƒBƒ“ƒhƒE‚ÌƒNƒŠƒbƒNˆ— */
-/* mousePt‚Íƒ[ƒJƒ‹À•W */
+/* ãƒ•ã‚¡ãƒŸãƒªã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ã‚¯ãƒªãƒƒã‚¯å‡¦ç† */
+/* mousePtã¯ãƒ­ãƒ¼ã‚«ãƒ«åº§æ¨™ */
 void ClickFamilyWindow(WindowPtr fWindow,Point mousePt,EventRecord *theEvent)
 {
 	IconFamilyWinRec	*fWinRec=GetIconFamilyRec(fWindow);
@@ -831,13 +831,13 @@ void ClickFamilyWindow(WindowPtr fWindow,Point mousePt,EventRecord *theEvent)
 	Boolean	shiftDown=((theEvent->modifiers & shiftKey) != 0);
 	UInt32	time;
 	Point	pt;
-	Rect	dRect={-2,-2,3,3}; /* ƒhƒ‰ƒbƒO‚Ì”»’è—p */
+	Rect	dRect={-2,-2,3,3}; /* ãƒ‰ãƒ©ãƒƒã‚°ã®åˆ¤å®šç”¨ */
 	
 	SetPortWindowPort(fWindow);
 	
 	OffsetRect(&dRect,mousePt.h,mousePt.v);
 	
-	/* ƒNƒŠƒbƒN‚³‚ê‚½ƒAƒCƒRƒ“‚ğ’²‚×‚é */
+	/* ã‚¯ãƒªãƒƒã‚¯ã•ã‚ŒãŸã‚¢ã‚¤ã‚³ãƒ³ã‚’èª¿ã¹ã‚‹ */
 	for (i=0; i<GetIconKindNum(fWinRec); i++)
 	{
 		if (PtInRect(mousePt,&familyIconRect[i]))
@@ -849,7 +849,7 @@ void ClickFamilyWindow(WindowPtr fWindow,Point mousePt,EventRecord *theEvent)
 	
 	if (iconKind >= 0)
 	{
-		/* ƒ|ƒbƒvƒAƒbƒvƒƒjƒ…[”»’è */
+		/* ãƒãƒƒãƒ—ã‚¢ãƒƒãƒ—ãƒ¡ãƒ‹ãƒ¥ãƒ¼åˆ¤å®š */
 		if ((theEvent->modifiers & controlKey) != 0)
 		{
 			SetPortWindowPort(fWindow);
@@ -863,7 +863,7 @@ void ClickFamilyWindow(WindowPtr fWindow,Point mousePt,EventRecord *theEvent)
 		}
 		
 		time=TickCount()+GetDblTime();
-		/* ƒ|ƒbƒvƒAƒbƒvƒƒjƒ…[”»’è */
+		/* ãƒãƒƒãƒ—ã‚¢ãƒƒãƒ—ãƒ¡ãƒ‹ãƒ¥ãƒ¼åˆ¤å®š */
 		if (isDragMgrPresent || MyFrontNonFloatingWindow()==fWindow)
 		{
 			GetMouse(&pt);
@@ -882,7 +882,7 @@ void ClickFamilyWindow(WindowPtr fWindow,Point mousePt,EventRecord *theEvent)
 				}
 			}
 		}
-		/* ƒhƒ‰ƒbƒO”»’è */
+		/* ãƒ‰ãƒ©ãƒƒã‚°åˆ¤å®š */
 		if (isDragMgrPresent)
 		{
 			if (StillDown())
@@ -894,7 +894,7 @@ void ClickFamilyWindow(WindowPtr fWindow,Point mousePt,EventRecord *theEvent)
 					DisplayFamilyIcon(fWinRec,iconKind);
 					DisplayFamilyIcon(fWinRec,prevSelection);
 				}
-				/* ƒhƒ‰ƒbƒOˆ— */
+				/* ãƒ‰ãƒ©ãƒƒã‚°å‡¦ç† */
 				MyDoStartDragIconFamily(fWindow,theEvent);
 				return;
 			}
@@ -905,7 +905,7 @@ void ClickFamilyWindow(WindowPtr fWindow,Point mousePt,EventRecord *theEvent)
 			while (StillDown()) ;
 		}
 		
-		/* ƒtƒƒ“ƒgƒEƒBƒ“ƒhƒE‚Å‚È‚©‚Á‚½‚Í‘I‘ğ‚µ‚ÄI‚í‚è */
+		/* ãƒ•ãƒ­ãƒ³ãƒˆã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã§ãªã‹ã£ãŸæ™‚ã¯é¸æŠã—ã¦çµ‚ã‚ã‚Š */
 		if (MyFrontNonFloatingWindow()!=fWindow)
 		{
 			SelectReferencedWindow(fWindow);
@@ -913,7 +913,7 @@ void ClickFamilyWindow(WindowPtr fWindow,Point mousePt,EventRecord *theEvent)
 			return;
 		}
 		
-		/* ‘I‘ğƒAƒCƒRƒ“‚ª•ÏX‚³‚ê‚½‚çƒnƒCƒ‰ƒCƒg‚ğXV */
+		/* é¸æŠã‚¢ã‚¤ã‚³ãƒ³ãŒå¤‰æ›´ã•ã‚ŒãŸã‚‰ãƒã‚¤ãƒ©ã‚¤ãƒˆã‚’æ›´æ–° */
 		if (fWinRec->selectedIcon != iconKind)
 		{
 			SetPortWindowPort(fWindow);
@@ -926,7 +926,7 @@ void ClickFamilyWindow(WindowPtr fWindow,Point mousePt,EventRecord *theEvent)
 			SetPortWindowPort(fWindow);
 		}
 		
-		/* ƒ_ƒuƒ‹ƒNƒŠƒbƒN”»’è */
+		/* ãƒ€ãƒ–ãƒ«ã‚¯ãƒªãƒƒã‚¯åˆ¤å®š */
 		while (TickCount() < time && PtInRect(pt,&dRect))
 		{
 			EventRecord	followEvent;
@@ -936,7 +936,7 @@ void ClickFamilyWindow(WindowPtr fWindow,Point mousePt,EventRecord *theEvent)
 			{
 				FlushEvents(mDownMask+mUpMask,0);
 				
-				/* ƒAƒCƒRƒ“•ÒW */
+				/* ã‚¢ã‚¤ã‚³ãƒ³ç·¨é›† */
 				EditFamilyIcon(fWindow,kForceNone);
 				return;
 			}
@@ -959,7 +959,7 @@ void ClickFamilyWindow(WindowPtr fWindow,Point mousePt,EventRecord *theEvent)
 		}
 	}
 	
-	/* TE‚Ì“à•”‚©‚Ç‚¤‚©‚ğƒ`ƒFƒbƒN */
+	/* TEã®å†…éƒ¨ã‹ã©ã†ã‹ã‚’ãƒã‚§ãƒƒã‚¯ */
 	if (PtInRect(mousePt,&familyNameTERect))
 	{
 		if (!(**fWinRec->iconNameTE).active)
@@ -970,8 +970,8 @@ void ClickFamilyWindow(WindowPtr fWindow,Point mousePt,EventRecord *theEvent)
 		}
 		TEClick(mousePt,shiftDown,fWinRec->iconNameTE);
 		
-		/* ƒNƒŠƒbƒvƒ{[ƒhƒƒjƒ…[XV‚Ì‚½‚ßAƒ}ƒCƒiƒX‚Ì’l
-		   ƒnƒCƒ‰ƒCƒgXV‚Ì‚½‚ßA-1‚Æˆá‚¤’l */
+		/* ã‚¯ãƒªãƒƒãƒ—ãƒœãƒ¼ãƒ‰ãƒ¡ãƒ‹ãƒ¥ãƒ¼æ›´æ–°ã®ãŸã‚ã€ãƒã‚¤ãƒŠã‚¹ã®å€¤
+		   ãƒã‚¤ãƒ©ã‚¤ãƒˆæ›´æ–°ã®ãŸã‚ã€-1ã¨é•ã†å€¤ */
 		fWinRec->selectedIcon = -2;
 		
 		UpdateClipMenu();
@@ -980,7 +980,7 @@ void ClickFamilyWindow(WindowPtr fWindow,Point mousePt,EventRecord *theEvent)
 	}
 	else
 	{
-		/* “à•”‚Å‚È‚¯‚ê‚ÎATE‚ğƒfƒBƒAƒNƒeƒBƒx[ƒg */
+		/* å†…éƒ¨ã§ãªã‘ã‚Œã°ã€TEã‚’ãƒ‡ã‚£ã‚¢ã‚¯ãƒ†ã‚£ãƒ™ãƒ¼ãƒˆ */
 		if ((**fWinRec->iconNameTE).active)
 		{
 			TEDeactivate(fWinRec->iconNameTE);
@@ -989,7 +989,7 @@ void ClickFamilyWindow(WindowPtr fWindow,Point mousePt,EventRecord *theEvent)
 		}
 	}
 	
-	/* ‘I‘ğƒAƒCƒRƒ“‚ª•ÏX‚³‚ê‚½‚çƒnƒCƒ‰ƒCƒg‚ğXV */
+	/* é¸æŠã‚¢ã‚¤ã‚³ãƒ³ãŒå¤‰æ›´ã•ã‚ŒãŸã‚‰ãƒã‚¤ãƒ©ã‚¤ãƒˆã‚’æ›´æ–° */
 	if (fWinRec->selectedIcon != iconKind)
 	{
 		SetPortWindowPort(fWindow);
@@ -999,7 +999,7 @@ void ClickFamilyWindow(WindowPtr fWindow,Point mousePt,EventRecord *theEvent)
 	}
 }
 
-/* Ÿ‚ÌƒAƒCƒRƒ“‚Ì‘I‘ğ */
+/* æ¬¡ã®ã‚¢ã‚¤ã‚³ãƒ³ã®é¸æŠ */
 void SelectNextIcon(IconFamilyWinRec *fWinRec,Boolean shiftDown)
 {
 	short	prevSelectedIcon=fWinRec->selectedIcon;
@@ -1049,17 +1049,17 @@ void SelectNextIcon(IconFamilyWinRec *fWinRec,Boolean shiftDown)
 	RedrawIconPreview();
 }
 
-/* ‘I‘ğƒAƒCƒRƒ“‚Ì•ÏX */
+/* é¸æŠã‚¢ã‚¤ã‚³ãƒ³ã®å¤‰æ›´ */
 void SelectNextIcon2(IconFamilyWinRec *fWinRec,short dx,short dy)
 {
 	short	prevSelectedIcon=fWinRec->selectedIcon;
 	short	newSelectedIcon=fWinRec->selectedIcon;
 	
-	if (prevSelectedIcon < 0) /* ƒAƒCƒRƒ“‚ª‘I‘ğ‚³‚ê‚Ä‚¢‚È‚¯‚ê‚Î‰½‚à‚µ‚È‚¢ */
+	if (prevSelectedIcon < 0) /* ã‚¢ã‚¤ã‚³ãƒ³ãŒé¸æŠã•ã‚Œã¦ã„ãªã‘ã‚Œã°ä½•ã‚‚ã—ãªã„ */
 		return;
 	
 	newSelectedIcon += dx + dy*4;
-	/* ”ÍˆÍŠO‚Ìê‡‚Í‰½‚à‚µ‚È‚¢ */
+	/* ç¯„å›²å¤–ã®å ´åˆã¯ä½•ã‚‚ã—ãªã„ */
 	if (newSelectedIcon < kL8Data || newSelectedIcon >= GetIconKindNum(fWinRec)) return;
 	
 	fWinRec->selectedIcon = newSelectedIcon;
@@ -1071,7 +1071,7 @@ void SelectNextIcon2(IconFamilyWinRec *fWinRec,short dx,short dy)
 	RedrawIconPreview();
 }
 
-/* ƒAƒCƒRƒ“ƒf[ƒ^‚Ì•\¦i‘I‘ğ‚³‚ê‚Ä‚¢‚ê‚Î˜g‚àj */
+/* ã‚¢ã‚¤ã‚³ãƒ³ãƒ‡ãƒ¼ã‚¿ã®è¡¨ç¤ºï¼ˆé¸æŠã•ã‚Œã¦ã„ã‚Œã°æ ã‚‚ï¼‰ */
 void DisplayFamilyIcon(IconFamilyWinRec *fWinRec,short i)
 {
 	PicHandle	iconPic;
@@ -1104,9 +1104,9 @@ void DisplayFamilyIcon(IconFamilyWinRec *fWinRec,short i)
 		FrameRect(&iconRect);
 }
 
-/* ƒAƒCƒRƒ“ƒf[ƒ^‚Ì•Û‘¶ */
-/* saveToFile‚ÍAƒŠƒXƒgƒEƒBƒ“ƒhƒE‚ÌqƒEƒBƒ“ƒhƒE‚Ì‚Æ‚«‚Ì‚İ—LŒø */
-/* saveAsFlag‚ÍA–¼‘O‚ğ•t‚¯‚Ä•Û‘¶‚Ì‚Æ‚«ie‚ª‚¢‚é‚Æ‚«‚Í“Æ—§‚³‚¹‚éj */
+/* ã‚¢ã‚¤ã‚³ãƒ³ãƒ‡ãƒ¼ã‚¿ã®ä¿å­˜ */
+/* saveToFileã¯ã€ãƒªã‚¹ãƒˆã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®å­ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ã¨ãã®ã¿æœ‰åŠ¹ */
+/* saveAsFlagã¯ã€åå‰ã‚’ä»˜ã‘ã¦ä¿å­˜ã®ã¨ãï¼ˆè¦ªãŒã„ã‚‹ã¨ãã¯ç‹¬ç«‹ã•ã›ã‚‹ï¼‰ */
 void SaveFamilyIcon(WindowPtr fWindow,Boolean saveToFile,Boolean saveAsFlag)
 {
 	OSErr	err=noErr;
@@ -1114,11 +1114,11 @@ void SaveFamilyIcon(WindowPtr fWindow,Boolean saveToFile,Boolean saveAsFlag)
 	
 	if (fWinRec->parentWindow==nil || saveAsFlag)
 	{
-		/* e‚ÌƒŠƒXƒgƒEƒBƒ“ƒhƒE‚ª‚È‚¢¨“Æ—§‚µ‚½ƒtƒ@ƒ~ƒŠƒEƒBƒ“ƒhƒE */
+		/* è¦ªã®ãƒªã‚¹ãƒˆã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ãŒãªã„â†’ç‹¬ç«‹ã—ãŸãƒ•ã‚¡ãƒŸãƒªã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ */
 		NavReplyRecord	theReply;
 		Boolean			newSaveFlag=false;
 		
-		if (!fWinRec->isSaved || saveAsFlag) /* –¢•Û‘¶‚©A–¼‘O‚ğ•t‚¯‚Ä•Û‘¶ */
+		if (!fWinRec->isSaved || saveAsFlag) /* æœªä¿å­˜ã‹ã€åå‰ã‚’ä»˜ã‘ã¦ä¿å­˜ */
 		{
 			err=SaveAsIconDialog(fWinRec->theIconSpec.name,
 				&fWinRec->theIconSpec,&fWinRec->iconType,&theReply);
@@ -1127,12 +1127,12 @@ void SaveFamilyIcon(WindowPtr fWindow,Boolean saveToFile,Boolean saveAsFlag)
 			newSaveFlag = true;
 			fWinRec->isFolder = (fWinRec->iconType == 'Icon');
 			
-			/* e‚ª‚¢‚é‚Æ‚«‚Í“Æ—§‚³‚¹‚é */
+			/* è¦ªãŒã„ã‚‹ã¨ãã¯ç‹¬ç«‹ã•ã›ã‚‹ */
 			if (saveAsFlag)
 				fWinRec->parentWindow = nil;
 		}
 		
-		/* ÀÛ‚Ì•Û‘¶ */
+		/* å®Ÿéš›ã®ä¿å­˜ */
 		if (fWinRec->isFolder)
 			err=MakeFolderWithIPIcon(&fWinRec->theIconSpec,&fWinRec->ipIcon);
 		else
@@ -1153,7 +1153,7 @@ void SaveFamilyIcon(WindowPtr fWindow,Boolean saveToFile,Boolean saveAsFlag)
 			}
 		}
 		
-		/* V‹K•Û‘¶‚ÅNavigation Servicesg—p‚ÍCompleteSave‚ğŒÄ‚Ô */
+		/* æ–°è¦ä¿å­˜ã§Navigation Servicesä½¿ç”¨æ™‚ã¯CompleteSaveã‚’å‘¼ã¶ */
 		if (newSaveFlag && isNavServicesAvailable && useNavigationServices)
 		{
 			OSErr dummy;
@@ -1166,12 +1166,12 @@ void SaveFamilyIcon(WindowPtr fWindow,Boolean saveToFile,Boolean saveAsFlag)
 			ErrorAlertFromResource(ICONERR_RESID,ICONERR5);
 		else
 		{
-			/* ƒGƒ‰[‚È‚­•Û‘¶‚Å‚«‚ê‚Î•ÏXƒtƒ‰ƒO‚ğƒŠƒZƒbƒg‚µA•Û‘¶Ï‚İƒtƒ‰ƒO‚ğ‚½‚Ä‚é */
+			/* ã‚¨ãƒ©ãƒ¼ãªãä¿å­˜ã§ãã‚Œã°å¤‰æ›´ãƒ•ãƒ©ã‚°ã‚’ãƒªã‚»ãƒƒãƒˆã—ã€ä¿å­˜æ¸ˆã¿ãƒ•ãƒ©ã‚°ã‚’ãŸã¦ã‚‹ */
 			fWinRec->wasChanged=false;
 			fWinRec->isSaved=true;
 		}
 		
-		/* V‚µ‚­•Û‘¶‚³‚ê‚½ê‡‚ÍAƒ^ƒCƒgƒ‹ƒo[‚ğC³ */
+		/* æ–°ã—ãä¿å­˜ã•ã‚ŒãŸå ´åˆã¯ã€ã‚¿ã‚¤ãƒˆãƒ«ãƒãƒ¼ã‚’ä¿®æ­£ */
 		if (newSaveFlag)
 			SetIconFamilyWinTitle(fWindow);
 	}
@@ -1187,7 +1187,7 @@ void SaveFamilyIcon(WindowPtr fWindow,Boolean saveToFile,Boolean saveAsFlag)
 		PStrCpy(fWinRec->iconName,newIcon.resName);
 		newIcon.attrs=resPurgeable;
 		
-		/* ƒeƒ“ƒ|ƒ‰ƒŠƒtƒ@ƒCƒ‹‚Ö‘‚«o‚· */
+		/* ãƒ†ãƒ³ãƒãƒ©ãƒªãƒ•ã‚¡ã‚¤ãƒ«ã¸æ›¸ãå‡ºã™ */
 		UseResFile(iWinRec->tempRefNum);
 		
 		if (fWinRec->iconType == kIconFamilyType)
@@ -1223,7 +1223,7 @@ void SaveFamilyIcon(WindowPtr fWindow,Boolean saveToFile,Boolean saveAsFlag)
 		UpdateResFile(iWinRec->tempRefNum);
 		UseResFile(gApplRefNum);
 		
-		/* ƒAƒCƒRƒ“ƒŠƒXƒgƒEƒBƒ“ƒhƒE‚ÌƒAƒbƒvƒf[ƒg */
+		/* ã‚¢ã‚¤ã‚³ãƒ³ãƒªã‚¹ãƒˆã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆ */
 		GetPort(&port);
 		SetPortWindowPort(iconWindow);
 		MyInvalWindowPortBounds(iconWindow);
@@ -1238,7 +1238,7 @@ void SaveFamilyIcon(WindowPtr fWindow,Boolean saveToFile,Boolean saveAsFlag)
 	UpdateSaveMenu();
 }
 
-/* ƒAƒCƒRƒ“ƒtƒ@ƒ~ƒŠƒEƒBƒ“ƒhƒE‚Ì•œ‹A */
+/* ã‚¢ã‚¤ã‚³ãƒ³ãƒ•ã‚¡ãƒŸãƒªã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®å¾©å¸° */
 void DoRevertIconFamilyWindow(WindowPtr theWindow)
 {
 	IconFamilyWinRec	*fWinRec=GetIconFamilyRec(theWindow);
@@ -1246,13 +1246,13 @@ void DoRevertIconFamilyWindow(WindowPtr theWindow)
 	Str255		docKind,docName;
 	OSErr		err;
 	
-	/* ‚Ü‚¸AŠm”F */
+	/* ã¾ãšã€ç¢ºèª */
 	GetIndString(docKind,133,5);
 	GetWTitle(theWindow,docName);
 	item=RevertYN(docKind,docName);
 	if (item!=ok) return;
 	
-	if (fWinRec->parentWindow != nil) /* ƒŠƒXƒgƒEƒBƒ“ƒhƒE‚ğe‚É‚Â */
+	if (fWinRec->parentWindow != nil) /* ãƒªã‚¹ãƒˆã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚’è¦ªã«æŒã¤ */
 	{
 		WindowPtr	iWindow=fWinRec->parentWindow;
 		IconListWinRec	*iWinRec=GetIconListRec(iWindow);
@@ -1260,14 +1260,14 @@ void DoRevertIconFamilyWindow(WindowPtr theWindow)
 		Cell	*cellList=nil;
 		Cell	theCell;
 		
-		/* ‘I‘ğ‚·‚éƒZƒ‹ */
+		/* é¸æŠã™ã‚‹ã‚»ãƒ« */
 		if (!IDToCell(fWinRec->iconID,&theCell,iWinRec->iconList))
 		{
 			SysBeep(0);
 			return;
 		}
 		
-		/* ‘I‘ğ‚³‚ê‚Ä‚¢‚éƒZƒ‹‚ğ•Û‘¶‚µ‚Ä‚¨‚­ */
+		/* é¸æŠã•ã‚Œã¦ã„ã‚‹ã‚»ãƒ«ã‚’ä¿å­˜ã—ã¦ãŠã */
 		if (selNum>0)
 		{
 			Cell	dummy={0,0};
@@ -1283,15 +1283,15 @@ void DoRevertIconFamilyWindow(WindowPtr theWindow)
 			LSetDrawingMode(false,iWinRec->iconList);
 		}
 		
-		/* ƒZƒ‹‚ğ‘I‘ğ */
+		/* ã‚»ãƒ«ã‚’é¸æŠ */
 		LSetSelect(true,theCell,iWinRec->iconList);
 		
-		/* •Û‘¶‚¹‚¸‚ÉƒEƒBƒ“ƒhƒE‚ğ•Â‚¶‚é */
+		/* ä¿å­˜ã›ãšã«ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚’é–‰ã˜ã‚‹ */
 		err=CloseFamilyWindow(theWindow,false,false);
 		if (err==noErr)
 			OpenSelectedIcon(iWindow);
 		
-		/* ‘I‘ğƒZƒ‹‚ğŒ³‚É–ß‚· */
+		/* é¸æŠã‚»ãƒ«ã‚’å…ƒã«æˆ»ã™ */
 		LSetSelect(false,theCell,iWinRec->iconList);
 		while (selNum>0)
 		{
@@ -1300,7 +1300,7 @@ void DoRevertIconFamilyWindow(WindowPtr theWindow)
 		DisposePtr((Ptr)cellList);
 		LSetDrawingMode(true,iWinRec->iconList);
 	}
-	else /* ƒtƒ@ƒCƒ‹‚©ƒtƒHƒ‹ƒ_ */
+	else /* ãƒ•ã‚¡ã‚¤ãƒ«ã‹ãƒ•ã‚©ãƒ«ãƒ€ */
 	{
 		FSSpec		theFile=fWinRec->theIconSpec;
 		Boolean		wasFolder=fWinRec->isFolder;
@@ -1313,13 +1313,13 @@ void DoRevertIconFamilyWindow(WindowPtr theWindow)
 		err = FSGetFinderInfo(&fsRef,&info,NULL,NULL);
 		
 		#else
-		if (wasFolder) /* ƒtƒHƒ‹ƒ_ */
+		if (wasFolder) /* ãƒ•ã‚©ãƒ«ãƒ€ */
 		{
 			DInfo		dInfo;
 			
 			err=FSpGetDInfo(&theFile,&dInfo);
 		}
-		else /* ƒtƒ@ƒCƒ‹ */
+		else /* ãƒ•ã‚¡ã‚¤ãƒ« */
 		{
 			FInfo		fInfo;
 			
@@ -1333,15 +1333,15 @@ void DoRevertIconFamilyWindow(WindowPtr theWindow)
 			return;
 		}
 		
-		/* •Û‘¶‚¹‚¸‚É•Â‚¶‚ÄŠJ‚«’¼‚· */
+		/* ä¿å­˜ã›ãšã«é–‰ã˜ã¦é–‹ãç›´ã™ */
 		err=CloseFamilyWindow(theWindow,false,false);
 		if (err==noErr)
 			OpenFolderIcon(&theFile,wasFolder);
 	}
 }
 
-/* ƒ}ƒEƒXƒJ[ƒ\ƒ‹‚ÌƒAƒbƒvƒf[ƒg */
-/* pt‚Íƒ[ƒJƒ‹À•W */
+/* ãƒã‚¦ã‚¹ã‚«ãƒ¼ã‚½ãƒ«ã®ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆ */
+/* ptã¯ãƒ­ãƒ¼ã‚«ãƒ«åº§æ¨™ */
 void UpdateCursorInFamilyWindow(WindowPtr theWindow,Point pt)
 {
 	#pragma unused(theWindow)
@@ -1366,13 +1366,13 @@ void UpdateCursorInFamilyWindow(WindowPtr theWindow,Point pt)
 	}
 }
 
-/* ƒAƒCƒRƒ“ƒf[ƒ^‚ğƒNƒŠƒbƒvƒ{[ƒh‚ÉƒRƒs[ */
+/* ã‚¢ã‚¤ã‚³ãƒ³ãƒ‡ãƒ¼ã‚¿ã‚’ã‚¯ãƒªãƒƒãƒ—ãƒœãƒ¼ãƒ‰ã«ã‚³ãƒ”ãƒ¼ */
 void CopySelectedIconPicture(IconFamilyWinRec *fWinRec)
 {
 	PicHandle	picture;
 	long		err,dataSize;
 	
-	/* ‚Ü‚¸A‘I‚ñ‚Å‚¢‚éƒAƒCƒRƒ“‚ÌPICT‚ğ“¾‚é */
+	/* ã¾ãšã€é¸ã‚“ã§ã„ã‚‹ã‚¢ã‚¤ã‚³ãƒ³ã®PICTã‚’å¾—ã‚‹ */
 	picture=IPIconToPicture(&fWinRec->ipIcon,fWinRec->selectedIcon);
 	if (picture == nil)
 	{
@@ -1380,7 +1380,7 @@ void CopySelectedIconPicture(IconFamilyWinRec *fWinRec)
 		return;
 	}
 	
-	/* ƒNƒŠƒbƒvƒ{[ƒh‚É“ü‚ê‚é */
+	/* ã‚¯ãƒªãƒƒãƒ—ãƒœãƒ¼ãƒ‰ã«å…¥ã‚Œã‚‹ */
 	dataSize=GetHandleSize((Handle)picture);
 	#if TARGET_API_MAC_CARBON
 	do
@@ -1410,7 +1410,7 @@ void CopySelectedIconPicture(IconFamilyWinRec *fWinRec)
 	KillPicture(picture);
 }
 
-/* ƒAƒCƒRƒ“ƒf[ƒ^‚ğíœ */
+/* ã‚¢ã‚¤ã‚³ãƒ³ãƒ‡ãƒ¼ã‚¿ã‚’å‰Šé™¤ */
 void DeleteSelectedIconPicture(WindowPtr fWindow)
 {
 	Handle	temp,temp2;
@@ -1421,7 +1421,7 @@ void DeleteSelectedIconPicture(WindowPtr fWindow)
 	WindowPtr	eWindow;
 	PaintWinRec	*eWinRec;
 	
-	/* íœ‚³‚ê‚éƒf[ƒ^‚Ìƒ`ƒFƒbƒN */
+	/* å‰Šé™¤ã•ã‚Œã‚‹ãƒ‡ãƒ¼ã‚¿ã®ãƒã‚§ãƒƒã‚¯ */
 	err=GetDataFromIPIcon(&temp,&fWinRec->ipIcon,fWinRec->selectedIcon);
 	if (temp == nil)
 	{
@@ -1429,7 +1429,7 @@ void DeleteSelectedIconPicture(WindowPtr fWindow)
 		return;
 	}
 	
-	/* íœ‚³‚ê‚Ä‚àƒAƒCƒRƒ“‚ª¬‚è—§‚Â‚©‚Ç‚¤‚©‚ğƒ`ƒFƒbƒN */
+	/* å‰Šé™¤ã•ã‚Œã¦ã‚‚ã‚¢ã‚¤ã‚³ãƒ³ãŒæˆã‚Šç«‹ã¤ã‹ã©ã†ã‹ã‚’ãƒã‚§ãƒƒã‚¯ */
 	if (gIconType[fWinRec->selectedIcon] == kLarge1BitMask)
 	{
 		err=GetIconFromSuite(&temp2,fWinRec->ipIcon.iconSuite,kSmall1BitMask);
@@ -1449,7 +1449,7 @@ void DeleteSelectedIconPicture(WindowPtr fWindow)
 		}
 	}
 	
-	/* íœ‚µ‚æ‚¤‚Æ‚µ‚Ä‚¢‚éƒAƒCƒRƒ“‚ª•ÒW’†‚Å‚È‚¢‚©‚Ç‚¤‚©‚ğŠm”F */
+	/* å‰Šé™¤ã—ã‚ˆã†ã¨ã—ã¦ã„ã‚‹ã‚¢ã‚¤ã‚³ãƒ³ãŒç·¨é›†ä¸­ã§ãªã„ã‹ã©ã†ã‹ã‚’ç¢ºèª */
 	eWindow=MyFrontNonFloatingWindow();
 	while (eWindow != nil)
 	{
@@ -1479,7 +1479,7 @@ void DeleteSelectedIconPicture(WindowPtr fWindow)
 		eWindow=GetNextVisibleWindow(eWindow);
 	}
 	
-	/* ÀÛ‚Ìíœ */
+	/* å®Ÿéš›ã®å‰Šé™¤ */
 	fWinRec->undoData.iconData=temp;
 	HandToHand(&fWinRec->undoData.iconData);
 	err=SetDataToIPIcon(nil,&fWinRec->ipIcon,fWinRec->selectedIcon);
@@ -1487,7 +1487,7 @@ void DeleteSelectedIconPicture(WindowPtr fWindow)
 	fWinRec->undoData.iconKind=fWinRec->selectedIcon;
 	fWinRec->wasChanged=true;
 	
-	/* Ä•`‰æ—Ìˆæ */
+	/* å†æç”»é ˜åŸŸ */
 	updateRect=familyIconRect[fWinRec->selectedIcon];
 	InsetRect(&updateRect,-2,-2);
 	MyInvalWindowRect(fWindow,&updateRect);
@@ -1502,7 +1502,7 @@ void DeleteSelectedIconPicture(WindowPtr fWindow)
 		MyInvalWindowRect(fWindow,&updateRect);
 	}
 	
-	/* XV */
+	/* æ›´æ–° */
 	fWinRec->undoData.undoMode=umDeleteIconData;
 	UpdateUndoMenu();
 	UpdateSaveMenu();
@@ -1510,7 +1510,7 @@ void DeleteSelectedIconPicture(WindowPtr fWindow)
 	UpdateIconMenu();
 }
 
-/* ƒNƒŠƒbƒvƒ{[ƒh‚Ì“à—e‚ğƒAƒCƒRƒ“ƒf[ƒ^‚É */
+/* ã‚¯ãƒªãƒƒãƒ—ãƒœãƒ¼ãƒ‰ã®å†…å®¹ã‚’ã‚¢ã‚¤ã‚³ãƒ³ãƒ‡ãƒ¼ã‚¿ã« */
 void PasteToSelectedIcon(WindowPtr fWindow)
 {
 	PicHandle	picture;
@@ -1527,7 +1527,7 @@ void PasteToSelectedIcon(WindowPtr fWindow)
 	
 	if (fWinRec->selectedIcon < 0) return;
 	
-	/* ƒy[ƒXƒg‚µ‚æ‚¤‚Æ‚µ‚Ä‚¢‚éƒAƒCƒRƒ“‚ª•ÒW’†‚Å‚È‚¢‚©‚Ç‚¤‚©‚ğŠm”F */
+	/* ãƒšãƒ¼ã‚¹ãƒˆã—ã‚ˆã†ã¨ã—ã¦ã„ã‚‹ã‚¢ã‚¤ã‚³ãƒ³ãŒç·¨é›†ä¸­ã§ãªã„ã‹ã©ã†ã‹ã‚’ç¢ºèª */
 	eWindow=MyFrontNonFloatingWindow();
 	while (eWindow != nil)
 	{
@@ -1563,7 +1563,7 @@ void PasteToSelectedIcon(WindowPtr fWindow)
 		return;
 	}
 	
-	/* ƒNƒŠƒbƒvƒ{[ƒh‚©‚ç“Ç‚İ‚Ş */
+	/* ã‚¯ãƒªãƒƒãƒ—ãƒœãƒ¼ãƒ‰ã‹ã‚‰èª­ã¿è¾¼ã‚€ */
 	#if TARGET_API_MAC_CARBON
 	err=GetScrapFlavorData(scrap,'PICT',&dataSize,*picture);
 	#else
@@ -1578,7 +1578,7 @@ void PasteToSelectedIcon(WindowPtr fWindow)
 	RedrawIconPreview();
 }
 
-/* Picture‚Ìƒf[ƒ^‚ğƒAƒCƒRƒ“‚Éİ’è */
+/* Pictureã®ãƒ‡ãƒ¼ã‚¿ã‚’ã‚¢ã‚¤ã‚³ãƒ³ã«è¨­å®š */
 void SavePictureToIconData(PicHandle picture,IconFamilyWinRec *fWinRec,Boolean convertMaskFlag)
 {
 	Handle		dataHandle,iconData;
@@ -1592,7 +1592,7 @@ void SavePictureToIconData(PicHandle picture,IconFamilyWinRec *fWinRec,Boolean c
 		if (iconKind == kL1Mask) tempKind=kL1Data;
 		else if (iconKind == kS1Mask) tempKind=kS1Data;
 	
-	/* ƒAƒCƒRƒ“ƒf[ƒ^‚É•ÏŠ· */
+	/* ã‚¢ã‚¤ã‚³ãƒ³ãƒ‡ãƒ¼ã‚¿ã«å¤‰æ› */
 	dataHandle=PictureToIcon(picture,tempKind);
 	if (dataHandle == nil)
 	{
@@ -1616,7 +1616,7 @@ void SavePictureToIconData(PicHandle picture,IconFamilyWinRec *fWinRec,Boolean c
 		long	iconDataSize=GetIconDataSize(iconKind);
 		short	tempKind=-1;
 		
-		/* ƒAƒCƒRƒ“ƒf[ƒ^‚ª‚È‚¢ê‡‚É‚Íì¬‚µ‚È‚¢‚Æ‚¢‚¯‚È‚¢ */
+		/* ã‚¢ã‚¤ã‚³ãƒ³ãƒ‡ãƒ¼ã‚¿ãŒãªã„å ´åˆã«ã¯ä½œæˆã—ãªã„ã¨ã„ã‘ãªã„ */
 		iconData=NewHandleClear(iconDataSize);
 		err=SetDataToIPIcon(iconData,&fWinRec->ipIcon,iconKind);
 		
@@ -1648,10 +1648,10 @@ void SavePictureToIconData(PicHandle picture,IconFamilyWinRec *fWinRec,Boolean c
 	
 	DisposeHandle(dataHandle);
 	
-	/* •ÏXƒtƒ‰ƒO‚ğƒZƒbƒg */
+	/* å¤‰æ›´ãƒ•ãƒ©ã‚°ã‚’ã‚»ãƒƒãƒˆ */
 	fWinRec->wasChanged=true;
 	
-	/* æ‚èÁ‚µˆ——p */
+	/* å–ã‚Šæ¶ˆã—å‡¦ç†ç”¨ */
 	fWinRec->undoData.undoMode=umPasteIconData;
 	UpdateUndoMenu();
 	UpdateSaveMenu();
@@ -1664,7 +1664,7 @@ pascal void MyBitsProc(const BitMap *bitPtr,const Rect *srcRect,const Rect *dstR
 
 GWorldPtr	gT;
 
-/* Picture‚©‚çƒAƒCƒRƒ“‚É•ÏŠ· */
+/* Pictureã‹ã‚‰ã‚¢ã‚¤ã‚³ãƒ³ã«å¤‰æ› */
 Handle PictureToIcon(PicHandle picture,short iconKind)
 {
 	short	iconSize=gIconSize[iconKind],iconDepth=gIconDepth[iconKind];
@@ -1689,7 +1689,7 @@ Handle PictureToIcon(PicHandle picture,short iconKind)
 	dataHandle=NewHandle(iconSize*iconRowBytes);
 	if (dataHandle == nil) return nil;
 	
-	/* ‚Ü‚¸ƒIƒtƒ|[ƒg‚ğì¬‚µAPICT‚ğ‚»‚Ì’†‚É•\¦‚·‚é */
+	/* ã¾ãšã‚ªãƒ•ãƒãƒ¼ãƒˆã‚’ä½œæˆã—ã€PICTã‚’ãã®ä¸­ã«è¡¨ç¤ºã™ã‚‹ */
 	GetGWorld(&cPort,&cDevice);
 	err=NewGWorld(&tempGWorld,k32ARGBPixelFormat,&pictRect,0,0,useTempMem);
 	if (err != noErr) return nil;
@@ -1710,7 +1710,7 @@ Handle PictureToIcon(PicHandle picture,short iconKind)
 		EraseRect(&pictRect);
 		SetGWorld(tempGWorld,0);
 		
-		/* bitsProc’u‚«Š·‚¦ */
+		/* bitsProcç½®ãæ›ãˆ */
 		savedProcs=GetPortGrafProcs(tempGWorld);
 		SetStdCProcs(&procs);
 		procs.bitsProc=NewQDBitsUPP(MyBitsProc);
@@ -1718,7 +1718,7 @@ Handle PictureToIcon(PicHandle picture,short iconKind)
 		
 		DrawPicture(picture,&pictRect);
 		
-		/* bitsProc‚ğŒ³‚É–ß‚· */
+		/* bitsProcã‚’å…ƒã«æˆ»ã™ */
 		SetPortCGrafProcs(tempGWorld,savedProcs);
 		DisposeQDBitsUPP(procs.bitsProc);
 		
@@ -1761,7 +1761,7 @@ Handle PictureToIcon(PicHandle picture,short iconKind)
 	SetGWorld(cPort,cDevice);
 	DisposeGWorld(tempGWorld);
 	
-	/* ƒf[ƒ^‰» */
+	/* ãƒ‡ãƒ¼ã‚¿åŒ– */
 	HLock(dataHandle);
 	dst=*dataHandle;
 	for (i=0; i<iconSize; i++)
@@ -1800,7 +1800,7 @@ pascal void MyBitsProc(const BitMap *bitPtr,const Rect *srcRect,const Rect *dstR
 	SetGWorld(cPort,cDevice);
 }
 
-/* ƒAƒCƒRƒ“‚©‚çƒf[ƒ^‚ğæ‚èo‚µ‚ÄPicture‚É•ÏŠ· */
+/* ã‚¢ã‚¤ã‚³ãƒ³ã‹ã‚‰ãƒ‡ãƒ¼ã‚¿ã‚’å–ã‚Šå‡ºã—ã¦Pictureã«å¤‰æ› */
 PicHandle IconToPicture(IconSuiteRef theIconSuite,short iconKind)
 {
 	ResType	iconType;
@@ -1846,7 +1846,7 @@ PicHandle IconToPicture(IconSuiteRef theIconSuite,short iconKind)
 	SetRect(&iconRect,0,0,iconSize,iconSize);
 	
 	err=GetIconFromSuite(&dataHandle,theIconSuite,iconType);
-	if (err != noErr || dataHandle == nil) return nil; /* ƒAƒCƒRƒ“‚ª‚È‚¯‚ê‚Înil‚ğ•Ô‚· */
+	if (err != noErr || dataHandle == nil) return nil; /* ã‚¢ã‚¤ã‚³ãƒ³ãŒãªã‘ã‚Œã°nilã‚’è¿”ã™ */
 	if (GetHandleSize(dataHandle) != iconSize*(long)iconSize*(iconDepth>1 ? iconDepth : 2)/8) return nil;
 	
 	GetGWorld(&cPort,&cDevice);
@@ -1894,7 +1894,7 @@ PicHandle IconToPicture(IconSuiteRef theIconSuite,short iconKind)
 	return picture;
 }
 
-/* ƒAƒCƒRƒ“‚ÌŠG‚ğ•`‚­B‚È‚¢ê‡‚ÍƒOƒŒ[‚Å“h‚é */
+/* ã‚¢ã‚¤ã‚³ãƒ³ã®çµµã‚’æãã€‚ãªã„å ´åˆã¯ã‚°ãƒ¬ãƒ¼ã§å¡—ã‚‹ */
 void MyDrawPicture(PicHandle picture,const Rect *r)
 {
 	if (picture!=nil)
@@ -1925,11 +1925,11 @@ void EditFamilyIcon(WindowPtr fWindow,short forceFlag)
 	Handle		dataHandle;
 	OSErr		err;
 	
-	/* ƒf[ƒ^‚ª‚ ‚é‚©‚Ç‚¤‚©‚ğŠm”F */
+	/* ãƒ‡ãƒ¼ã‚¿ãŒã‚ã‚‹ã‹ã©ã†ã‹ã‚’ç¢ºèª */
 	err=GetDataFromIPIcon(&dataHandle,&fWinRec->ipIcon,fWinRec->selectedIcon);
 	if (err!=noErr || dataHandle == NULL) return;
 	
-	/* ‚Ü‚¸ƒEƒBƒ“ƒhƒE‚ªæ‚ÉŠJ‚©‚ê‚Ä‚¢‚È‚¢‚©‚Ç‚¤‚©‚ğƒ`ƒFƒbƒN */
+	/* ã¾ãšã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ãŒå…ˆã«é–‹ã‹ã‚Œã¦ã„ãªã„ã‹ã©ã†ã‹ã‚’ãƒã‚§ãƒƒã‚¯ */
 	eWindow=MyFrontNonFloatingWindow();
 	while (eWindow != nil)
 	{
@@ -1947,9 +1947,9 @@ void EditFamilyIcon(WindowPtr fWindow,short forceFlag)
 		eWindow=GetNextVisibleWindow(eWindow);
 	}
 	
-	/* ŠO•”ƒGƒfƒBƒ^‚ÅŠJ‚©‚ê‚Ä‚¢‚é‚©‚Ç‚¤‚© */
+	/* å¤–éƒ¨ã‚¨ãƒ‡ã‚£ã‚¿ã§é–‹ã‹ã‚Œã¦ã„ã‚‹ã‹ã©ã†ã‹ */
 	if (IsOpenedByExternalEditor(fWindow,fWinRec->selectedIcon,kXIconOpenMode))
-		return; /* æ‚è‚ ‚¦‚¸‚Ìˆ— */
+		return; /* å–ã‚Šã‚ãˆãšã®å‡¦ç† */
 	
 	switch (forceFlag)
 	{
@@ -1967,7 +1967,7 @@ void EditFamilyIcon(WindowPtr fWindow,short forceFlag)
 			break;
 	}
 	
-	/* 32bitƒAƒCƒRƒ“‚È‚Ç‚ÅAŠO•”ƒGƒfƒBƒ^‚ÅŠJ‚­İ’è‚È‚ç‚ÎˆÏ‘õ */
+	/* 32bitã‚¢ã‚¤ã‚³ãƒ³ãªã©ã§ã€å¤–éƒ¨ã‚¨ãƒ‡ã‚£ã‚¿ã§é–‹ãè¨­å®šãªã‚‰ã°å§”è¨— */
 	if (useExternalEditor)
 		OpenByExternalEditor(fWindow);
 	else
@@ -1975,7 +1975,7 @@ void EditFamilyIcon(WindowPtr fWindow,short forceFlag)
 		GWorldPtr	cPort;
 		GDHandle	cDevice;
 		
-		/* ‚»‚¤‚Å‚È‚¯‚ê‚Î©‘O‚ÅŠJ‚­ */
+		/* ãã†ã§ãªã‘ã‚Œã°è‡ªå‰ã§é–‹ã */
 		picture=IPIconToPicture(&fWinRec->ipIcon,fWinRec->selectedIcon);
 		if (picture == nil)
 		{
@@ -2036,7 +2036,7 @@ void EditFamilyIcon(WindowPtr fWindow,short forceFlag)
 	}
 }
 
-/* ƒAƒCƒRƒ“‚ğƒtƒ@ƒ~ƒŠƒEƒBƒ“ƒhƒE‚Ö•Û‘¶ */
+/* ã‚¢ã‚¤ã‚³ãƒ³ã‚’ãƒ•ã‚¡ãƒŸãƒªã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã¸ä¿å­˜ */
 void SaveToFamily(WindowPtr eWindow)
 {
 	PaintWinRec	*eWinRec=GetPaintWinRec(eWindow);
@@ -2061,7 +2061,7 @@ void SaveToFamily(WindowPtr eWindow)
 	SetPort(port);
 }
 
-/* ‹ó‚Ìƒf[ƒ^‚ğ’Ç‰Á */
+/* ç©ºã®ãƒ‡ãƒ¼ã‚¿ã‚’è¿½åŠ  */
 void CreateEmptyIconData(WindowPtr fWindow)
 {
 	IconFamilyWinRec	*fWinRec=GetIconFamilyRec(fWindow);
@@ -2070,18 +2070,18 @@ void CreateEmptyIconData(WindowPtr fWindow)
 	OSErr		err;
 	short		iconKind=fWinRec->selectedIcon;
 	
-	/* ƒAƒCƒRƒ“‚ª‘I‘ğ‚³‚ê‚Ä‚¢‚È‚¯‚ê‚Î–³Œø */
+	/* ã‚¢ã‚¤ã‚³ãƒ³ãŒé¸æŠã•ã‚Œã¦ã„ãªã‘ã‚Œã°ç„¡åŠ¹ */
 	if (iconKind < 0) return;
 	
-	/* ƒAƒCƒRƒ“ƒf[ƒ^‚ª‘¶İ‚·‚ê‚Î–³Œø */
+	/* ã‚¢ã‚¤ã‚³ãƒ³ãƒ‡ãƒ¼ã‚¿ãŒå­˜åœ¨ã™ã‚Œã°ç„¡åŠ¹ */
 	err=GetDataFromIPIcon(&iconData,&fWinRec->ipIcon,iconKind);
 	if (iconData != NULL) return;
 	
-	/* æ‚èÁ‚µ—p‚Ìƒf[ƒ^‚ğƒNƒŠƒA */
+	/* å–ã‚Šæ¶ˆã—ç”¨ã®ãƒ‡ãƒ¼ã‚¿ã‚’ã‚¯ãƒªã‚¢ */
 	if (fWinRec->undoData.iconData != nil)
 		DisposeHandle(fWinRec->undoData.iconData);
 	
-	/* ƒAƒCƒRƒ“ƒf[ƒ^‚Ìì¬ */
+	/* ã‚¢ã‚¤ã‚³ãƒ³ãƒ‡ãƒ¼ã‚¿ã®ä½œæˆ */
 	{
 		long	iconDataSize=GetIconDataSize(iconKind);
 		short	tempKind=-1;
@@ -2089,7 +2089,7 @@ void CreateEmptyIconData(WindowPtr fWindow)
 		iconData=NewHandleClear(iconDataSize);
 		err=SetDataToIPIcon(iconData,&fWinRec->ipIcon,iconKind);
 		
-		/* 1ƒrƒbƒgƒ}ƒXƒN‚Ìê‡AXV‚·‚éêŠ‚ª‘½‚¢ */
+		/* 1ãƒ“ãƒƒãƒˆãƒã‚¹ã‚¯ã®å ´åˆã€æ›´æ–°ã™ã‚‹å ´æ‰€ãŒå¤šã„ */
 		fWinRec->undoData.iconData=nil;
 		if (iconKind == kL1Data || iconKind == kS1Data)
 			tempKind=iconKind+1;
@@ -2105,15 +2105,15 @@ void CreateEmptyIconData(WindowPtr fWindow)
 	}
 	fWinRec->undoData.iconKind=fWinRec->selectedIcon;
 	
-	/* ƒEƒBƒ“ƒhƒE‚ÌXV */
+	/* ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®æ›´æ–° */
 	updateRect=familyIconRect[fWinRec->selectedIcon];
 	InsetRect(&updateRect,-2,-2);
 	MyInvalWindowRect(fWindow,&updateRect);
 	
-	/* •ÏXƒtƒ‰ƒO‚ğƒZƒbƒg */
+	/* å¤‰æ›´ãƒ•ãƒ©ã‚°ã‚’ã‚»ãƒƒãƒˆ */
 	fWinRec->wasChanged=true;
 	
-	/* æ‚èÁ‚µˆ——p */
+	/* å–ã‚Šæ¶ˆã—å‡¦ç†ç”¨ */
 	fWinRec->undoData.undoMode=umAddIconData;
 	UpdateUndoMenu();
 	UpdateSaveMenu();
@@ -2122,7 +2122,7 @@ void CreateEmptyIconData(WindowPtr fWindow)
 	RedrawIconPreview();
 }
 
-/* ƒAƒCƒRƒ“ƒtƒ@ƒ~ƒŠƒEƒBƒ“ƒhƒE‚Å‚Ìundoˆ— */
+/* ã‚¢ã‚¤ã‚³ãƒ³ãƒ•ã‚¡ãƒŸãƒªã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã§ã®undoå‡¦ç† */
 void DoUndoIconFamily(WindowPtr fWindow)
 {
 	IconFamilyWinRec	*fWinRec=GetIconFamilyRec(fWindow);
@@ -2190,7 +2190,7 @@ void DoUndoIconFamily(WindowPtr fWindow)
 	RedrawIconPreview();
 }
 
-/* ƒAƒCƒRƒ“‚ğ‘I‘ğ‚µ‚Ä‚¢‚È‚¢ê‡‚Ìƒƒjƒ…[ */
+/* ã‚¢ã‚¤ã‚³ãƒ³ã‚’é¸æŠã—ã¦ã„ãªã„å ´åˆã®ãƒ¡ãƒ‹ãƒ¥ãƒ¼ */
 void MyIconFamilyContextMenu(Point globPt,WindowPtr fWindow)
 {
 	enum {
@@ -2211,7 +2211,7 @@ void MyIconFamilyContextMenu(Point globPt,WindowPtr fWindow)
 	OSErr	err;
 	
 	InsertMenu(menu,-1);
-	/* ƒNƒŠƒbƒvƒ{[ƒh‚ÌŠm”F¨ƒy[ƒXƒg */
+	/* ã‚¯ãƒªãƒƒãƒ—ãƒœãƒ¼ãƒ‰ã®ç¢ºèªâ†’ãƒšãƒ¼ã‚¹ãƒˆ */
 	#if TARGET_API_MAC_CARBON
 	{
 		ScrapRef	scrap;
@@ -2230,14 +2230,14 @@ void MyIconFamilyContextMenu(Point globPt,WindowPtr fWindow)
 	if (dataSize<=0) MyDisableMenuItem(menu,piPaste);
 	else MyEnableMenuItem(menu,piPaste);
 	
-	/* ‘I‘ğƒAƒCƒRƒ“‚ÌŠm”F */
+	/* é¸æŠã‚¢ã‚¤ã‚³ãƒ³ã®ç¢ºèª */
 	{
 		Handle	dataHandle;
 		OSErr	err;
 		
 		err=GetDataFromIPIcon(&dataHandle,&fWinRec->ipIcon,fWinRec->selectedIcon);
 		
-		/* ‘I‘ğƒAƒCƒRƒ“‚ ‚è */
+		/* é¸æŠã‚¢ã‚¤ã‚³ãƒ³ã‚ã‚Š */
 		if (err == noErr && dataHandle != nil)
 		{
 			MyEnableMenuItem(menu,piEdit);
@@ -2245,7 +2245,7 @@ void MyIconFamilyContextMenu(Point globPt,WindowPtr fWindow)
 			MyEnableMenuItem(menu,piCut);
 			MyEnableMenuItem(menu,piClear);
 			
-			/* ŠO•”ƒGƒfƒBƒ^‘¶İ‚ÌŠm”F */
+			/* å¤–éƒ¨ã‚¨ãƒ‡ã‚£ã‚¿å­˜åœ¨ã®ç¢ºèª */
 			if (isExternalEditorAvailable)
 			{
 				MyEnableMenuItem(menu,piEditByExternalEditor);
@@ -2317,7 +2317,7 @@ void MyIconFamilyContextMenu(Point globPt,WindowPtr fWindow)
 	}
 }
 
-/* ƒtƒ@ƒ~ƒŠƒEƒBƒ“ƒhƒE‚Ö‚Ìƒhƒ‰ƒbƒOˆ— */
+/* ãƒ•ã‚¡ãƒŸãƒªã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã¸ã®ãƒ‰ãƒ©ãƒƒã‚°å‡¦ç† */
 pascal short MyIconFamilyTrackingHandler(DragTrackingMessage theMessage,WindowPtr theWindow,
 										void *handlerRefCon,DragReference theDrag)
 {
@@ -2366,7 +2366,7 @@ pascal short MyIconFamilyTrackingHandler(DragTrackingMessage theMessage,WindowPt
 						hiliteRect=familyIconRect[i];
 						InsetRect(&hiliteRect,-2,-2);
 						RectRgn(hiliteRgn,&hiliteRect);
-						ShowDragHilite(theDrag,hiliteRgn,true); /* “à‘¤ */
+						ShowDragHilite(theDrag,hiliteRgn,true); /* å†…å´ */
 						DisposeRgn(hiliteRgn);
 						isInIconRect=true;
 						break;
@@ -2392,7 +2392,7 @@ pascal short MyIconFamilyTrackingHandler(DragTrackingMessage theMessage,WindowPt
 	return (noErr);
 }
 
-/* ó‚¯“ü‚ê‰Â”\‚È‚à‚Ì‚©‚Ç‚¤‚©‚Ìƒ`ƒFƒbƒN */
+/* å—ã‘å…¥ã‚Œå¯èƒ½ãªã‚‚ã®ã‹ã©ã†ã‹ã®ãƒã‚§ãƒƒã‚¯ */
 Boolean IsMyIconFamilyTypeAvailable(DragReference theDrag)
 {
 	short			index;
@@ -2403,13 +2403,13 @@ Boolean IsMyIconFamilyTypeAvailable(DragReference theDrag)
 	
 	CountDragItems(theDrag,&items);
 	
-	/* ‚P‚Â‚¾‚¯ó‚¯“ü‚ê‰Â”\ */
+	/* ï¼‘ã¤ã ã‘å—ã‘å…¥ã‚Œå¯èƒ½ */
 	if (items > 1) return false;
 	
 	for (index=1; index<=1; index++) {
 		GetDragItemReferenceNumber(theDrag,index,&theItem);
 		
-		/* 'PICT' flavor‚Ì‘¶İ‚ğƒ`ƒFƒbƒN */
+		/* 'PICT' flavorã®å­˜åœ¨ã‚’ãƒã‚§ãƒƒã‚¯ */
 		result=GetFlavorFlags(theDrag,theItem,'PICT',&theFlags);
 		if (result==noErr)
 			continue;
@@ -2420,7 +2420,7 @@ Boolean IsMyIconFamilyTypeAvailable(DragReference theDrag)
 	return true;
 }
 
-/* ƒtƒ@ƒ~ƒŠƒEƒBƒ“ƒhƒE‚Ö‚Ìƒhƒ‰ƒbƒO‚Ìó‚¯“ü‚ê */
+/* ãƒ•ã‚¡ãƒŸãƒªã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã¸ã®ãƒ‰ãƒ©ãƒƒã‚°ã®å—ã‘å…¥ã‚Œ */
 pascal short MyIconFamilyReceiveHandler(WindowPtr theWindow,void *handlerRefCon,
 										DragReference theDrag)
 {
@@ -2460,7 +2460,7 @@ pascal short MyIconFamilyReceiveHandler(WindowPtr theWindow,void *handlerRefCon,
 			dragPic=(PicHandle)NewHandle(dataSize);
 			if (dragPic==nil)
 			{
-				/* ƒƒ‚ƒŠ‚ª‘«‚è‚È‚¢ */
+				/* ãƒ¡ãƒ¢ãƒªãŒè¶³ã‚Šãªã„ */
 				return memFullErr;
 			}
 			
@@ -2468,7 +2468,7 @@ pascal short MyIconFamilyReceiveHandler(WindowPtr theWindow,void *handlerRefCon,
 			GetFlavorData(theDrag,theItem,'PICT',(char *)*dragPic,&dataSize,0L);
 			HUnlock((Handle)dragPic);
 			
-			/* ‚Ç‚±‚Éƒhƒ‰ƒbƒO‚³‚ê‚½‚Ì‚©‚ğƒ`ƒFƒbƒN */
+			/* ã©ã“ã«ãƒ‰ãƒ©ãƒƒã‚°ã•ã‚ŒãŸã®ã‹ã‚’ãƒã‚§ãƒƒã‚¯ */
 			for (i=0; i<GetIconKindNum(fWinRec); i++)
 			{
 				if (PtInRect(localMouse,&familyIconRect[i]))
@@ -2490,7 +2490,7 @@ pascal short MyIconFamilyReceiveHandler(WindowPtr theWindow,void *handlerRefCon,
 					MyInvalWindowRect(theWindow,&prevSelectedRect);
 				}
 				
-				/* ƒhƒƒbƒv‚µ‚æ‚¤‚Æ‚µ‚Ä‚¢‚éƒAƒCƒRƒ“‚ª•ÒW’†‚Å‚È‚¢‚©‚Ç‚¤‚©‚ğŠm”F */
+				/* ãƒ‰ãƒ­ãƒƒãƒ—ã—ã‚ˆã†ã¨ã—ã¦ã„ã‚‹ã‚¢ã‚¤ã‚³ãƒ³ãŒç·¨é›†ä¸­ã§ãªã„ã‹ã©ã†ã‹ã‚’ç¢ºèª */
 				eWindow=MyFrontNonFloatingWindow();
 				while (eWindow != nil)
 				{
@@ -2527,26 +2527,26 @@ pascal short MyIconFamilyReceiveHandler(WindowPtr theWindow,void *handlerRefCon,
 				GetFlavorDataSize(theDrag,theItem,'hfs ',&dataSize);
 				GetFlavorData(theDrag,theItem,'hfs ',(char *)&hfsFlavorData,&dataSize,0L);
 				*/
-				/* ƒtƒ@ƒCƒ‹‚ÌƒAƒCƒRƒ“‚ğæ“¾‚µ‚ÄƒŠƒXƒg‚É’Ç‰Á‚·‚é */
+				/* ãƒ•ã‚¡ã‚¤ãƒ«ã®ã‚¢ã‚¤ã‚³ãƒ³ã‚’å–å¾—ã—ã¦ãƒªã‚¹ãƒˆã«è¿½åŠ ã™ã‚‹ */
 /*				AddFileIconToIconList(theWindow,&hfsFlavorData.fileSpec);
 			}
 		}*/
 	}
-	/* ƒEƒBƒ“ƒhƒE‚ğƒAƒNƒeƒBƒu‚É‚·‚éİ’è‚È‚çA‚·‚é */
+	/* ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚’ã‚¢ã‚¯ãƒ†ã‚£ãƒ–ã«ã™ã‚‹è¨­å®šãªã‚‰ã€ã™ã‚‹ */
 	if (gOtherPrefs.activateDroppedWindow)
 	{
 		SelectReferencedWindow(theWindow);
 		UpdateMenus();
 	}
 	
-	/* ƒhƒƒbƒv‚³‚ê‚½ƒEƒBƒ“ƒhƒE‚ªƒtƒƒ“ƒgƒEƒBƒ“ƒhƒE‚È‚çƒvƒŒƒrƒ…[‚ğXV */
+	/* ãƒ‰ãƒ­ãƒƒãƒ—ã•ã‚ŒãŸã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ãŒãƒ•ãƒ­ãƒ³ãƒˆã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ãªã‚‰ãƒ—ãƒ¬ãƒ“ãƒ¥ãƒ¼ã‚’æ›´æ–° */
 	if (MyFrontNonFloatingWindow() == theWindow)
 		RedrawIconPreview();
 	
 	return result;
 }
 
-/* ƒhƒ‰ƒbƒO‚ğŠJn‚·‚éiƒhƒ‰ƒbƒO‚Ìƒf[ƒ^‚ğì¬j */
+/* ãƒ‰ãƒ©ãƒƒã‚°ã‚’é–‹å§‹ã™ã‚‹ï¼ˆãƒ‰ãƒ©ãƒƒã‚°ã®ãƒ‡ãƒ¼ã‚¿ã‚’ä½œæˆï¼‰ */
 void MyDoStartDragIconFamily(WindowPtr fWindow,EventRecord *theEvent)
 {
 	IconFamilyWinRec	*fWinRec=GetIconFamilyRec(fWindow);
@@ -2584,7 +2584,7 @@ exit:
 	DisposeDragSendDataUPP(dsdUPP);
 }
 
-/* ƒhƒ‰ƒbƒOƒf[ƒ^‚Éflavor‚ğ’Ç‰Á‚·‚é */
+/* ãƒ‰ãƒ©ãƒƒã‚°ãƒ‡ãƒ¼ã‚¿ã«flavorã‚’è¿½åŠ ã™ã‚‹ */
 OSErr MyDoAddIconFamilyFlavors(WindowPtr fWindow,DragReference theDrag)
 {
 	#pragma unused(fWindow)
@@ -2595,7 +2595,7 @@ OSErr MyDoAddIconFamilyFlavors(WindowPtr fWindow,DragReference theDrag)
 	return err;
 }
 
-/* ƒhƒ‰ƒbƒOƒŠ[ƒWƒ‡ƒ“‚Ìì¬ */
+/* ãƒ‰ãƒ©ãƒƒã‚°ãƒªãƒ¼ã‚¸ãƒ§ãƒ³ã®ä½œæˆ */
 OSErr MyGetDragIconFamilyRegion(WindowPtr fWindow,RgnHandle dragRegion,
 							DragReference theDragRef)
 {
@@ -2619,7 +2619,7 @@ OSErr MyGetDragIconFamilyRegion(WindowPtr fWindow,RgnHandle dragRegion,
 	return(noErr);
 }
 
-/* —v‹‚³‚ê‚½flavorƒf[ƒ^‚ğ’ñ‹Ÿ‚·‚é */
+/* è¦æ±‚ã•ã‚ŒãŸflavorãƒ‡ãƒ¼ã‚¿ã‚’æä¾›ã™ã‚‹ */
 pascal short MySendIconFamilyDataProc(FlavorType theType,void *dragSendRefCon,
 										ItemReference theItem,DragReference theDrag)
 {
@@ -2632,7 +2632,7 @@ pascal short MySendIconFamilyDataProc(FlavorType theType,void *dragSendRefCon,
 	
 	switch (theType) {
 		case 'PICT':
-			/* “n‚·PICTƒf[ƒ^‚ğì¬ */
+			/* æ¸¡ã™PICTãƒ‡ãƒ¼ã‚¿ã‚’ä½œæˆ */
 			picture=IPIconToPicture(&fWinRec->ipIcon,fWinRec->selectedIcon);
 			HLock((Handle)picture);
 			err=SetDragItemFlavorData(theDrag,theItem,kScrapFlavorTypePicture,*picture,

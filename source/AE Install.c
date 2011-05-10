@@ -1,6 +1,6 @@
 /* ------------------------------------------------------------ */
 /*  AE Install.c                                                */
-/*      ƒAƒbƒvƒ‹ƒCƒxƒ“ƒgƒnƒ“ƒhƒ‰‚ÌƒCƒ“ƒXƒg[ƒ‹ˆ—‚È‚Ç          */
+/*      ã‚¢ãƒƒãƒ—ãƒ«ã‚¤ãƒ™ãƒ³ãƒˆãƒãƒ³ãƒ‰ãƒ©ã®ã‚¤ãƒ³ã‚¹ãƒˆãƒ¼ãƒ«å‡¦ç†ãªã©          */
 /*                                                              */
 /*                 1997.1.11 - 2000.1.4  naoki iimura         	*/
 /* ------------------------------------------------------------ */
@@ -43,13 +43,13 @@ static OSErr	CheckForRequiredParams(const AppleEvent *event);
 #define	AEERR6	6
 
 
-/* ƒAƒbƒvƒ‹ƒCƒxƒ“ƒg‚Ì‰Šú‰» */
+/* ã‚¢ãƒƒãƒ—ãƒ«ã‚¤ãƒ™ãƒ³ãƒˆã®åˆæœŸåŒ– */
 void AEInit(void)
 {
 	OSErr	err;
 	long	feature;
 	
-	/* ƒAƒbƒvƒ‹ƒCƒxƒ“ƒg‚ªg—p‰Â”\‚©‚Ç‚¤‚©ƒ`ƒFƒbƒN */
+	/* ã‚¢ãƒƒãƒ—ãƒ«ã‚¤ãƒ™ãƒ³ãƒˆãŒä½¿ç”¨å¯èƒ½ã‹ã©ã†ã‹ãƒã‚§ãƒƒã‚¯ */
 	err=Gestalt(gestaltAppleEventsAttr,&feature);
 	
 	if (err!=noErr)
@@ -66,7 +66,7 @@ void AEInit(void)
 	AEInstallHandlers();
 }
 
-/*ƒAƒbƒvƒ‹ƒCƒxƒ“ƒgƒnƒ“ƒhƒ‰‚ÌƒCƒ“ƒXƒg[ƒ‹ */
+/*ã‚¢ãƒƒãƒ—ãƒ«ã‚¤ãƒ™ãƒ³ãƒˆãƒãƒ³ãƒ‰ãƒ©ã®ã‚¤ãƒ³ã‚¹ãƒˆãƒ¼ãƒ« */
 void AEInstallHandlers(void)
 {
 	OSErr	err;
@@ -93,7 +93,7 @@ void AEInstallHandlers(void)
 	}
 }
 
-/* oappƒAƒbƒvƒ‹ƒCƒxƒ“ƒgƒnƒ“ƒhƒ‰ */
+/* oappã‚¢ãƒƒãƒ—ãƒ«ã‚¤ãƒ™ãƒ³ãƒˆãƒãƒ³ãƒ‰ãƒ© */
 pascal OSErr DoOpenApp(const AppleEvent *event,AppleEvent *reply,long refcon)
 {
 	#pragma unused(event,reply,refcon)
@@ -105,7 +105,7 @@ pascal OSErr DoOpenApp(const AppleEvent *event,AppleEvent *reply,long refcon)
 	#endif
 }
 
-/* odocƒAƒbƒvƒ‹ƒCƒxƒ“ƒgƒnƒ“ƒhƒ‰ */
+/* odocã‚¢ãƒƒãƒ—ãƒ«ã‚¤ãƒ™ãƒ³ãƒˆãƒãƒ³ãƒ‰ãƒ© */
 pascal OSErr DoOpenDoc(const AppleEvent *event,AppleEvent *reply,long refcon)
 {
 	#pragma unused(reply,refcon)
@@ -140,7 +140,7 @@ pascal OSErr DoOpenDoc(const AppleEvent *event,AppleEvent *reply,long refcon)
 		err=AEGetNthPtr(&docList,i,typeFSS,&keywd,&returnedType,(Ptr)&spec,sizeof(spec),&actualSize);
 		err=AEGetNthPtr(&docList,i,typeType,&keywd,&returnedType,(Ptr)&type,sizeof(type),&actualSize);
 		
-		/* ƒtƒ@ƒCƒ‹‚ğŠJ‚­ */
+		/* ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ã */
 		err=HandleOpenDoc(&spec);
 	}
 	err=AEDisposeDesc(&docList);

@@ -1,6 +1,6 @@
 /* ------------------------------------------------------------ */
 /*  EffectRoutines.c                                            */
-/*     Œø‰Êˆ—‚È‚Ç                                             */
+/*     åŠ¹æœå‡¦ç†ãªã©                                             */
 /*                                                              */
 /*                 2001.11.17 - 2001.11.17  naoki iimura       	*/
 /* ------------------------------------------------------------ */
@@ -26,10 +26,10 @@
 
 #pragma options align=mac68k
 
-/* ‰ñ“] */
+/* å›è»¢ */
 static short	gAngle=90;
 
-/* “_•` */
+/* ç‚¹æ */
 typedef struct DotPictureRec {
 	short	dotPicBack;
 	Boolean	dotPicLight;
@@ -38,7 +38,7 @@ typedef struct DotPictureRec {
 
 static DotPictureRec	dotPicturePrefs={0,false,0};
 
-/* •— */
+/* é¢¨ */
 typedef struct WindRec {
 	short	direction;
 	short	power;
@@ -46,7 +46,7 @@ typedef struct WindRec {
 
 static WindRec	windPrefs={0,0};
 
-/* •¶š“ü—Í—p */
+/* æ–‡å­—å…¥åŠ›ç”¨ */
 typedef struct TypeStringRec {
 	short	fontID;
 	short	size;
@@ -58,14 +58,14 @@ typedef struct TypeStringRec {
 
 static TypeStringRec	typeStringPrefs={0,12,normal,"\ptext",false,1};
 
-/* ‰æ‚è */
+/* ç¸å–ã‚Š */
 enum {
 	kShapeEdge=1,
 	kShapeOval,
 	kShapeTriangle,
 	kShapeRTriangle,
-	kShapeLozenge,		/* ‚Ğ‚µŒ` */
-	kShapeDiagonal1,	/* ‘ÎŠpü */
+	kShapeLozenge,		/* ã²ã—å½¢ */
+	kShapeDiagonal1,	/* å¯¾è§’ç·š */
 	kShapeDiagonal2,
 };
 
@@ -85,7 +85,7 @@ static void	DoEdgingMain(PaintWinRec *eWinRec,EdgePrefsRec *prefs);
 static void	FlipVerticalRgn(RgnHandle rgn,Rect *r);
 static void	FlipHorizontalRgn(RgnHandle rgn,Rect *r);
 
-/* Œø‰Ê‚È‚Ç‚Ìİ’è */
+/* åŠ¹æœãªã©ã®è¨­å®š */
 static short	ConfigureDotPicture(void);
 static short	ConfigureRotate(void);
 static short	ConfigureWind(void);
@@ -102,7 +102,7 @@ static void	GetSinCos(short angle,long *sine,long *cosine);
 #define	EFFECTERR2	2
 
 
-/* ‘I‘ğ”ÍˆÍ‚ğˆÃ‚­‚·‚é */
+/* é¸æŠç¯„å›²ã‚’æš—ãã™ã‚‹ */
 void DoDarken(WindowPtr theWindow)
 {
 	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
@@ -114,7 +114,7 @@ void DoDarken(WindowPtr theWindow)
 	ResetRuler();
 	GoOffPort(theWindow);
 	
-	if (eWinRec->isSelected) /* ‘I‘ğ”ÍˆÍ‚ ‚è */
+	if (eWinRec->isSelected) /* é¸æŠç¯„å›²ã‚ã‚Š */
 	{
 		CopyRgn(eWinRec->selectionPos,selectedRgn);
 		OffsetRgn(selectedRgn,-eWinRec->selectionOffset.h,-eWinRec->selectionOffset.v);
@@ -134,7 +134,7 @@ void DoDarken(WindowPtr theWindow)
 	ForeColor(blackColor);
 	PenMode(srcCopy);
 	
-	/* ƒ}ƒXƒNˆ— */
+	/* ãƒã‚¹ã‚¯å‡¦ç† */
 	SetGWorld(eWinRec->currentMask,0);
 	LockPixels(GetGWorldPixMap(eWinRec->currentMask));
 	PaintRgn(selectedRgn);
@@ -149,11 +149,11 @@ void DoDarken(WindowPtr theWindow)
 	gUsedCount.darkenNum++;
 	UpdateTransparentMenu();
 	SetUndoMode(umEffect);
-	if (gPaletteCheck == kPaletteCheckUsed) /* ƒpƒŒƒbƒg‚Ìƒ`ƒFƒbƒN‚ğƒAƒbƒvƒf[ƒg */
+	if (gPaletteCheck == kPaletteCheckUsed) /* ãƒ‘ãƒ¬ãƒƒãƒˆã®ãƒã‚§ãƒƒã‚¯ã‚’ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆ */
 		UpdatePaletteCheck();
 }
 
-/* ‘I‘ğ”ÍˆÍ‚ğ–¾‚é‚­‚·‚é */
+/* é¸æŠç¯„å›²ã‚’æ˜ã‚‹ãã™ã‚‹ */
 void DoLighten(WindowPtr theWindow)
 {
 	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
@@ -184,11 +184,11 @@ void DoLighten(WindowPtr theWindow)
 	gUsedCount.lightenNum++;
 	UpdateTransparentMenu();
 	SetUndoMode(umEffect);
-	if (gPaletteCheck == kPaletteCheckUsed) /* ƒpƒŒƒbƒg‚Ìƒ`ƒFƒbƒN‚ğƒAƒbƒvƒf[ƒg */
+	if (gPaletteCheck == kPaletteCheckUsed) /* ãƒ‘ãƒ¬ãƒƒãƒˆã®ãƒã‚§ãƒƒã‚¯ã‚’ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆ */
 		UpdatePaletteCheck();
 }
 
-/* ‘I‘ğ”ÍˆÍ‚ğ“h‚è‚Â‚Ô‚· */
+/* é¸æŠç¯„å›²ã‚’å¡—ã‚Šã¤ã¶ã™ */
 void DoFill(WindowPtr theWindow)
 {
 	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
@@ -217,7 +217,7 @@ void DoFill(WindowPtr theWindow)
 	
 	LockPixels(GetGWorldPixMap(eWinRec->editDataPtr));
 	PenPat(&pat);
-	PaintRgn(effectRgn); /* FillRect‚¾‚Æ•s“§–¾“x‚ª”½‰f‚³‚ê‚È‚¢ */
+	PaintRgn(effectRgn); /* FillRectã ã¨ä¸é€æ˜åº¦ãŒåæ˜ ã•ã‚Œãªã„ */
 	UnlockPixels(GetGWorldPixMap(eWinRec->editDataPtr));
 	
 	PenNormal();
@@ -225,7 +225,7 @@ void DoFill(WindowPtr theWindow)
 	ForeColor(blackColor);
 	BackColor(whiteColor);
 	
-	/* ƒ}ƒXƒNˆ— */
+	/* ãƒã‚¹ã‚¯å‡¦ç† */
 	{
 		Boolean	isBlackPat=(gOtherPrefs.useHyperCardPalette && gPatternNo==12) ||
 							(!gOtherPrefs.useHyperCardPalette && gPatternNo==1),
@@ -238,7 +238,7 @@ void DoFill(WindowPtr theWindow)
 							(gCurrentColor.isTransparent && isBlackPat) ||
 							(gBackColor.isTransparent && isWhitePat);
 		
-		if (isOpaque || isTransparent) /* Š®‘S‚É“§–¾ or •s“§–¾ */
+		if (isOpaque || isTransparent) /* å®Œå…¨ã«é€æ˜ or ä¸é€æ˜ */
 		{
 			SetGWorld(eWinRec->currentMask,0);
 			LockPixels(GetGWorldPixMap(eWinRec->currentMask));
@@ -248,7 +248,7 @@ void DoFill(WindowPtr theWindow)
 				PaintRgn(effectRgn);
 			UnlockPixels(GetGWorldPixMap(eWinRec->currentMask));
 		}
-		else /* ƒpƒ^[ƒ“‚ªŠÖŒW‚·‚é */
+		else /* ãƒ‘ã‚¿ãƒ¼ãƒ³ãŒé–¢ä¿‚ã™ã‚‹ */
 		{
 			SetGWorld(eWinRec->currentMask,0);
 			LockPixels(GetGWorldPixMap(eWinRec->currentMask));
@@ -273,11 +273,11 @@ void DoFill(WindowPtr theWindow)
 	gUsedCount.fillNum++;
 	UpdateTransparentMenu();
 	SetUndoMode(umEffect);
-	if (gPaletteCheck == kPaletteCheckUsed) /* ƒpƒŒƒbƒg‚Ìƒ`ƒFƒbƒN‚ğƒAƒbƒvƒf[ƒg */
+	if (gPaletteCheck == kPaletteCheckUsed) /* ãƒ‘ãƒ¬ãƒƒãƒˆã®ãƒã‚§ãƒƒã‚¯ã‚’ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆ */
 		UpdatePaletteCheck();
 }
 
-/* ‘I‘ğ”ÍˆÍ‚ÉƒAƒ“ƒ`ƒGƒCƒŠƒAƒXˆ—‚ğ‚©‚¯‚é */
+/* é¸æŠç¯„å›²ã«ã‚¢ãƒ³ãƒã‚¨ã‚¤ãƒªã‚¢ã‚¹å‡¦ç†ã‚’ã‹ã‘ã‚‹ */
 void DoAntialias(WindowPtr theWindow)
 {
 	Rect	dstRect;
@@ -299,7 +299,7 @@ void DoAntialias(WindowPtr theWindow)
 	GetGWorld(&cPort,&cDevice);
 	ResetRuler();
 	
-	/* “à•”‚Å‚Í32768F‚ÅŒvZ‚·‚é */
+	/* å†…éƒ¨ã§ã¯32768è‰²ã§è¨ˆç®—ã™ã‚‹ */
 	GetPortBounds(eWinRec->editDataPtr,&portRect);
 	err=NewGWorld(&tempGWorld,24,&portRect,0,0,useTempMem);
 	
@@ -311,7 +311,7 @@ void DoAntialias(WindowPtr theWindow)
 	
 	GoOffPort(theWindow);
 	
-	/* ã‰º¶‰E‚É‚¸‚ç‚µ‚È‚ª‚ç“K“–‚ÈŠ„‡‚Å‚Ü‚º‚ ‚í‚¹‚é */
+	/* ä¸Šä¸‹å·¦å³ã«ãšã‚‰ã—ãªãŒã‚‰é©å½“ãªå‰²åˆã§ã¾ãœã‚ã‚ã›ã‚‹ */
 	SetGWorld(tempGWorld,0);
 	
 	LockPixels(GetGWorldPixMap(tempGWorld));
@@ -336,7 +336,7 @@ void DoAntialias(WindowPtr theWindow)
 	
 	SetGWorld(eWinRec->editDataPtr,0);
 	
-	/* ÅŒã‚É256F‚É–ß‚· */
+	/* æœ€å¾Œã«256è‰²ã«æˆ»ã™ */
 	CopyBits(GetPortBitMapForCopyBits(tempGWorld),
 		GetPortBitMapForCopyBits(eWinRec->editDataPtr),
 		&effectRect,&effectRect,srcCopy,0);
@@ -344,7 +344,7 @@ void DoAntialias(WindowPtr theWindow)
 	UnlockPixels(GetGWorldPixMap(tempGWorld));
 	DisposeGWorld(tempGWorld);
 	
-	/* ƒ}ƒXƒNˆ— */
+	/* ãƒã‚¹ã‚¯å‡¦ç† */
 	err=CreateMask2(eWinRec->editDataPtr,&maskGWorld);
 	if (err!=noErr)
 	{
@@ -367,7 +367,7 @@ void DoAntialias(WindowPtr theWindow)
 		DisposeGWorld(maskGWorld);
 	}
 	
-	/* ‘I‘ğ”ÍˆÍ‘S‘Ì‚ğXV */
+	/* é¸æŠç¯„å›²å…¨ä½“ã‚’æ›´æ–° */
 	CopyRgn(eWinRec->selectionPos,eWinRec->updateRgn);
 	SetGWorld(cPort,cDevice);
 	DispOffPort(theWindow);
@@ -375,11 +375,11 @@ void DoAntialias(WindowPtr theWindow)
 	gUsedCount.antialiasNum++;
 	UpdateTransparentMenu();
 	SetUndoMode(umEffect);
-	if (gPaletteCheck == kPaletteCheckUsed) /* ƒpƒŒƒbƒg‚Ìƒ`ƒFƒbƒN‚ğƒAƒbƒvƒf[ƒg */
+	if (gPaletteCheck == kPaletteCheckUsed) /* ãƒ‘ãƒ¬ãƒƒãƒˆã®ãƒã‚§ãƒƒã‚¯ã‚’ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆ */
 		UpdatePaletteCheck();
 }
 
-/* “_•`—p‚Ì’è”^•Ï” */
+/* ç‚¹æç”¨ã®å®šæ•°ï¼å¤‰æ•° */
 #define		dDotPicture	130
 enum {
 	bgNone=3,
@@ -392,7 +392,7 @@ enum {
 	dotFewer
 };
 
-/* “_•`iHj */
+/* ç‚¹æï¼ˆï¼Ÿï¼‰ */
 void DoDotPicture(WindowPtr theWindow)
 {
 	RGBColor	dotOpColor[]=  {{0x8000,0x8000,0x8000},
@@ -425,17 +425,17 @@ void DoDotPicture(WindowPtr theWindow)
 	GWorldPtr	cPort;
 	GDHandle	cDevice;
 	
-	/* İ’è‚ğŒÄ‚Ño‚· */
+	/* è¨­å®šã‚’å‘¼ã³å‡ºã™ */
 	if (ConfigureDotPicture()<0) return;
 	
-	/* ŒvZ—p‚Ì•Ï”‚Ì‰Šú‰» */
+	/* è¨ˆç®—ç”¨ã®å¤‰æ•°ã®åˆæœŸåŒ– */
 	selectRect=effectRect;
 	left=selectRect.left;
 	top=selectRect.top;
 	right=selectRect.right;
 	bottom=selectRect.bottom;
 	
-	/* ƒ‰ƒ“ƒ_ƒ€ƒhƒbƒg‚Ìƒpƒ^[ƒ“ì¬ */
+	/* ãƒ©ãƒ³ãƒ€ãƒ ãƒ‰ãƒƒãƒˆã®ãƒ‘ã‚¿ãƒ¼ãƒ³ä½œæˆ */
 	err=NewGWorld(&randomGWorld,1,&effectRect,0,0,useTempMem);
 	if (err!=noErr)
 	{
@@ -452,12 +452,12 @@ void DoDotPicture(WindowPtr theWindow)
 	baseAddr=MyGetPixBaseAddr(pmh);
 	rowBytes=MyGetPixRowBytes(pmh) & 0x3fff;
 	
-	for (dotY=top; dotY<bottom; dotY++) /* ‘I‘ğ”ÍˆÍ‚Ìã‚©‚ç‰º‚Ü‚Åƒ‹[ƒv‚·‚é */
+	for (dotY=top; dotY<bottom; dotY++) /* é¸æŠç¯„å›²ã®ä¸Šã‹ã‚‰ä¸‹ã¾ã§ãƒ«ãƒ¼ãƒ—ã™ã‚‹ */
 	{
-		dotX=right+(dotY%3)*3+(Random()%3); /* ‰E‘¤‚©‚ç“_‚ğ‘Å‚Á‚Ä‚¢‚­ */
+		dotX=right+(dotY%3)*3+(Random()%3); /* å³å´ã‹ã‚‰ç‚¹ã‚’æ‰“ã£ã¦ã„ã */
 		while (dotX>=right) dotX-=(dotPicturePrefs.dotVolume<<1)+4+Random()%3;
 		
-		/* “_‚ÌˆÊ’u‚ÌƒAƒhƒŒƒX‚ğŒvZ */
+		/* ç‚¹ã®ä½ç½®ã®ã‚¢ãƒ‰ãƒ¬ã‚¹ã‚’è¨ˆç®— */
 		addrX=baseAddr+(dotY-top)*rowBytes+((dotX-left) >> 3)+1;
 		bitCount=7-((dotX-left) & 0x07);
 		outBits=1L<<bitCount;
@@ -466,49 +466,49 @@ void DoDotPicture(WindowPtr theWindow)
 		{
 			dx=(dotPicturePrefs.dotVolume<<1)+4+Random()%3;
 			dotX-=dx;
-			if (dotX<left) break; /* ¶‚Í‚µ‚É’B‚·‚é‚Ü‚ÅŒJ‚è•Ô‚· */
+			if (dotX<left) break; /* å·¦ã¯ã—ã«é”ã™ã‚‹ã¾ã§ç¹°ã‚Šè¿”ã™ */
 			bitCount+=dx;
 			outBits+=1L<<bitCount;
 			while (bitCount>=8)
 			{
-				*--addrX=outBits&0xff; /* ‚Wƒrƒbƒgi‚PƒoƒCƒgj’PˆÊ‚Å‘‚«‚ñ‚Å‚¢‚­ */
+				*--addrX=outBits&0xff; /* ï¼˜ãƒ“ãƒƒãƒˆï¼ˆï¼‘ãƒã‚¤ãƒˆï¼‰å˜ä½ã§æ›¸ãè¾¼ã‚“ã§ã„ã */
 				outBits>>=8;
 				bitCount-=8;
 			}
 		}
-		if (bitCount>0) *--addrX=outBits&0xff; /* c‚Á‚½ƒrƒbƒg‚ğ‘‚«‚Ş */
+		if (bitCount>0) *--addrX=outBits&0xff; /* æ®‹ã£ãŸãƒ“ãƒƒãƒˆã‚’æ›¸ãè¾¼ã‚€ */
 		if (addrX<baseAddr)
 		{
 			SysBeep(0);
 		}
 	}
 	
-	/* ƒƒCƒ“ƒ‹[ƒ`ƒ“ */
+	/* ãƒ¡ã‚¤ãƒ³ãƒ«ãƒ¼ãƒãƒ³ */
 	GoOffPort(theWindow);
 	
 	SetGWorld(eWinRec->editDataPtr,0);
 	LockPixels(GetGWorldPixMap(eWinRec->editDataPtr));
 	
-	/* ”wŒi‚Ì•`‰æ */
+	/* èƒŒæ™¯ã®æç”» */
 	switch (dotPicturePrefs.dotPicBack+bgNone)
 	{
 		case bgNone:
-			/* ”wŒi‚È‚µ */
+			/* èƒŒæ™¯ãªã— */
 			EraseRect(&effectRect);
 			break;
 		
 		case bgCurrent:
-			/* Œ»İ‚Ì‘I‘ğF */
+			/* ç¾åœ¨ã®é¸æŠè‰² */
 			RGBForeColor(&gCurrentColor.rgb);
 			PaintRect(&effectRect);
 			ForeColor(blackColor);
 			break;
 		
 		case bgSource:
-			/* Œ»İ‚ÌŠG */
-			if (dotPicturePrefs.dotPicLight) /* ”–‚­‚·‚é‚È‚ç */
+			/* ç¾åœ¨ã®çµµ */
+			if (dotPicturePrefs.dotPicLight) /* è–„ãã™ã‚‹ãªã‚‰ */
 			{
-				/* 50“‚ÌŠ„‡‚Å”’‚Å“h‚é */
+				/* 50ï¼…ã®å‰²åˆã§ç™½ã§å¡—ã‚‹ */
 				PenMode(blend);
 				OpColor(&rgbGrayColor);
 				ForeColor(whiteColor);
@@ -521,7 +521,7 @@ void DoDotPicture(WindowPtr theWindow)
 	
 	UnlockPixels(GetGWorldPixMap(eWinRec->editDataPtr));
 	
-	/* “_•`‚ğ‘‚«‚ñ‚Å‚¢‚­iƒ‰ƒ“ƒ_ƒ€ƒhƒbƒg‚Åƒ}ƒXƒN‚µ‚È‚ª‚ç‚¸‚ç‚µ‚Ä•`‰æj */
+	/* ç‚¹æã‚’æ›¸ãè¾¼ã‚“ã§ã„ãï¼ˆãƒ©ãƒ³ãƒ€ãƒ ãƒ‰ãƒƒãƒˆã§ãƒã‚¹ã‚¯ã—ãªãŒã‚‰ãšã‚‰ã—ã¦æç”»ï¼‰ */
 	SafeCopyDeepMask(GetPortBitMapForCopyBits(eWinRec->tempDataPtr),
 		GetPortBitMapForCopyBits(randomGWorld),
 		GetPortBitMapForCopyBits(eWinRec->editDataPtr),
@@ -541,7 +541,7 @@ void DoDotPicture(WindowPtr theWindow)
 	
 	DisposeGWorld(randomGWorld);
 	
-	/* ƒ}ƒXƒNˆ— */
+	/* ãƒã‚¹ã‚¯å‡¦ç† */
 	err=CreateMask2(eWinRec->editDataPtr,&maskGWorld);
 	if (err!=noErr)
 	{
@@ -571,11 +571,11 @@ void DoDotPicture(WindowPtr theWindow)
 	gUsedCount.dotPictureNum++;
 	UpdateTransparentMenu();
 	SetUndoMode(umEffect);
-	if (gPaletteCheck == kPaletteCheckUsed) /* ƒpƒŒƒbƒg‚Ìƒ`ƒFƒbƒN‚ğƒAƒbƒvƒf[ƒg */
+	if (gPaletteCheck == kPaletteCheckUsed) /* ãƒ‘ãƒ¬ãƒƒãƒˆã®ãƒã‚§ãƒƒã‚¯ã‚’ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆ */
 		UpdatePaletteCheck();
 }
 
-/* •—‚Ì‚½‚ß‚Ì’è”^•Ï” */
+/* é¢¨ã®ãŸã‚ã®å®šæ•°ï¼å¤‰æ•° */
 #define	dWind	139
 
 enum{
@@ -585,7 +585,7 @@ enum{
 	pStrong,
 };
 
-/* •—i–¢Š®¬j */
+/* é¢¨ï¼ˆæœªå®Œæˆï¼‰ */
 void DoWind(WindowPtr theWindow)
 {
 	RGBColor	rgbDarkGrayColor={0x5000,0x5000,0x5000};
@@ -607,7 +607,7 @@ void DoWind(WindowPtr theWindow)
 	GWorldPtr	cPort;
 	GDHandle	cDevice;
 	
-	/* İ’è•ÏXƒ‹[ƒ`ƒ“ */
+	/* è¨­å®šå¤‰æ›´ãƒ«ãƒ¼ãƒãƒ³ */
 	if (ConfigureWind()<0) return;
 	
 	GetGWorld(&cPort,&cDevice);
@@ -624,7 +624,7 @@ void DoWind(WindowPtr theWindow)
 	
 	for (dotY=top; dotY<bottom; dotY++)
 	{
-		if (Random()%4==0) /* “K“–‚È‚Æ‚±‚ë‚É•‚¢ü‚ğ‚Ğ‚¢‚Ä‚¢‚­ */
+		if (Random()%4==0) /* é©å½“ãªã¨ã“ã‚ã«é»’ã„ç·šã‚’ã²ã„ã¦ã„ã */
 		{
 			SetRect(&windRect,left,dotY,right,dotY+1);
 			FrameRect(&windRect);
@@ -636,7 +636,7 @@ void DoWind(WindowPtr theWindow)
 	
 	GoOffPort(theWindow);
 	
-	/* ‰¡‚É‚¸‚ç‚µ‚È‚ª‚çd‚Ë‚Ä•`‰æ */
+	/* æ¨ªã«ãšã‚‰ã—ãªãŒã‚‰é‡ã­ã¦æç”» */
 	SetGWorld(eWinRec->editDataPtr,0);
 	dstRect=effectRect;
 	OffsetRect(&dstRect,(4+windPrefs.power)*wd[windPrefs.direction],0);
@@ -655,7 +655,7 @@ void DoWind(WindowPtr theWindow)
 	
 	DisposeRgn(windRgn);
 	
-	/* ƒ}ƒXƒNˆ— */
+	/* ãƒã‚¹ã‚¯å‡¦ç† */
 	err=CreateMask2(eWinRec->editDataPtr,&maskGWorld);
 	if (err!=noErr)
 	{
@@ -685,22 +685,22 @@ void DoWind(WindowPtr theWindow)
 	gUsedCount.windNum++;
 	UpdateTransparentMenu();
 	SetUndoMode(umEffect);
-	if (gPaletteCheck == kPaletteCheckUsed) /* ƒpƒŒƒbƒg‚Ìƒ`ƒFƒbƒN‚ğƒAƒbƒvƒf[ƒg */
+	if (gPaletteCheck == kPaletteCheckUsed) /* ãƒ‘ãƒ¬ãƒƒãƒˆã®ãƒã‚§ãƒƒã‚¯ã‚’ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆ */
 		UpdatePaletteCheck();
 }
 
-/* ‰ñ“] */
+/* å›è»¢ */
 void DoRotate(WindowPtr theWindow)
 {
-	long	sine; /* Šp“x‚ÌƒTƒCƒ“i32768”{‚µ‚Ä‚ ‚éj */
-	long	cosine; /* Šp“x‚ÌƒRƒTƒCƒ“i“¯ãj */
+	long	sine; /* è§’åº¦ã®ã‚µã‚¤ãƒ³ï¼ˆ32768å€ã—ã¦ã‚ã‚‹ï¼‰ */
+	long	cosine; /* è§’åº¦ã®ã‚³ã‚µã‚¤ãƒ³ï¼ˆåŒä¸Šï¼‰ */
 	
 	Rect	selectRect;
 	short	left;
 	short	right;
 	short	top;
 	short	bottom;
-	short	centerX; /* ‘I‘ğ”ÍˆÍ‚Ì’†S“_‚ÌÀ•W‚Ì‚Q”{ */
+	short	centerX; /* é¸æŠç¯„å›²ã®ä¸­å¿ƒç‚¹ã®åº§æ¨™ã®ï¼’å€ */
 	short	centerY;
 	PixMapHandle	pmh;
 	long	editRowBytes,tempRowBytes;
@@ -728,7 +728,7 @@ void DoRotate(WindowPtr theWindow)
 	GWorldPtr	cPort;
 	GDHandle	cDevice;
 	
-	/* İ’èƒ‹[ƒ`ƒ“‚ÌŒÄ‚Ño‚µ */
+	/* è¨­å®šãƒ«ãƒ¼ãƒãƒ³ã®å‘¼ã³å‡ºã— */
 	newAngle=ConfigureRotate();
 	if (newAngle<=0) return;
 	
@@ -744,17 +744,17 @@ void DoRotate(WindowPtr theWindow)
 	
 	eWinRec->prevRotate=newAngle;
 	
-	GetSinCos(newAngle,&sine,&cosine); /* Šp“x‚É‘Î‚·‚éƒTƒCƒ“^ƒRƒTƒCƒ“‚ğŒvZ */
+	GetSinCos(newAngle,&sine,&cosine); /* è§’åº¦ã«å¯¾ã™ã‚‹ã‚µã‚¤ãƒ³ï¼ã‚³ã‚µã‚¤ãƒ³ã‚’è¨ˆç®— */
 	
 	GoOffPort(theWindow);
 	
-	/* ŒvZ—p‚Ì•Ï”‚Ì‰Šú‰» */
+	/* è¨ˆç®—ç”¨ã®å¤‰æ•°ã®åˆæœŸåŒ– */
 	selectRect=eWinRec->selectedRect;
-	if (!eWinRec->isSelected) /* ‘I‘ğ’†‚Å‚È‚¢ */
+	if (!eWinRec->isSelected) /* é¸æŠä¸­ã§ãªã„ */
 	{
 		SetGWorld(eWinRec->selectedDataPtr,0);
 		LockPixels(GetGWorldPixMap(eWinRec->selectedDataPtr));
-		if (isBackMode) /* ”wŒi‚ª‚È‚¢ê‡‚Í”wŒiF‚Å“h‚é */
+		if (isBackMode) /* èƒŒæ™¯ãŒãªã„å ´åˆã¯èƒŒæ™¯è‰²ã§å¡—ã‚‹ */
 			RGBBackColor(&gBackColor.rgb);
 		EraseRect(&selectRect);
 		BackColor(whiteColor);
@@ -772,56 +772,56 @@ void DoRotate(WindowPtr theWindow)
 	top-=centerY;
 	bottom-=centerY;
 	
-	/* ‰ñ“]Œã‚Ì—Ìˆæ‚Æ‚È‚éRect‚ğ‹‚ß‚é */
+	/* å›è»¢å¾Œã®é ˜åŸŸã¨ãªã‚‹Rectã‚’æ±‚ã‚ã‚‹ */
 	if (newAngle < 90)
 	{
-		/* ¶‰º‚Ì“_‚ª¶’[‚É‚È‚é */
+		/* å·¦ä¸‹ã®ç‚¹ãŒå·¦ç«¯ã«ãªã‚‹ */
 		newSelectRect.left=((left*cosine-bottom*sine+16384)/32768+centerX)/2;
-		/* ¶ã‚Ì“_‚ªã’[‚É‚È‚é */
+		/* å·¦ä¸Šã®ç‚¹ãŒä¸Šç«¯ã«ãªã‚‹ */
 		newSelectRect.top=((left*sine+top*cosine+16384)/32768+centerY)/2;
-		/* ‰Eã‚Ì“_‚ª‰E’[‚É‚È‚é */
+		/* å³ä¸Šã®ç‚¹ãŒå³ç«¯ã«ãªã‚‹ */
 		newSelectRect.right=((right*cosine-top*sine+16384)/32768+centerX)/2;
-		/* ‰E‰º‚Ì“_‚ª‰º’[‚É‚È‚é */
+		/* å³ä¸‹ã®ç‚¹ãŒä¸‹ç«¯ã«ãªã‚‹ */
 		newSelectRect.bottom=((right*sine+bottom*cosine+16384)/32768+centerY)/2;
 	}
 	else if (newAngle < 180)
 	{
-		/* ‰E‰º‚Ì“_‚ª¶’[‚É‚È‚é */
+		/* å³ä¸‹ã®ç‚¹ãŒå·¦ç«¯ã«ãªã‚‹ */
 		newSelectRect.left=((right*cosine-bottom*sine+16384)/32768+centerX)/2;
-		/* ¶‰º‚Ì“_‚ªã’[‚É‚È‚é */
+		/* å·¦ä¸‹ã®ç‚¹ãŒä¸Šç«¯ã«ãªã‚‹ */
 		newSelectRect.top=((left*sine+bottom*cosine+16384)/32768+centerY)/2;
-		/* ¶ã‚Ì“_‚ª‰E’[‚É‚È‚é */
+		/* å·¦ä¸Šã®ç‚¹ãŒå³ç«¯ã«ãªã‚‹ */
 		newSelectRect.right=((left*cosine-top*sine+16384)/32768+centerX)/2;
-		/* ‰Eã‚Ì“_‚ª‰º’[‚É‚È‚é */
+		/* å³ä¸Šã®ç‚¹ãŒä¸‹ç«¯ã«ãªã‚‹ */
 		newSelectRect.bottom=((right*sine+top*cosine+16384)/32768+centerY)/2;
 	}
 	else if (newAngle < 270)
 	{
-		/* ‰Eã‚ª¶’[ */
+		/* å³ä¸ŠãŒå·¦ç«¯ */
 		newSelectRect.left=((right*cosine-top*sine+16384)/32768+centerX)/2;
-		/* ‰E‰º‚ªã’[ */
+		/* å³ä¸‹ãŒä¸Šç«¯ */
 		newSelectRect.top=((right*sine+bottom*cosine+16384)/32768+centerY)/2;
-		/* ¶‰º‚ª‰E’[ */
+		/* å·¦ä¸‹ãŒå³ç«¯ */
 		newSelectRect.right=((left*cosine-bottom*sine+16384)/32768+centerX)/2;
-		/* ¶ã‚ª‰º’[ */
+		/* å·¦ä¸ŠãŒä¸‹ç«¯ */
 		newSelectRect.bottom=((left*sine+top*cosine+16384)/32768+centerY)/2;
 	}
 	else
 	{
-		/* ¶ã‚ª¶’[ */
+		/* å·¦ä¸ŠãŒå·¦ç«¯ */
 		newSelectRect.left=((left*cosine-top*sine+16384)/32768+centerX)/2;
-		/* ‰Eã‚ªã’[ */
+		/* å³ä¸ŠãŒä¸Šç«¯ */
 		newSelectRect.top=((right*sine+top*cosine+16384)/32768+centerY)/2;
-		/* ‰E‰º‚ª‰E’[ */
+		/* å³ä¸‹ãŒå³ç«¯ */
 		newSelectRect.right=((right*cosine-bottom*sine+16384)/32768+centerX)/2;
-		/* ¶‰º‚ª‰º’[ */
+		/* å·¦ä¸‹ãŒä¸‹ç«¯ */
 		newSelectRect.bottom=((left*sine+bottom*cosine+16384)/32768+centerY)/2;
 	}
 	
-	/* ”O‚Ì‚½‚ßA1ƒhƒbƒgL‚°‚Ä‚¨‚­ */
+	/* å¿µã®ãŸã‚ã€1ãƒ‰ãƒƒãƒˆåºƒã’ã¦ãŠã */
 	InsetRect(&newSelectRect,-1,-1);
 	
-	/* ‘I‘ğ”ÍˆÍ‚ªŒ»İ‚Ì‰æ‘œ‚ğ‚Í‚İ‚¾‚·‚©‚Ç‚¤‚©‚ğ’²‚×‚é */
+	/* é¸æŠç¯„å›²ãŒç¾åœ¨ã®ç”»åƒã‚’ã¯ã¿ã ã™ã‹ã©ã†ã‹ã‚’èª¿ã¹ã‚‹ */
 	GetPortBounds(eWinRec->editDataPtr,&tempRect);
 	SectRect(&tempRect,&newSelectRect,&tempRect);
 	if (!EqualRect(&newSelectRect,&tempRect))
@@ -829,7 +829,7 @@ void DoRotate(WindowPtr theWindow)
 		GWorldFlags	flags;
 		
 		flags=UpdateGWorld(&eWinRec->editDataPtr,eWinRec->iconDepth,&newSelectRect,0,0,0);
-		if ((flags & gwFlagErr)!=0) /* ƒGƒ‰[ */
+		if ((flags & gwFlagErr)!=0) /* ã‚¨ãƒ©ãƒ¼ */
 		{
 			SetGWorld(cPort,cDevice);
 			ErrorAlertFromResource(EFFECTERR_RESID,EFFECTERR1);
@@ -844,7 +844,7 @@ void DoRotate(WindowPtr theWindow)
 		}
 		
 		flags=UpdateGWorld(&eWinRec->currentMask,1,&newSelectRect,0,0,0);
-		if ((flags & gwFlagErr)!=0) /* ƒGƒ‰[ */
+		if ((flags & gwFlagErr)!=0) /* ã‚¨ãƒ©ãƒ¼ */
 		{
 			flags=UpdateGWorld(&eWinRec->editDataPtr,eWinRec->iconDepth,&eWinRec->iconSize,0,0,0);
 			
@@ -866,12 +866,12 @@ void DoRotate(WindowPtr theWindow)
 		}
 	}
 	
-	/* ‰æ‘œã‚Å‚Ì‘I‘ğ—Ìˆæ */
+	/* ç”»åƒä¸Šã§ã®é¸æŠé ˜åŸŸ */
 	selectedRgn=NewRgn();
 	CopyRgn(eWinRec->selectionPos,selectedRgn);
 	OffsetRgn(selectedRgn,-eWinRec->selectionOffset.h,-eWinRec->selectionOffset.v);
 	
-	/* V‚µ‚¢‘I‘ğ—Ìˆæ‚ğ“¾‚é‚½‚ß‚ÌGWorld */
+	/* æ–°ã—ã„é¸æŠé ˜åŸŸã‚’å¾—ã‚‹ãŸã‚ã®GWorld */
 	err=NewGWorld(&rotateGWorld,1,&newSelectRect,0,0,useTempMem);
 	if (err!=noErr)
 	{
@@ -888,7 +888,7 @@ void DoRotate(WindowPtr theWindow)
 	rotateRowBytes=MyGetPixRowBytes(pmh) & 0x3fff;
 	rotateBaseAddr=MyGetPixBaseAddr(pmh);
 	
-	/* V‚µ‚¢ƒ}ƒXƒN */
+	/* æ–°ã—ã„ãƒã‚¹ã‚¯ */
 	maskGWorld=eWinRec->currentMask;
 	pmh=GetGWorldPixMap(maskGWorld);
 	SetGWorld(maskGWorld,0);
@@ -910,7 +910,7 @@ void DoRotate(WindowPtr theWindow)
 	tempRowBytes=MyGetPixRowBytes(pmh) & 0x3fff;
 	tempBaseAddr=MyGetPixBaseAddr(pmh);
 	
-	/* V‚µ‚¢—Ìˆæ‚Ì‚½‚ß‚Éİ’è‚µ‚È‚¨‚· */
+	/* æ–°ã—ã„é ˜åŸŸã®ãŸã‚ã«è¨­å®šã—ãªãŠã™ */
 	left=newSelectRect.left;
 	top=newSelectRect.top;
 	right=newSelectRect.right;
@@ -925,7 +925,7 @@ void DoRotate(WindowPtr theWindow)
 	
 	for (y=top; y<bottom; y++)
 	{
-		/* ˆêŸ•ÏŠ·‚ğ—p‚¢‚Ä‰ñ“]‘O‚Ì“_‚ğ‹‚ß‚é */
+		/* ä¸€æ¬¡å¤‰æ›ã‚’ç”¨ã„ã¦å›è»¢å‰ã®ç‚¹ã‚’æ±‚ã‚ã‚‹ */
 		px=(left*2-centerX+1)*cosine+(y*2-centerY+1)*sine;
 		py=-(left*2-centerX+1)*sine+(y*2-centerY+1)*cosine;
 		
@@ -935,7 +935,7 @@ void DoRotate(WindowPtr theWindow)
 			prevRealY=(((py+(py>0 ? 16384L : -16384L))/32768L)+centerY-1)/2;
 			SetPt(&prevRealPt,prevRealX,prevRealY);
 			
-			if (PtInRgn(prevRealPt,selectedRgn)) /* ‰ñ“]‘O‚Ì“_‚ª‘I‘ğ”ÍˆÍ“à‚È‚ç‚Î */
+			if (PtInRgn(prevRealPt,selectedRgn)) /* å›è»¢å‰ã®ç‚¹ãŒé¸æŠç¯„å›²å†…ãªã‚‰ã° */
 			{
 				switch (eWinRec->colorMode)
 				{
@@ -955,12 +955,12 @@ void DoRotate(WindowPtr theWindow)
 					1<<(7-(x-left)%8);
 			}
 			
-			/* ƒ}ƒXƒN */
+			/* ãƒã‚¹ã‚¯ */
 			if (RealPtInMask(prevRealPt,eWinRec->pCurrentMask))
 				*(maskBaseAddr+(x-editLeft)/8+(y-editTop)*maskRowBytes)|=
 					1<<(7-(x-editLeft)%8);
 			
-			/* Ÿ‚Ì“_‚ÖˆÚ“® */
+			/* æ¬¡ã®ç‚¹ã¸ç§»å‹• */
 			px+=cosine*2;
 			py-=sine*2;
 		}
@@ -969,12 +969,12 @@ void DoRotate(WindowPtr theWindow)
 	UnlockPixels(GetGWorldPixMap(eWinRec->editDataPtr));
 	UnlockPixels(GetGWorldPixMap(eWinRec->tempDataPtr));
 	
-	/* V‚µ‚¢‘I‘ğ—Ìˆæ */
+	/* æ–°ã—ã„é¸æŠé ˜åŸŸ */
 	err=BitMapToRegion(selectedRgn,GetPortBitMapForCopyBits(rotateGWorld));
 	UnlockPixels(GetGWorldPixMap(rotateGWorld));
 	DisposeGWorld(rotateGWorld);
 	
-	/* ‘I‘ğ”ÍˆÍŠO‚Í‘I‘ğ‚³‚ê‚Ä‚¢‚È‚¢ó‘Ô‚©‚ç‰ñ“]‚³‚ê‚½ê‡‚Ì‚İXV */
+	/* é¸æŠç¯„å›²å¤–ã¯é¸æŠã•ã‚Œã¦ã„ãªã„çŠ¶æ…‹ã‹ã‚‰å›è»¢ã•ã‚ŒãŸå ´åˆã®ã¿æ›´æ–° */
 	if (!eWinRec->isSelected)
 	{
 		MySetGWorld(selectionMask);
@@ -985,7 +985,7 @@ void DoRotate(WindowPtr theWindow)
 			EraseRect(&eWinRec->iconSize);
 		MyUnlockPixels(selectionMask);
 		
-		/* V‚µ‚­‘I‘ğ‚³‚ê‚½‚ÍƒuƒŒƒ“ƒhƒ‚[ƒh‚ğŒ³‚É–ß‚· */
+		/* æ–°ã—ãé¸æŠã•ã‚ŒãŸæ™‚ã¯ãƒ–ãƒ¬ãƒ³ãƒ‰ãƒ¢ãƒ¼ãƒ‰ã‚’å…ƒã«æˆ»ã™ */
 		eWinRec->selectionBlend=srcCopy;
 		{
 			MenuHandle	menu;
@@ -1009,7 +1009,7 @@ void DoRotate(WindowPtr theWindow)
 	
 	DisposeRgn(selectedRgn);
 	
-	/* ¡‰ñ‚Ì‘I‘ğ”ÍˆÍ‚Æ‘O‰ñ‚Ì‘I‘ğ”ÍˆÍ‚ªXV”ÍˆÍ */
+	/* ä»Šå›ã®é¸æŠç¯„å›²ã¨å‰å›ã®é¸æŠç¯„å›²ãŒæ›´æ–°ç¯„å›² */
 	UnionRgn(eWinRec->selectionPos,eWinRec->prevSelectionPos,eWinRec->updateRgn);
 	
 	eWinRec->showSelection=true;
@@ -1025,11 +1025,11 @@ void DoRotate(WindowPtr theWindow)
 	gUsedCount.rotateNum++;
 	UpdateTransparentMenu();
 	SetUndoMode(umRotate);
-	if (gPaletteCheck == kPaletteCheckUsed) /* ƒpƒŒƒbƒg‚Ìƒ`ƒFƒbƒN‚ğƒAƒbƒvƒf[ƒg */
+	if (gPaletteCheck == kPaletteCheckUsed) /* ãƒ‘ãƒ¬ãƒƒãƒˆã®ãƒã‚§ãƒƒã‚¯ã‚’ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆ */
 		UpdatePaletteCheck();
 }
 
-/* }Œ`“ü—Í */
+/* å›³å½¢å…¥åŠ› */
 void DoEdging(WindowPtr theWindow)
 {
 	EdgePrefsRec	newPrefs;
@@ -1056,7 +1056,7 @@ void DoEdging(WindowPtr theWindow)
 	PenNormal();
 	ForeColor(blackColor);
 	
-	/* •s“§–¾“x‚ª100%‚Å‚È‚¢‚Æ‚«‚Í‚»‚ê‚È‚è‚Ìˆ— */
+	/* ä¸é€æ˜åº¦ãŒ100%ã§ãªã„ã¨ãã¯ãã‚Œãªã‚Šã®å‡¦ç† */
 	if (newPrefs.transparency != 1)
 	{
 		transR=(newPrefs.transparency-1)<<14;
@@ -1068,7 +1068,7 @@ void DoEdging(WindowPtr theWindow)
 			&effectRect,&effectRect,blend,nil);
 	}
 	
-	/* ƒ}ƒXƒNˆ— */
+	/* ãƒã‚¹ã‚¯å‡¦ç† */
 	MySetGWorld(currentMask);
 	MyLockPixels(currentMask);
 	if (gCurrentColor.isTransparent)
@@ -1085,11 +1085,11 @@ void DoEdging(WindowPtr theWindow)
 	gUsedCount.edgeNum++;
 	UpdateTransparentMenu();
 	SetUndoMode(umEffect);
-	if (gPaletteCheck == kPaletteCheckUsed) /* ƒpƒŒƒbƒg‚Ìƒ`ƒFƒbƒN‚ğƒAƒbƒvƒf[ƒg */
+	if (gPaletteCheck == kPaletteCheckUsed) /* ãƒ‘ãƒ¬ãƒƒãƒˆã®ãƒã‚§ãƒƒã‚¯ã‚’ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆ */
 		UpdatePaletteCheck();
 }
 
-/* }Œ`“ü—ÍƒƒCƒ“i•`‰æ‚Ì‚İ’S“–j */
+/* å›³å½¢å…¥åŠ›ãƒ¡ã‚¤ãƒ³ï¼ˆæç”»ã®ã¿æ‹…å½“ï¼‰ */
 void DoEdgingMain(PaintWinRec *eWinRec,EdgePrefsRec *prefs)
 {
 	RgnHandle	effectRgn;
@@ -1098,7 +1098,7 @@ void DoEdgingMain(PaintWinRec *eWinRec,EdgePrefsRec *prefs)
 	switch(prefs->kind)
 	{
 		case kShapeEdge:
-			/* ‰æ‚è */
+			/* ç¸å–ã‚Š */
 			effectRgn=NewRgn();
 			CopyRgn(eWinRec->selectionPos,effectRgn);
 			GetRegionBounds(eWinRec->selectionPos,&tempRect);
@@ -1108,12 +1108,12 @@ void DoEdgingMain(PaintWinRec *eWinRec,EdgePrefsRec *prefs)
 			break;
 		
 		case kShapeOval:
-			/* ‚¾‰~ */
+			/* ã å†† */
 			FrameOval(&effectRect);
 			break;
 		
 		case kShapeTriangle:
-			/* OŠpŒ`BŒ`‚ğ®‚¦‚é‚½‚ßA‘äŒ`‚Æ‚µ‚Ä•`‚­ */
+			/* ä¸‰è§’å½¢ã€‚å½¢ã‚’æ•´ãˆã‚‹ãŸã‚ã€å°å½¢ã¨ã—ã¦æã */
 			MoveTo((effectRect.left+effectRect.right-prefs->pixels)/2,effectRect.top);
 			LineTo(effectRect.left,effectRect.bottom-prefs->pixels);
 			LineTo(effectRect.right-prefs->pixels,effectRect.bottom-prefs->pixels);
@@ -1122,7 +1122,7 @@ void DoEdgingMain(PaintWinRec *eWinRec,EdgePrefsRec *prefs)
 			break;
 		
 		case kShapeRTriangle:
-			/* ‹tOŠpŒ`BŒ`‚ğ®‚¦‚é‚½‚ßA‘äŒ`‚Æ‚µ‚Ä•`‚­ */
+			/* é€†ä¸‰è§’å½¢ã€‚å½¢ã‚’æ•´ãˆã‚‹ãŸã‚ã€å°å½¢ã¨ã—ã¦æã */
 			MoveTo((effectRect.left+effectRect.right-prefs->pixels)/2,effectRect.bottom-prefs->pixels);
 			LineTo(effectRect.left,effectRect.top);
 			LineTo(effectRect.right-prefs->pixels,effectRect.top);
@@ -1131,7 +1131,7 @@ void DoEdgingMain(PaintWinRec *eWinRec,EdgePrefsRec *prefs)
 			break;
 		
 		case kShapeLozenge:
-			/* ‚Ğ‚µŒ`BŒ`‚ğ®‚¦‚é‚½‚ßA”ªŠpŒ`‚Æ‚µ‚Ä•`‚­ */
+			/* ã²ã—å½¢ã€‚å½¢ã‚’æ•´ãˆã‚‹ãŸã‚ã€å…«è§’å½¢ã¨ã—ã¦æã */
 			MoveTo((effectRect.left+effectRect.right-prefs->pixels)/2,effectRect.top);
 			LineTo(effectRect.left,(effectRect.top+effectRect.bottom-prefs->pixels)/2);
 			LineTo(effectRect.left,(effectRect.top+effectRect.bottom-prefs->pixels+1)/2);
@@ -1144,20 +1144,20 @@ void DoEdgingMain(PaintWinRec *eWinRec,EdgePrefsRec *prefs)
 			break;
 		
 		case kShapeDiagonal1:
-			/* ‘ÎŠpüi_j */
+			/* å¯¾è§’ç·šï¼ˆï¼¼ï¼‰ */
 			MoveTo(effectRect.left,effectRect.top);
 			LineTo(effectRect.right-prefs->pixels,effectRect.bottom-prefs->pixels);
 			break;
 		
 		case kShapeDiagonal2:
-			/* ‘ÎŠpüi^j */
+			/* å¯¾è§’ç·šï¼ˆï¼ï¼‰ */
 			MoveTo(effectRect.right-prefs->pixels,effectRect.top);
 			LineTo(effectRect.left,effectRect.bottom-prefs->pixels);
 			break;
 	}
 }
 
-/* ¶‰E”½“] */
+/* å·¦å³åè»¢ */
 void FlipHorizontal(WindowPtr theWindow)
 {
 	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
@@ -1187,7 +1187,7 @@ void FlipHorizontal(WindowPtr theWindow)
 	CopyRgn(eWinRec->selectionPos,eWinRec->prevSelectionPos);
 	CopyRgn(eWinRec->eSelectedRgn,eWinRec->ePrevSelectedRgn);
 	
-	/* ‘I‘ğ”ÍˆÍ‚ğ”½“]‚³‚¹‚é*/
+	/* é¸æŠç¯„å›²ã‚’åè»¢ã•ã›ã‚‹*/
 	if (eWinRec->isSelected)
 	{
 		Rect	tempRect;
@@ -1203,7 +1203,7 @@ void FlipHorizontal(WindowPtr theWindow)
 	else
 		CopyRgn(eWinRec->selectionPos,eWinRec->updateRgn);
 	
-	/* ƒ}ƒXƒN‚à”½“] */
+	/* ãƒã‚¹ã‚¯ã‚‚åè»¢ */
 	SetRect(&srcRect,effectRect.left,effectRect.top,effectRect.left+1,effectRect.bottom);
 	SetRect(&dstRect,effectRect.right-1,effectRect.top,effectRect.right,effectRect.bottom);
 	
@@ -1223,11 +1223,11 @@ void FlipHorizontal(WindowPtr theWindow)
 	
 	gUsedCount.flipNum++;
 	SetUndoMode(umFlip);
-	if (gPaletteCheck == kPaletteCheckUsed) /* ƒpƒŒƒbƒg‚Ìƒ`ƒFƒbƒN‚ğƒAƒbƒvƒf[ƒg */
+	if (gPaletteCheck == kPaletteCheckUsed) /* ãƒ‘ãƒ¬ãƒƒãƒˆã®ãƒã‚§ãƒƒã‚¯ã‚’ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆ */
 		UpdatePaletteCheck();
 }
 
-/* ƒŠ[ƒWƒ‡ƒ“‚Ì¶‰E”½“] */
+/* ãƒªãƒ¼ã‚¸ãƒ§ãƒ³ã®å·¦å³åè»¢ */
 void FlipHorizontalRgn(RgnHandle rgn,Rect *r)
 {
 	RgnHandle	tempRgn=NewRgn(),resultRgn=NewRgn();
@@ -1252,7 +1252,7 @@ void FlipHorizontalRgn(RgnHandle rgn,Rect *r)
 	DisposeRgn(resultRgn);
 }
 
-/* ã‰º”½“] */
+/* ä¸Šä¸‹åè»¢ */
 void FlipVertical(WindowPtr theWindow)
 {
 	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
@@ -1277,7 +1277,7 @@ void FlipVertical(WindowPtr theWindow)
 	
 	SetGWorld(eWinRec->editDataPtr,0);
 	
-	/* PixMap‚ğ’¼Ú‚¢‚¶‚é */
+	/* PixMapã‚’ç›´æ¥ã„ã˜ã‚‹ */
 	srcPMH=GetGWorldPixMap(eWinRec->tempDataPtr);
 	LockPixels(srcPMH);
 	srcRowBytes=MyGetPixRowBytes(srcPMH) & 0x3fff;
@@ -1300,7 +1300,7 @@ void FlipVertical(WindowPtr theWindow)
 	CopyRgn(eWinRec->selectionPos,eWinRec->prevSelectionPos);
 	CopyRgn(eWinRec->eSelectedRgn,eWinRec->ePrevSelectedRgn);
 	
-	/* ‘I‘ğ”ÍˆÍ‚ğ”½“]‚³‚¹‚é*/
+	/* é¸æŠç¯„å›²ã‚’åè»¢ã•ã›ã‚‹*/
 	if (eWinRec->isSelected)
 	{
 		GetRegionBounds(eWinRec->selectionPos,&tempRect);
@@ -1314,7 +1314,7 @@ void FlipVertical(WindowPtr theWindow)
 	else
 		CopyRgn(eWinRec->selectionPos,eWinRec->updateRgn);
 	
-	/* ƒ}ƒXƒN‚à”½“] */
+	/* ãƒã‚¹ã‚¯ã‚‚åè»¢ */
 	SetRect(&srcRect,effectRect.left,effectRect.top,effectRect.right,effectRect.top+1);
 	SetRect(&dstRect,effectRect.left,effectRect.bottom-1,effectRect.right,effectRect.bottom);
 	
@@ -1334,11 +1334,11 @@ void FlipVertical(WindowPtr theWindow)
 	
 	gUsedCount.flipNum++;
 	SetUndoMode(umFlip);
-	if (gPaletteCheck == kPaletteCheckUsed) /* ƒpƒŒƒbƒg‚Ìƒ`ƒFƒbƒN‚ğƒAƒbƒvƒf[ƒg */
+	if (gPaletteCheck == kPaletteCheckUsed) /* ãƒ‘ãƒ¬ãƒƒãƒˆã®ãƒã‚§ãƒƒã‚¯ã‚’ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆ */
 		UpdatePaletteCheck();
 }
 
-/* ƒŠ[ƒWƒ‡ƒ“‚Ìã‰º”½“] */
+/* ãƒªãƒ¼ã‚¸ãƒ§ãƒ³ã®ä¸Šä¸‹åè»¢ */
 void FlipVerticalRgn(RgnHandle rgn,Rect *r)
 {
 	RgnHandle	tempRgn=NewRgn(),resultRgn=NewRgn();
@@ -1363,7 +1363,7 @@ void FlipVerticalRgn(RgnHandle rgn,Rect *r)
 	DisposeRgn(resultRgn);
 }
 
-/* •¶š‚Ì“ü—Í */
+/* æ–‡å­—ã®å…¥åŠ› */
 void TypeString(WindowPtr theWindow)
 {
 	Rect	stringRect;
@@ -1383,7 +1383,7 @@ void TypeString(WindowPtr theWindow)
 	
 	typeStringPrefs=prefs;
 	
-	/* ‚Ü‚¸A•¶š‚Ì‰¡•Ac‚Ì‚‚³‚ğƒ`ƒFƒbƒN */
+	/* ã¾ãšã€æ–‡å­—ã®æ¨ªå¹…ã€ç¸¦ã®é«˜ã•ã‚’ãƒã‚§ãƒƒã‚¯ */
 	TextFont(prefs.fontID);
 	TextSize(prefs.size);
 	TextFace(prefs.face);
@@ -1395,7 +1395,7 @@ void TypeString(WindowPtr theWindow)
 	
 	GetGWorld(&cPort,&cDevice);
 	
-	if (!prefs.antialias) /* ƒAƒ“ƒ`ƒGƒCƒŠƒAƒX‚ğ‚©‚¯‚È‚¢ê‡ */
+	if (!prefs.antialias) /* ã‚¢ãƒ³ãƒã‚¨ã‚¤ãƒªã‚¢ã‚¹ã‚’ã‹ã‘ãªã„å ´åˆ */
 	{
 		GWorldPtr	tempGWorld=nil,maskGWorld;
 		RgnHandle	maskRgn=nil;
@@ -1411,10 +1411,10 @@ void TypeString(WindowPtr theWindow)
 			SetClip(tempRgn);
 			DisposeRgn(tempRgn);
 		}
-		else /* 8.5ˆÈ~‚Ìê‡‚Í‚È‚ß‚ç‚©‚È•¶š‚Ìİ’è‚É”õ‚¦A */
+		else /* 8.5ä»¥é™ã®å ´åˆã¯ãªã‚ã‚‰ã‹ãªæ–‡å­—ã®è¨­å®šã«å‚™ãˆã€ */
 		{
-			/* 2bits GWorldã‚É•`‰æ */
-			/* ƒJƒ‰[ƒpƒŒƒbƒg‚ğì¬ */
+			/* 2bits GWorldä¸Šã«æç”» */
+			/* ã‚«ãƒ©ãƒ¼ãƒ‘ãƒ¬ãƒƒãƒˆã‚’ä½œæˆ */
 			ctable=(CTabHandle)NewHandle(sizeof(ColorTable)+sizeof(ColorSpec)*(4-1));
 			if (ctable==nil)
 			{
@@ -1450,29 +1450,29 @@ void TypeString(WindowPtr theWindow)
 			TextFace(prefs.face);
 			TextMode(srcOr);
 			
-			/*@ƒ}ƒXƒNì¬ */
-			if (gCurrentColor.isTransparent && gBackColor.isTransparent) /* —¼•û“§–¾ */
+			/*ã€€ãƒã‚¹ã‚¯ä½œæˆ */
+			if (gCurrentColor.isTransparent && gBackColor.isTransparent) /* ä¸¡æ–¹é€æ˜ */
 			{
-				/* ‹ó‚ÌƒŠ[ƒWƒ‡ƒ“ */
+				/* ç©ºã®ãƒªãƒ¼ã‚¸ãƒ§ãƒ³ */
 				maskRgn=NewRgn();
 				SetEmptyRgn(maskRgn);
 			}
-			else if (!gCurrentColor.isTransparent && !gBackColor.isTransparent) /* —¼•û•s“§–¾ */
+			else if (!gCurrentColor.isTransparent && !gBackColor.isTransparent) /* ä¸¡æ–¹ä¸é€æ˜ */
 			{
-				/* ‘S‘ÌBnil‚Ì‚Ü‚Ü‚Å‚¢‚¢ */
+				/* å…¨ä½“ã€‚nilã®ã¾ã¾ã§ã„ã„ */
 				maskRgn=nil;
 			}
 			else
 			{
-				/* ˆê•”BGWorldŒo—R‚Åì‚é */
+				/* ä¸€éƒ¨ã€‚GWorldçµŒç”±ã§ä½œã‚‹ */
 				err=NewGWorld(&maskGWorld,1,&stringRect,nil,0,useTempMem);
 				if (err==noErr)
 				{
 					SetGWorld(maskGWorld,0);
 					LockPixels(GetGWorldPixMap(maskGWorld));
 					
-					/* F */
-					if (gCurrentColor.isTransparent) /* ‘OŒiF‚ª“§–¾ */
+					/* è‰² */
+					if (gCurrentColor.isTransparent) /* å‰æ™¯è‰²ãŒé€æ˜ */
 					{
 						ForeColor(whiteColor);
 						BackColor(blackColor);
@@ -1483,10 +1483,10 @@ void TypeString(WindowPtr theWindow)
 						BackColor(whiteColor);
 					}
 					
-					/* ”wŒi */
+					/* èƒŒæ™¯ */
 					EraseRect(&stringRect);
 					
-					/* ƒeƒLƒXƒgƒtƒHƒ“ƒg‚È‚Ç */
+					/* ãƒ†ã‚­ã‚¹ãƒˆãƒ•ã‚©ãƒ³ãƒˆãªã© */
 					TextFont(prefs.fontID);
 					TextSize(prefs.size);
 					TextFace(prefs.face);
@@ -1500,7 +1500,7 @@ void TypeString(WindowPtr theWindow)
 					
 					UnlockPixels(GetGWorldPixMap(maskGWorld));
 					
-					/* ƒŠ[ƒWƒ‡ƒ“‰» */
+					/* ãƒªãƒ¼ã‚¸ãƒ§ãƒ³åŒ– */
 					maskRgn=NewRgn();
 					err=BitMapToRegion(maskRgn,GetPortBitMapForCopyBits(maskGWorld));
 					if (err!=noErr)
@@ -1521,7 +1521,7 @@ void TypeString(WindowPtr theWindow)
 			}
 		}
 		
-		/* ƒsƒNƒ`ƒƒ‹L˜^ŠJn */
+		/* ãƒ”ã‚¯ãƒãƒ£è¨˜éŒ²é–‹å§‹ */
 		picParam.srcRect=stringRect;
 		picParam.hRes=72L<<16;
 		picParam.vRes=72L<<16;
@@ -1571,7 +1571,7 @@ void TypeString(WindowPtr theWindow)
 			}
 		}
 		
-		/* •â³ */
+		/* è£œæ­£ */
 		err=CheckPictureByte();
 		
 	//	(**picture).picFrame=stringRect;
@@ -1592,7 +1592,7 @@ void TypeString(WindowPtr theWindow)
 		
 		SetGWorld(cPort,cDevice);
 	}
-	else /* ƒAƒ“ƒ`ƒGƒCƒŠƒAƒX‚ğ‚©‚¯‚éê‡ */
+	else /* ã‚¢ãƒ³ãƒã‚¨ã‚¤ãƒªã‚¢ã‚¹ã‚’ã‹ã‘ã‚‹å ´åˆ */
 	{
 		GWorldPtr	tempGWorld;
 		PixMapHandle	tempPix;
@@ -1602,7 +1602,7 @@ void TypeString(WindowPtr theWindow)
 		
 		#define		kAntiDepth	4
 		
-		/* —Ìˆæ‚ğc‰¡kAntiDepth”{‚ÉL‚°‚é */
+		/* é ˜åŸŸã‚’ç¸¦æ¨ªkAntiDepthå€ã«åºƒã’ã‚‹ */
 		stringRect.right+=2;
 		stringRect.bottom++;
 		SetRect(&tempRect,0,0,stringRect.right*kAntiDepth,stringRect.bottom*kAntiDepth);
@@ -1633,7 +1633,7 @@ void TypeString(WindowPtr theWindow)
 		ForeColor(blackColor);
 		UnlockPixels(tempPix);
 		
-		/* ƒsƒNƒ`ƒƒ‹L˜^ŠJn */
+		/* ãƒ”ã‚¯ãƒãƒ£è¨˜éŒ²é–‹å§‹ */
 		picParam.srcRect=stringRect;
 		picParam.hRes=72L<<16;
 		picParam.vRes=72L<<16;
@@ -1648,7 +1648,7 @@ void TypeString(WindowPtr theWindow)
 		
 //		(**picture).picFrame=stringRect;
 //		ClosePicture();
-		/* •â³ */
+		/* è£œæ­£ */
 		err=CheckPictureByte();
 		err=TempClosePicture(&picture);
 		
@@ -1680,7 +1680,7 @@ void TypeString(WindowPtr theWindow)
 		SetUndoMode(umInputText);
 		UpdateTransparentMenu();
 		DispOffPort(theWindow);
-		if (gPaletteCheck == kPaletteCheckUsed) /* ƒpƒŒƒbƒg‚Ìƒ`ƒFƒbƒN‚ğƒAƒbƒvƒf[ƒg */
+		if (gPaletteCheck == kPaletteCheckUsed) /* ãƒ‘ãƒ¬ãƒƒãƒˆã®ãƒã‚§ãƒƒã‚¯ã‚’ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆ */
 			UpdatePaletteCheck();
 	}
 	else
@@ -1707,7 +1707,7 @@ struct MyTypeStringRec {
 	TEHandle		hTE;
 };
 
-/* •¶š“ü—Í‚Ìİ’è•ÏX */
+/* æ–‡å­—å…¥åŠ›ã®è¨­å®šå¤‰æ›´ */
 short ConfigureTypeString(TypeStringRec *prefs)
 {
 	DialogPtr	dp;
@@ -1735,10 +1735,10 @@ short ConfigureTypeString(TypeStringRec *prefs)
 	SetDialogDefaultItem(dp,ok);
 	SetDialogCancelItem(dp,cancel);
 	
-	/* æ‚ÉƒTƒCƒYƒ`ƒFƒbƒN */
+	/* å…ˆã«ã‚µã‚¤ã‚ºãƒã‚§ãƒƒã‚¯ */
 	if (prefs->size < 0) prefs->size=12;
 	
-	/* ŠeƒAƒCƒeƒ€‚Ì‰Šú‰» */
+	/* å„ã‚¢ã‚¤ãƒ†ãƒ ã®åˆæœŸåŒ– */
 	menu=GetControlPopupMenuHandle((ControlHandle)GetDialogItemHandle(dp,diFontPopup));
 	#if TARGET_API_MAC_CARBON
 	CreateStandardFontMenu(menu,0,190,kNilOptions,&count);
@@ -1747,7 +1747,7 @@ short ConfigureTypeString(TypeStringRec *prefs)
 	#endif
 	SetDialogControlValue(dp,diFontPopup,prefs->menuItem);
 	#if TARGET_API_MAC_CARBON
-	GetFontFamilyFromMenuSelection(menu,prefs->menuItem,&prefs->fontID,&style); /* style‚Í‚Ç‚¤‚·‚éH */
+	GetFontFamilyFromMenuSelection(menu,prefs->menuItem,&prefs->fontID,&style); /* styleã¯ã©ã†ã™ã‚‹ï¼Ÿ */
 	#else
 	GetMenuItemText(menu,prefs->menuItem,str);
 	GetFNum(str,&prefs->fontID);
@@ -1766,7 +1766,7 @@ short ConfigureTypeString(TypeStringRec *prefs)
 	
 	SetDialogControlValue(dp,diAntialias,prefs->antialias ? 1 : 0);
 	
-	/* ƒvƒŒƒrƒ…[ */
+	/* ãƒ—ãƒ¬ãƒ“ãƒ¥ãƒ¼ */
 	GetDialogItemRect(dp,diPreview,&box);
 	TextFont(prefs->fontID);
 	TextSize(prefs->size);
@@ -1878,8 +1878,8 @@ short ConfigureTypeString(TypeStringRec *prefs)
 	
 	if (item==ok)
 	{
-		/* w’è‚³‚ê‚½“à—e‚ğ“¾‚é */
-		/* ƒƒjƒ…[ */
+		/* æŒ‡å®šã•ã‚ŒãŸå†…å®¹ã‚’å¾—ã‚‹ */
+		/* ãƒ¡ãƒ‹ãƒ¥ãƒ¼ */
 		mItem=GetDialogControlValue(dp,diFontPopup);
 		prefs->menuItem=mItem;
 		
@@ -1890,12 +1890,12 @@ short ConfigureTypeString(TypeStringRec *prefs)
 		GetFNum(str,&prefs->fontID);
 		#endif
 		
-		/* ƒtƒHƒ“ƒgƒTƒCƒY */
+		/* ãƒ•ã‚©ãƒ³ãƒˆã‚µã‚¤ã‚º */
 		GetDialogItemText2(dp,diFontSize,str);
 		StringToNum(str,&l);
 		prefs->size=l;
 		
-		/* •¶š—ñ */
+		/* æ–‡å­—åˆ— */
 		GetDialogItemText2(dp,diText,prefs->string);
 	}
 	
@@ -1910,7 +1910,7 @@ short ConfigureTypeString(TypeStringRec *prefs)
 	return item;
 }
 
-/* •¶š“ü—Íƒ_ƒCƒAƒƒO‚ÌƒAƒbƒvƒf[ƒg */
+/* æ–‡å­—å…¥åŠ›ãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã®ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆ */
 pascal Boolean MyDispTEFilter(DialogPtr theDialog,EventRecord *theEvent,short *theItemHit)
 {
 	if (theEvent->what == updateEvt && GetDialogFromWindow((WindowPtr)theEvent->message) == theDialog)
@@ -1937,7 +1937,7 @@ pascal Boolean MyDispTEFilter(DialogPtr theDialog,EventRecord *theEvent,short *t
 	return MyModalDialogFilter(theDialog,theEvent,theItemHit);
 }
 
-/* TE‚ğƒAƒbƒvƒf[ƒg */
+/* TEã‚’ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆ */
 void TypeStringTEUpdate(TypeStringRec *prefs,TEHandle hTE)
 {
 	Rect	box;
@@ -1961,7 +1961,7 @@ void TypeStringTEUpdate(TypeStringRec *prefs,TEHandle hTE)
 	TextFace(normal);
 }
 
-/* —^‚¦‚ç‚ê‚½Šp“x‚©‚çƒTƒCƒ“^ƒRƒTƒCƒ“‚ğŒvZi‚Á‚Ä‚¢‚Á‚Ä‚àƒe[ƒuƒ‹‚©‚çŒÄ‚Ño‚·‚¾‚¯‚¾‚¯‚Çj */
+/* ä¸ãˆã‚‰ã‚ŒãŸè§’åº¦ã‹ã‚‰ã‚µã‚¤ãƒ³ï¼ã‚³ã‚µã‚¤ãƒ³ã‚’è¨ˆç®—ï¼ˆã£ã¦ã„ã£ã¦ã‚‚ãƒ†ãƒ¼ãƒ–ãƒ«ã‹ã‚‰å‘¼ã³å‡ºã™ã ã‘ã ã‘ã©ï¼‰ */
 void GetSinCos(short angle,long *sine,long *cosine)
 {
 	Handle	resHandle;
@@ -1979,7 +1979,7 @@ void GetSinCos(short angle,long *sine,long *cosine)
 	HLock(resHandle);
 	s=(unsigned short *)*resHandle;
 	
-	/* Šp“x‚ª‚O`‚X‚O“x‚Ì”ÍˆÍ‚Å‚Í‚È‚¢ê‡‚Ìˆ—‚È‚Ç */
+	/* è§’åº¦ãŒï¼ã€œï¼™ï¼åº¦ã®ç¯„å›²ã§ã¯ãªã„å ´åˆã®å‡¦ç†ãªã© */
 	if (angle<=90)
 	{
 		*sine=s[angle];
@@ -2006,13 +2006,13 @@ void GetSinCos(short angle,long *sine,long *cosine)
 }
 
 
-/* ‰ñ“]‚Ìİ’èƒ‹[ƒ`ƒ“‚Ì‚½‚ß‚Ì’è” */
+/* å›è»¢ã®è¨­å®šãƒ«ãƒ¼ãƒãƒ³ã®ãŸã‚ã®å®šæ•° */
 #define		dRotate	138
 enum {
 	angleStr=3
 };
 
-/* ‰ñ“]‚Ìİ’è */
+/* å›è»¢ã®è¨­å®š */
 short ConfigureRotate(void)
 {
 	DialogPtr	dp;
@@ -2048,7 +2048,7 @@ short ConfigureRotate(void)
 		StringToNum(str,&num);
 		result=num;
 		
-		/* “ü—Í‚³‚ê‚½Šp“x‚ğ‚O`‚R‚U‚O‚Ì”ÍˆÍ‚É’²®‚·‚é */
+		/* å…¥åŠ›ã•ã‚ŒãŸè§’åº¦ã‚’ï¼ã€œï¼“ï¼–ï¼ã®ç¯„å›²ã«èª¿æ•´ã™ã‚‹ */
 		while (result<0)
 			result+=360;
 		while (result>=360)
@@ -2060,7 +2060,7 @@ short ConfigureRotate(void)
 	return userCanceledErr;
 }
 
-/* “_•`‚Ìİ’è */
+/* ç‚¹æã®è¨­å®š */
 short ConfigureDotPicture(void)
 {
 	DialogPtr	dp;
@@ -2072,7 +2072,7 @@ short ConfigureDotPicture(void)
 	DeactivateFloatersAndFirstDocumentWindow();
 	dp=GetNewDialog(dDotPicture,nil,kFirstWindowOfClass);
 	
-	/* ƒRƒ“ƒgƒ[ƒ‹‚Ì’l‚ğİ’è */
+	/* ã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ«ã®å€¤ã‚’è¨­å®š */
 	SetDialogControlValue(dp,bgNone+dotPicturePrefs.dotPicBack,1);
 	if (dotPicturePrefs.dotPicBack!=bgSource-bgNone)
 		SetDialogControlHilite(dp,bgLighten,255);
@@ -2125,7 +2125,7 @@ short ConfigureDotPicture(void)
 	return userCanceledErr;
 }
 
-/* •—‚Ìİ’è */
+/* é¢¨ã®è¨­å®š */
 short ConfigureWind(void)
 {
 	DialogPtr	dp;
@@ -2136,7 +2136,7 @@ short ConfigureWind(void)
 	DeactivateFloatersAndFirstDocumentWindow();
 	dp=GetNewDialog(dWind,nil,kFirstWindowOfClass);
 	
-	/* ƒRƒ“ƒgƒ[ƒ‹‚Ì’l‚ğİ’è */
+	/* ã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ«ã®å€¤ã‚’è¨­å®š */
 	SetDialogControlValue(dp,dRight+windPrefs.direction,1);
 	SetDialogControlValue(dp,pWeak+windPrefs.power,1);
 	
@@ -2190,7 +2190,7 @@ enum {
 	diKind,
 };
 
-/* ‰æ‚è‚Ìİ’è */
+/* ç¸å–ã‚Šã®è¨­å®š */
 short ConfigureEdging(EdgePrefsRec *newPrefs)
 {
 	DialogPtr	dp;
@@ -2202,12 +2202,12 @@ short ConfigureEdging(EdgePrefsRec *newPrefs)
 	DeactivateFloatersAndFirstDocumentWindow();
 	dp=GetNewDialog(dEdging,nil,kFirstWindowOfClass);
 	
-	/* ŠeƒAƒCƒeƒ€‚Ì“à—e‚ğİ’è */
+	/* å„ã‚¢ã‚¤ãƒ†ãƒ ã®å†…å®¹ã‚’è¨­å®š */
 	NumToString(edgePrefs.pixels,pixelsStr);
 	SetDialogItemText2(dp,diPixels,pixelsStr);
 	if (gCurrentColor.isTransparent)
 	{
-		/* ‘OŒiF‚ª“§–¾F‚Ìê‡A•s“§–¾“x‚Ìw’è‚Í–³Œø‚Æ‚·‚é */
+		/* å‰æ™¯è‰²ãŒé€æ˜è‰²ã®å ´åˆã€ä¸é€æ˜åº¦ã®æŒ‡å®šã¯ç„¡åŠ¹ã¨ã™ã‚‹ */
 		SetDialogControlValue(dp,diTransparency,1);
 		SetDialogControlHilite(dp,diTransparency,255);
 	}
@@ -2255,7 +2255,7 @@ short ConfigureEdging(EdgePrefsRec *newPrefs)
 	return result;
 }
 
-/* F”‚Ì•ÏXi‚¢‚é‚Ì‚©H@‚Æv‚Á‚½‚¯‚ÇAƒfƒBƒU‚©‚¯‚é‚ÆŒ‹\‚¢‚¢Š´‚¶j */
+/* è‰²æ•°ã®å¤‰æ›´ï¼ˆã„ã‚‹ã®ã‹ï¼Ÿã€€ã¨æ€ã£ãŸã‘ã©ã€ãƒ‡ã‚£ã‚¶ã‹ã‘ã‚‹ã¨çµæ§‹ã„ã„æ„Ÿã˜ï¼‰ */
 void ChangeColorMode(WindowPtr theWindow,short mode,Boolean dither)
 {
 	GWorldPtr	newModePtr;
@@ -2272,13 +2272,13 @@ void ChangeColorMode(WindowPtr theWindow,short mode,Boolean dither)
 	switch (mode)
 	{
 		case i216Color:
-			/* 216FƒJƒ‰[iweb—pj */
+			/* 216è‰²ã‚«ãƒ©ãƒ¼ï¼ˆwebç”¨ï¼‰ */
 			ctab=GetCTable(129);
 			err=NewGWorld(&newModePtr,8,&iconSize,ctab,0,useTempMem);
 			break;
 		
 		case iAppleIconColor:
-			/* AppleIconColoriIcon—pj */
+			/* AppleIconColorï¼ˆIconç”¨ï¼‰ */
 			ctab=GetCTable(130);
 			err=NewGWorld(&newModePtr,8,&iconSize,ctab,0,useTempMem);
 			break;
@@ -2288,8 +2288,8 @@ void ChangeColorMode(WindowPtr theWindow,short mode,Boolean dither)
 			break;
 		
 		case i16Gray:
-			/* 16FƒOƒŒ[ */
-			/* ƒJƒ‰[ƒe[ƒuƒ‹‚ğg—p */
+			/* 16è‰²ã‚°ãƒ¬ãƒ¼ */
+			/* ã‚«ãƒ©ãƒ¼ãƒ†ãƒ¼ãƒ–ãƒ«ã‚’ä½¿ç”¨ */
 			ctab=GetCTable(128);
 			err=NewGWorld(&newModePtr,4,&iconSize,ctab,0,useTempMem);
 			break;
@@ -2310,7 +2310,7 @@ void ChangeColorMode(WindowPtr theWindow,short mode,Boolean dither)
 	
 	CopyBits(GetPortBitMapForCopyBits(eWinRec->tempDataPtr),
 		GetPortBitMapForCopyBits(newModePtr),
-		&iconSize,&iconSize,srcCopy+(dither ? ditherCopy : 0),0); /* ƒfƒBƒUƒRƒs[‚·‚é */
+		&iconSize,&iconSize,srcCopy+(dither ? ditherCopy : 0),0); /* ãƒ‡ã‚£ã‚¶ã‚³ãƒ”ãƒ¼ã™ã‚‹ */
 	
 	SetGWorld(eWinRec->editDataPtr,0);
 	CopyBits(GetPortBitMapForCopyBits(newModePtr),
@@ -2318,7 +2318,7 @@ void ChangeColorMode(WindowPtr theWindow,short mode,Boolean dither)
 		&iconSize,&iconSize,srcCopy,0);
 	
 	if (mode==i16Gray || mode==i216Color || mode==iAppleIconColor)
-		DisposeCTable(ctab); /* ƒJƒ‰[ƒe[ƒuƒ‹‚ğ”jŠü */
+		DisposeCTable(ctab); /* ã‚«ãƒ©ãƒ¼ãƒ†ãƒ¼ãƒ–ãƒ«ã‚’ç ´æ£„ */
 	
 	DisposeGWorld(newModePtr);
 	
@@ -2329,12 +2329,12 @@ void ChangeColorMode(WindowPtr theWindow,short mode,Boolean dither)
 	
 	gUsedCount.colorChangeNum++;
 	SetUndoMode(umColorChange);
-	if (gPaletteCheck == kPaletteCheckUsed) /* ƒpƒŒƒbƒg‚Ìƒ`ƒFƒbƒN‚ğƒAƒbƒvƒf[ƒg */
+	if (gPaletteCheck == kPaletteCheckUsed) /* ãƒ‘ãƒ¬ãƒƒãƒˆã®ãƒã‚§ãƒƒã‚¯ã‚’ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆ */
 		UpdatePaletteCheck();
 }
 
 
-/* İ’è‚Ì“Ç‚İ‚İ */
+/* è¨­å®šã®èª­ã¿è¾¼ã¿ */
 void LoadPaintPrefs(void)
 {
 	OSErr	err;
@@ -2346,7 +2346,7 @@ void LoadPaintPrefs(void)
 	err=LoadDataFromPrefs(&edgePrefs,sizeof(EdgePrefsRec),'pprf',132);
 }
 
-/* İ’è‚Ì•Û‘¶ */
+/* è¨­å®šã®ä¿å­˜ */
 void SavePaintPrefs(void)
 {
 	OSErr	err;

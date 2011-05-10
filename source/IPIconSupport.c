@@ -698,7 +698,7 @@ PicHandle IPIconToPicture(const IPIconRec *ipIcon,short iconKind)
 	return picture;
 }
 
-/* IPIcon‚É32bitƒf[ƒ^‚ ‚é‚¢‚Í8bitƒ}ƒXƒN‚ª‘¶İ‚·‚é‚©‚Ç‚¤‚© */
+/* IPIconã«32bitãƒ‡ãƒ¼ã‚¿ã‚ã‚‹ã„ã¯8bitãƒã‚¹ã‚¯ãŒå­˜åœ¨ã™ã‚‹ã‹ã©ã†ã‹ */
 OSErr	IPIconHas32Icons(const IPIconRec *ipIcon,Boolean *is32Exist)
 {
 	OSErr	err=noErr;
@@ -721,14 +721,14 @@ OSErr	IPIconHas32Icons(const IPIconRec *ipIcon,Boolean *is32Exist)
 	return noErr;
 }
 
-/* IPIcon‚ÉThumbnailƒAƒCƒRƒ“‚ª‘¶İ‚·‚é‚©‚Ç‚¤‚© */
+/* IPIconã«Thumbnailã‚¢ã‚¤ã‚³ãƒ³ãŒå­˜åœ¨ã™ã‚‹ã‹ã©ã†ã‹ */
 OSErr	IPIconHasThumbnailIcon(const IPIconRec *ipIcon,Boolean *isThumbnailExist)
 {
 	*isThumbnailExist = (ipIcon->it32Data != NULL || ipIcon->t8mkData != NULL);
 	return noErr;
 }
 
-/* IPIcon‚ÉThumbnailƒAƒCƒRƒ“‚ª‘¶İ‚·‚é‚©‚Ç‚¤‚© */
+/* IPIconã«Thumbnailã‚¢ã‚¤ã‚³ãƒ³ãŒå­˜åœ¨ã™ã‚‹ã‹ã©ã†ã‹ */
 Boolean IsIPIconHasThumbnailIcon(const IPIconRec *ipIcon)
 {
 	Boolean	result = false;
@@ -739,7 +739,7 @@ Boolean IsIPIconHasThumbnailIcon(const IPIconRec *ipIcon)
 	return result;
 }
 
-/* IPIcon‚Ì”jŠü */
+/* IPIconã®ç ´æ£„ */
 OSErr	DisposeIPIcon(const IPIconRec *ipIcon)
 {
 	OSErr	err=noErr;
@@ -755,7 +755,7 @@ OSErr	DisposeIPIcon(const IPIconRec *ipIcon)
 	return err;
 }
 
-/* ƒtƒHƒ‹ƒ_ƒAƒCƒRƒ“‚ğƒ`ƒFƒbƒN */
+/* ãƒ•ã‚©ãƒ«ãƒ€ã‚¢ã‚¤ã‚³ãƒ³ã‚’ãƒã‚§ãƒƒã‚¯ */
 OSErr FolderIconCheck(const FSSpec *theFolderSpec,short *alertMode)
 {
 	OSErr	err;
@@ -773,8 +773,8 @@ OSErr FolderIconCheck(const FSSpec *theFolderSpec,short *alertMode)
 	DInfo	dirInfo;
 	#endif
 	
-	/* ‚Ü‚¸AƒJƒXƒ^ƒ€ƒAƒCƒRƒ“ƒtƒ‰ƒO‚ª—§‚Á‚Ä‚¢‚é‚©‚Ç‚¤‚©‚ğ’²‚×‚é */
-	/* ‚±‚±‚ÅƒGƒ‰[‚ª”­¶‚·‚éê‡‚Í‚¨‚»‚ç‚­ƒtƒHƒ‹ƒ_ƒAƒCƒRƒ“•ÒW‚à•s‰Â”\‚È‚Ì‚Å‚»‚Ì‚Ü‚Ü•Ô‚é */
+	/* ã¾ãšã€ã‚«ã‚¹ã‚¿ãƒ ã‚¢ã‚¤ã‚³ãƒ³ãƒ•ãƒ©ã‚°ãŒç«‹ã£ã¦ã„ã‚‹ã‹ã©ã†ã‹ã‚’èª¿ã¹ã‚‹ */
+	/* ã“ã“ã§ã‚¨ãƒ©ãƒ¼ãŒç™ºç”Ÿã™ã‚‹å ´åˆã¯ãŠãã‚‰ããƒ•ã‚©ãƒ«ãƒ€ã‚¢ã‚¤ã‚³ãƒ³ç·¨é›†ã‚‚ä¸å¯èƒ½ãªã®ã§ãã®ã¾ã¾è¿”ã‚‹ */
 	#ifdef __MOREFILESX__
 	err = FSGetFinderInfo(&fsRef,&info,NULL,NULL);
 	#else
@@ -782,14 +782,14 @@ OSErr FolderIconCheck(const FSSpec *theFolderSpec,short *alertMode)
 	#endif
 	if (err!=noErr) return err;
 	
-	/* ƒJƒXƒ^ƒ€ƒAƒCƒRƒ“ƒtƒ‰ƒO‚ª—§‚Á‚Ä‚¢‚È‚¯‚ê‚Î–â‘è‚È‚µ */
+	/* ã‚«ã‚¹ã‚¿ãƒ ã‚¢ã‚¤ã‚³ãƒ³ãƒ•ãƒ©ã‚°ãŒç«‹ã£ã¦ã„ãªã‘ã‚Œã°å•é¡Œãªã— */
 	#ifdef __MOREFILESX__
 	if ((info.folder.finderFlags & kHasCustomIcon) == 0) return noErr;
 	#else
 	if ((dirInfo.frFlags & kHasCustomIcon) == 0) return noErr;
 	#endif
 	
-	/* —§‚Á‚Ä‚¢‚éê‡‚ÍAƒJƒXƒ^ƒ€ƒAƒCƒRƒ“‚ğƒ`ƒFƒbƒN */
+	/* ç«‹ã£ã¦ã„ã‚‹å ´åˆã¯ã€ã‚«ã‚¹ã‚¿ãƒ ã‚¢ã‚¤ã‚³ãƒ³ã‚’ãƒã‚§ãƒƒã‚¯ */
 	#ifdef __MOREFILESX__
 	err = FSGetNodeID(&fsRef,&dirID,&isDirectory);
 	#else
@@ -799,7 +799,7 @@ OSErr FolderIconCheck(const FSSpec *theFolderSpec,short *alertMode)
 	
 	GetIndString(iconFileName,140,3);
 	err=FSMakeFSSpec(theFolderSpec->vRefNum,dirID,iconFileName,&theIconFile);
-	if (err==fnfErr) /* ƒAƒCƒRƒ“ƒtƒ@ƒCƒ‹‚ªŒ©‚Â‚©‚ç‚È‚¢ê‡‚ÍAƒtƒ‰ƒO‚ªŠÔˆá‚Á‚Ä‚¢‚é‚í‚¯‚¾‚©‚çC³ */
+	if (err==fnfErr) /* ã‚¢ã‚¤ã‚³ãƒ³ãƒ•ã‚¡ã‚¤ãƒ«ãŒè¦‹ã¤ã‹ã‚‰ãªã„å ´åˆã¯ã€ãƒ•ãƒ©ã‚°ãŒé–“é•ã£ã¦ã„ã‚‹ã‚ã‘ã ã‹ã‚‰ä¿®æ­£ */
 	{
 		#ifdef __MOREFILESX__
 		err = FSClearHasCustomIcon(&fsRef);
@@ -808,13 +808,13 @@ OSErr FolderIconCheck(const FSSpec *theFolderSpec,short *alertMode)
 		#endif
 		return noErr;
 	}
-	else if (err!=noErr) /* ‚»‚êˆÈŠO‚ÌƒGƒ‰[‚È‚ç•ÒW‚Å‚«‚È‚¢‚¾‚ë‚¤‚©‚ç–ß‚é */
+	else if (err!=noErr) /* ãã‚Œä»¥å¤–ã®ã‚¨ãƒ©ãƒ¼ãªã‚‰ç·¨é›†ã§ããªã„ã ã‚ã†ã‹ã‚‰æˆ»ã‚‹ */
 		return err;
 	
 	return FileIconCheck(&theIconFile,alertMode);
 }
 
-/* ƒtƒ@ƒCƒ‹‚ÌƒAƒCƒRƒ“‚ğƒ`ƒFƒbƒN */
+/* ãƒ•ã‚¡ã‚¤ãƒ«ã®ã‚¢ã‚¤ã‚³ãƒ³ã‚’ãƒã‚§ãƒƒã‚¯ */
 OSErr FileIconCheck(const FSSpec *theIconFile,short *alertMode)
 {
 	OSErr	err;
@@ -822,7 +822,7 @@ OSErr FileIconCheck(const FSSpec *theIconFile,short *alertMode)
 	IconFamilyHandle	iconFamily;
 	
 	refNum=FSpOpenResFile(theIconFile,fsRdWrPerm);
-	if (refNum <=0) /* ŠJ‚¯‚È‚¢ê‡‚Í’Ç‰ÁŠm”F */
+	if (refNum <=0) /* é–‹ã‘ãªã„å ´åˆã¯è¿½åŠ ç¢ºèª */
 	{
 		if ((err=ResError())==eofErr)
 		{
@@ -832,10 +832,10 @@ OSErr FileIconCheck(const FSSpec *theIconFile,short *alertMode)
 		return err;
 	}
 	
-	/* 'icns'ƒŠƒ\[ƒX‚ğ’T‚· */
+	/* 'icns'ãƒªã‚½ãƒ¼ã‚¹ã‚’æ¢ã™ */
 	UseResFile(refNum);
 	iconFamily=(IconFamilyHandle)Get1Resource('icns',kCustomIconResource);
-	if (iconFamily==nil) /* 'icns'ƒŠƒ\[ƒX‚ª‚È‚¢ê‡‚Í–â‘è‚È‚µ */
+	if (iconFamily==nil) /* 'icns'ãƒªã‚½ãƒ¼ã‚¹ãŒãªã„å ´åˆã¯å•é¡Œãªã— */
 	{
 		CloseResFile(refNum);
 		UseResFile(gApplRefNum);
@@ -858,7 +858,7 @@ OSErr FileIconCheck(const FSSpec *theIconFile,short *alertMode)
 	return noErr;
 }
 
-/* ƒAƒCƒRƒ“ƒvƒŒƒrƒ…[‚ÌƒAƒbƒvƒf[ƒg */
+/* ã‚¢ã‚¤ã‚³ãƒ³ãƒ—ãƒ¬ãƒ“ãƒ¥ãƒ¼ã®ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆ */
 void DrawIPIconPreview(const IPIconRec *ipIcon)
 {
 	PicHandle	previewPict;
@@ -870,10 +870,10 @@ void DrawIPIconPreview(const IPIconRec *ipIcon)
 	IconSuiteRef	iconSuite=NULL;
 	IconRef		iconRef;
 	
-	/* ƒvƒŒƒrƒ…[‚Ì‘å‚«‚³ */
+	/* ãƒ—ãƒ¬ãƒ“ãƒ¥ãƒ¼ã®å¤§ãã• */
 	GetWindowPortBounds(gPreviewWindow,&r);
 	
-	/* ‚Ü‚¸”wŒi */
+	/* ã¾ãšèƒŒæ™¯ */
 	switch (gListBackground)
 	{
 		case iBackWhite:
@@ -1028,7 +1028,7 @@ OSErr IPIconToClip(const IPIconRec *ipIcon)
 	return err;
 }
 
-/* ƒJƒŒƒ“ƒgƒŠƒ\[ƒX‚©‚çw’è‚³‚ê‚½ƒAƒCƒRƒ“‚ğIPIcon‚Æ‚µ‚Ä“¾‚é */
+/* ã‚«ãƒ¬ãƒ³ãƒˆãƒªã‚½ãƒ¼ã‚¹ã‹ã‚‰æŒ‡å®šã•ã‚ŒãŸã‚¢ã‚¤ã‚³ãƒ³ã‚’IPIconã¨ã—ã¦å¾—ã‚‹ */
 OSErr Get1IPIcon(IPIconRec *ipIcon,short resID,const IPIconSelector *selector)
 {
 	OSErr	err;
@@ -1039,7 +1039,7 @@ OSErr Get1IPIcon(IPIconRec *ipIcon,short resID,const IPIconSelector *selector)
 		iconFamily = (IconFamilyHandle)Get1Resource(kIconFamilyType,resID);
 		if (iconFamily != NULL)
 		{
-			/* IconSuite‚É‚¨‚³‚ß‚é•”•ª */
+			/* IconSuiteã«ãŠã•ã‚ã‚‹éƒ¨åˆ† */
 			err = IconFamilyToIPIconWithSelector(iconFamily,selector,ipIcon);
 			ReleaseResource((Handle)iconFamily);
 			

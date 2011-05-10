@@ -194,91 +194,91 @@ void ToolWindowInit(void)
 		
 		/* color palette 1 */
 		err=LoadDataFromPrefs(&pt,sizeof(Point),'WPOS',kColorPalette1ResID);
-		if (err==noErr && PtInRgn(pt,GetGrayRgn())) /* ‰æ–Ê“à‚©‚Ç‚¤‚© */
+		if (err==noErr && PtInRgn(pt,GetGrayRgn())) /* ç”»é¢å†…ã‹ã©ã†ã‹ */
 			MoveWindow(ColorPalette1,pt.h,pt.v,false);
 		
-		/* ƒJƒ‰[ƒpƒŒƒbƒg‚Q */
+		/* ã‚«ãƒ©ãƒ¼ãƒ‘ãƒ¬ãƒƒãƒˆï¼’ */
 		err=LoadDataFromPrefs(&pt,sizeof(Point),'WPOS',kColorPalette2ResID);
-		if (err==noErr && PtInRgn(pt,GetGrayRgn())) /* ‰æ–Ê“à‚©‚Ç‚¤‚© */
+		if (err==noErr && PtInRgn(pt,GetGrayRgn())) /* ç”»é¢å†…ã‹ã©ã†ã‹ */
 			MoveWindow(ColorPalette2,pt.h,pt.v,false);
 		
-		/* ƒvƒŒƒrƒ…[‰æ–Ê */
+		/* ãƒ—ãƒ¬ãƒ“ãƒ¥ãƒ¼ç”»é¢ */
 		err=LoadDataFromPrefs(&pt,sizeof(Point),'WPOS',kPreviewWindowResID);
-		if (err==noErr && PtInRgn(pt,GetGrayRgn())) /* ‰æ–Ê“à‚©‚Ç‚¤‚© */
+		if (err==noErr && PtInRgn(pt,GetGrayRgn())) /* ç”»é¢å†…ã‹ã©ã†ã‹ */
 			MoveWindow(gPreviewWindow,pt.h,pt.v,false);
 		
-		/* ƒc[ƒ‹ƒpƒŒƒbƒg */
+		/* ãƒ„ãƒ¼ãƒ«ãƒ‘ãƒ¬ãƒƒãƒˆ */
 		err=LoadDataFromPrefs(&pt,sizeof(Point),'WPOS',kToolPaletteResID);
-		if (err==noErr && PtInRgn(pt,GetGrayRgn())) /* ‰æ–Ê“à‚©‚Ç‚¤‚© */
+		if (err==noErr && PtInRgn(pt,GetGrayRgn())) /* ç”»é¢å†…ã‹ã©ã†ã‹ */
 			MoveWindow(gToolPalette,pt.h,pt.v,false);
 		
-		/* ƒuƒŒƒ“ƒhƒpƒŒƒbƒg */
+		/* ãƒ–ãƒ¬ãƒ³ãƒ‰ãƒ‘ãƒ¬ãƒƒãƒˆ */
 		err=LoadDataFromPrefs(&pt,sizeof(Point),'WPOS',kBlendPaletteResID);
-		if (err==noErr && PtInRgn(pt,GetGrayRgn())) /* ‰æ–Ê“à‚©‚Ç‚¤‚© */
+		if (err==noErr && PtInRgn(pt,GetGrayRgn())) /* ç”»é¢å†…ã‹ã©ã†ã‹ */
 			MoveWindow(gBlendPalette,pt.h,pt.v,false);
 		
-		/* ƒ^ƒCƒgƒ‹‰æ–Ê */
+		/* ã‚¿ã‚¤ãƒˆãƒ«ç”»é¢ */
 		err=LoadDataFromPrefs(&pt,sizeof(Point),'WPOS',kTitleWindowResID);
-		if (err==noErr && PtInRgn(pt,GetGrayRgn())) /* ‰æ–Ê“à‚©‚Ç‚¤‚© */
+		if (err==noErr && PtInRgn(pt,GetGrayRgn())) /* ç”»é¢å†…ã‹ã©ã†ã‹ */
 			MoveWindow(TitleWindow,pt.h,pt.v,false);
 		
-		/* î•ñƒEƒBƒ“ƒhƒE */
+		/* æƒ…å ±ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ */
 		err=LoadDataFromPrefs(&pt,sizeof(Point),'WPOS',kInfoWindowResID);
-		if (err==noErr && PtInRgn(pt,GetGrayRgn())) /* ‰æ–Ê“à‚©‚Ç‚¤‚© */
+		if (err==noErr && PtInRgn(pt,GetGrayRgn())) /* ç”»é¢å†…ã‹ã©ã†ã‹ */
 			MoveWindow(InfoWindow,pt.h,pt.v,false);
 		
-		/* ƒpƒ^[ƒ“ƒpƒŒƒbƒg */
+		/* ãƒ‘ã‚¿ãƒ¼ãƒ³ãƒ‘ãƒ¬ãƒƒãƒˆ */
 		err=LoadDataFromPrefs(&pt,sizeof(Point),'WPOS',kPatternPaletteWindowResID);
 		if (err==noErr && PtInRgn(pt,GetGrayRgn()))
 			MoveWindow(PatternPalette,pt.h,pt.v,false);
 		
-		/* •`‰æ“_ƒ‚[ƒhƒpƒŒƒbƒg */
+		/* æç”»ç‚¹ãƒ¢ãƒ¼ãƒ‰ãƒ‘ãƒ¬ãƒƒãƒˆ */
 		err=LoadDataFromPrefs(&pt,sizeof(Point),'WPOS',kDotModePaletteWindowResID);
 		if (err==noErr && PtInRgn(pt,GetGrayRgn()))
 			MoveWindow(DotModePalette,pt.h,pt.v,false);
 		
-		/* ‚¨‹C‚É“ü‚èƒpƒŒƒbƒg */
+		/* ãŠæ°—ã«å…¥ã‚Šãƒ‘ãƒ¬ãƒƒãƒˆ */
 		err=LoadDataFromPrefs(&pt,sizeof(Point),'WPOS',kFavoritePaletteResID);
 		if (err==noErr && PtInRgn(pt,GetGrayRgn()))
 			MoveWindow(FavoritePalette,pt.h,pt.v,false);
 		
-		/* ‰Šúİ’è‚É‚æ‚Á‚ÄA•\¦^”ñ•\¦‚ğ•ÏX‚·‚é */
-		/* ƒJƒ‰[ƒpƒŒƒbƒg‚P */
+		/* åˆæœŸè¨­å®šã«ã‚ˆã£ã¦ã€è¡¨ç¤ºï¼éè¡¨ç¤ºã‚’å¤‰æ›´ã™ã‚‹ */
+		/* ã‚«ãƒ©ãƒ¼ãƒ‘ãƒ¬ãƒƒãƒˆï¼‘ */
 		err=LoadDataFromPrefs(&vis,sizeof(Boolean),'WVis',kColorPalette1ResID);
 		if ((err==noErr && vis) || err!=noErr) 
 			ShowHidePalette(ColorPalette1,true);
 		
-		/* ƒJƒ‰[ƒpƒŒƒbƒg‚Q */
+		/* ã‚«ãƒ©ãƒ¼ãƒ‘ãƒ¬ãƒƒãƒˆï¼’ */
 		err=LoadDataFromPrefs(&vis,sizeof(Boolean),'WVis',kColorPalette2ResID);
 		if ((err==noErr && vis) || err!=noErr) 
 			ShowHidePalette(ColorPalette2,true);
 		
-		/* ƒc[ƒ‹ƒpƒŒƒbƒg */
+		/* ãƒ„ãƒ¼ãƒ«ãƒ‘ãƒ¬ãƒƒãƒˆ */
 		err=LoadDataFromPrefs(&vis,sizeof(Boolean),'WVis',kToolPaletteResID);
 		if ((err==noErr && vis) || err!=noErr) 
 			ShowHidePalette(gToolPalette,true);
 		
-		/* ƒuƒŒƒ“ƒhƒpƒŒƒbƒg */
+		/* ãƒ–ãƒ¬ãƒ³ãƒ‰ãƒ‘ãƒ¬ãƒƒãƒˆ */
 		err=LoadDataFromPrefs(&vis,sizeof(Boolean),'WVis',kBlendPaletteResID);
 		if ((err==noErr && vis) || err!=noErr) 
 			ShowHidePalette(gBlendPalette,true);
 		
-		/* ƒ^ƒCƒgƒ‹‰æ–Ê */
+		/* ã‚¿ã‚¤ãƒˆãƒ«ç”»é¢ */
 		err=LoadDataFromPrefs(&vis,sizeof(Boolean),'WVis',kTitleWindowResID);
 		if ((err==noErr && vis) || err!=noErr) 
 			ShowHidePalette(TitleWindow,true);
 		
-		/* î•ñ‰æ–Ê */
+		/* æƒ…å ±ç”»é¢ */
 		err=LoadDataFromPrefs(&vis,sizeof(Boolean),'WVis',kInfoWindowResID);
 		if ((err==noErr && vis) || err!=noErr) 
 			ShowHidePalette(InfoWindow,true);
 		
-		/* ‚¨‹C‚É“ü‚èƒpƒŒƒbƒg */
+		/* ãŠæ°—ã«å…¥ã‚Šãƒ‘ãƒ¬ãƒƒãƒˆ */
 		err=LoadDataFromPrefs(&vis,sizeof(Boolean),'WVis',kFavoritePaletteResID);
 		if ((err==noErr && vis)) 
 			ShowHidePalette(FavoritePalette,true);
 		
-		/* ƒpƒ^[ƒ“ƒpƒŒƒbƒg */
+		/* ãƒ‘ã‚¿ãƒ¼ãƒ³ãƒ‘ãƒ¬ãƒƒãƒˆ */
 		if (gOtherPrefs.useHyperCardPalette)
 			SizeWindow(PatternPalette,163,67,false);
 		
@@ -301,7 +301,7 @@ void ToolWindowInit(void)
 	}
 }
 
-/* ƒtƒ[ƒeƒBƒ“ƒOƒEƒBƒ“ƒhƒE‚ğì¬ */
+/* ãƒ•ãƒ­ãƒ¼ãƒ†ã‚£ãƒ³ã‚°ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚’ä½œæˆ */
 WindowPtr GetNewFloatingWindow(short WINDid,short windowKind,long refCon)
 {
 	WindowPtr	theWindow;
@@ -328,7 +328,7 @@ WindowPtr GetNewFloatingWindow(short WINDid,short windowKind,long refCon)
 	return theWindow;
 }
 
-/* ƒEƒBƒ“ƒhƒE‚ÉŠg’£‚³‚ê‚½í—Ş‚ğİ’è‚·‚é */
+/* ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã«æ‹¡å¼µã•ã‚ŒãŸç¨®é¡ã‚’è¨­å®šã™ã‚‹ */
 void SetExtWindowKind(WindowPtr theWindow,short windowKind)
 {
 	#if TARGET_API_MAC_CARBON
@@ -411,16 +411,16 @@ void DoUpdate(EventRecord *theEvent)
 			DisposeRgn(tempClip);
 			DisposeRgn(imageRgn);
 			
-			/* ƒTƒCƒYƒ{ƒbƒNƒX */
+			/* ã‚µã‚¤ã‚ºãƒœãƒƒã‚¯ã‚¹ */
 			DrawGrowIcon(theWindow);
 			
-			/* ƒXƒNƒ[ƒ‹ƒo[ */
+			/* ã‚¹ã‚¯ãƒ­ãƒ¼ãƒ«ãƒãƒ¼ */
 			DrawControls(theWindow);
 			
-			/* ”{—¦ */
+			/* å€ç‡ */
 			DrawRatio(theWindow);
 			
-			/* ƒoƒbƒNƒOƒ‰ƒEƒ“ƒhî•ñ */
+			/* ãƒãƒƒã‚¯ã‚°ãƒ©ã‚¦ãƒ³ãƒ‰æƒ…å ± */
 			DrawBackInfo(theWindow);
 			break;
 		
@@ -506,7 +506,7 @@ void DoUpdate(EventRecord *theEvent)
 	EndUpdate(theWindow);
 }
 
-/* ƒyƒCƒ“ƒgƒEƒBƒ“ƒhƒE‚ÌÄ•`‰æ */
+/* ãƒšã‚¤ãƒ³ãƒˆã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®å†æç”» */
 void RedrawPaintWindow(WindowPtr theWindow,RgnHandle updateRgn)
 {
 	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
@@ -515,7 +515,7 @@ void RedrawPaintWindow(WindowPtr theWindow,RgnHandle updateRgn)
 	
 	eDispTempPtr=MakePaintImage(eWinRec,updateRgn);
 	
-	/* ÀÛ‚ÌƒEƒBƒ“ƒhƒE‚É•`‰æ */
+	/* å®Ÿéš›ã®ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã«æç”» */
 	SetPortWindowPort(theWindow);
 	GetClip(tempRgn);
 	SetClip(updateRgn);
@@ -531,7 +531,7 @@ void RedrawPaintWindow(WindowPtr theWindow,RgnHandle updateRgn)
 	DisposeRgn(tempRgn);
 }
 
-/* ƒyƒCƒ“ƒgƒEƒBƒ“ƒhƒE—p‚Ì‰æ‘œ‚ğì¬ */
+/* ãƒšã‚¤ãƒ³ãƒˆã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ç”¨ã®ç”»åƒã‚’ä½œæˆ */
 GWorldPtr MakePaintImage(PaintWinRec *eWinRec,RgnHandle updateRgn)
 {
 	GWorldPtr	tempGWorld,eDispTempPtr;
@@ -541,11 +541,11 @@ GWorldPtr MakePaintImage(PaintWinRec *eWinRec,RgnHandle updateRgn)
 	
 	GetGWorld(&cPort,&cDevice);
 	
-	/* •`‰æ—p‚ÌGWorldì¬ */
+	/* æç”»ç”¨ã®GWorldä½œæˆ */
 	tempGWorld=MakePreviewImage(eWinRec);
 	if (tempGWorld == nil) return nil;
 	
-	/* ÀÛ‚Ì‘å‚«‚³‚ÉŠg‘å‚µ‚½ƒCƒ[ƒW‚ğì¬ */
+	/* å®Ÿéš›ã®å¤§ãã•ã«æ‹¡å¤§ã—ãŸã‚¤ãƒ¡ãƒ¼ã‚¸ã‚’ä½œæˆ */
 	err=NewGWorld(&eDispTempPtr,eWinRec->iconDepth,&eWinRec->iconEditSize,0,0,useTempMem);
 	if (err!=noErr)
 	{
@@ -593,7 +593,7 @@ GWorldPtr MakePaintImage(PaintWinRec *eWinRec,RgnHandle updateRgn)
 	return eDispTempPtr;
 }
 
-/* ƒvƒŒƒrƒ…[ƒEƒBƒ“ƒhƒE‚ÌÄ•`‰æ */
+/* ãƒ—ãƒ¬ãƒ“ãƒ¥ãƒ¼ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®å†æç”» */
 void RedrawPreviewWindow(WindowPtr frontWindow)
 {
 	PaintWinRec	*eWinRec=GetPaintWinRec(frontWindow);
@@ -614,7 +614,7 @@ void RedrawPreviewWindow(WindowPtr frontWindow)
 		DispSelectionMain(frontWindow,false,true);
 }
 
-/* ‘OŒiA”wŒi‚ğ‡¬‚µ‚½ƒCƒ[ƒW‚ğì¬‚·‚é */
+/* å‰æ™¯ã€èƒŒæ™¯ã‚’åˆæˆã—ãŸã‚¤ãƒ¡ãƒ¼ã‚¸ã‚’ä½œæˆã™ã‚‹ */
 GWorldPtr MakePreviewImage(PaintWinRec *eWinRec)
 {
 	OSErr		err;
@@ -641,7 +641,7 @@ GWorldPtr MakePreviewImage(PaintWinRec *eWinRec)
 		{
 			short	foreMode=SetForeBlend(eWinRec);
 			
-			if (!eWinRec->isSelected) /* ‘I‘ğ”ÍˆÍ‚È‚µ */
+			if (!eWinRec->isSelected) /* é¸æŠç¯„å›²ãªã— */
 				SafeCopyDeepMask(GetPortBitMapForCopyBits(eWinRec->editDataPtr),
 					GetPortBitMapForCopyBits(eWinRec->currentMask),
 					GetPortBitMapForCopyBits(tempGWorld),
@@ -684,7 +684,7 @@ GWorldPtr MakePreviewImage(PaintWinRec *eWinRec)
 	return tempGWorld;
 }
 
-/* ƒCƒ“ƒtƒHƒ[ƒVƒ‡ƒ“ƒEƒBƒ“ƒhƒE‚ÌÄ•`‰æ */
+/* ã‚¤ãƒ³ãƒ•ã‚©ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®å†æç”» */
 void RedrawInfo(void)
 {
 	Rect	r;
@@ -712,7 +712,7 @@ void RedrawInfo(void)
 #define	kPatternNum	24
 #define	kHyperCardPaletteNum	40
 
-/* ƒpƒ^[ƒ“ƒpƒŒƒbƒg‚ÌÄ•`‰æ */
+/* ãƒ‘ã‚¿ãƒ¼ãƒ³ãƒ‘ãƒ¬ãƒƒãƒˆã®å†æç”» */
 void UpdatePatternPalette(void)
 {
 	short	i,x,y;
@@ -767,12 +767,12 @@ void UpdatePatternPalette(void)
 	HilitePattern(gPatternNo,true);
 }
 
-/* ƒpƒ^[ƒ“ƒpƒŒƒbƒg‚ÌƒŠƒTƒCƒY */
+/* ãƒ‘ã‚¿ãƒ¼ãƒ³ãƒ‘ãƒ¬ãƒƒãƒˆã®ãƒªã‚µã‚¤ã‚º */
 void ResizePatternPalette(void)
 {
 	Rect	r;
 	
-	/* ‰Šúİ’è•ÏX‘O‚È‚Ì‚Å‹t‚É‚È‚éi‚í‚©‚è‚É‚­‚¢j */
+	/* åˆæœŸè¨­å®šå¤‰æ›´å‰ãªã®ã§é€†ã«ãªã‚‹ï¼ˆã‚ã‹ã‚Šã«ãã„ï¼‰ */
 	if (gOtherPrefs.useHyperCardPalette)
 	{
 		SizeWindow(PatternPalette,99,67,false);
@@ -789,7 +789,7 @@ void ResizePatternPalette(void)
 	MyInvalWindowRect(PatternPalette,&r);
 }
 
-/* ‚¨‹C‚É“ü‚èƒpƒŒƒbƒg‚ÌƒAƒbƒvƒf[ƒg */
+/* ãŠæ°—ã«å…¥ã‚Šãƒ‘ãƒ¬ãƒƒãƒˆã®ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆ */
 void UpdateFavoritePalette(WindowPtr theWindow)
 {
 	ColorSpec	*cspec;
@@ -814,7 +814,7 @@ void UpdateFavoritePalette(WindowPtr theWindow)
 		h = (colorNum-1)%16 +1;
 		v = (colorNum-1)/16;
 		
-		if (colorNum > 16) /* 2’iˆÈã‚É‚È‚é */
+		if (colorNum > 16) /* 2æ®µä»¥ä¸Šã«ãªã‚‹ */
 		{
 			for (i=0; i<= v; i++)
 			{
@@ -840,13 +840,13 @@ void UpdateFavoritePalette(WindowPtr theWindow)
 			}
 		}
 		
-		/* —]”’ */
+		/* ä½™ç™½ */
 		SetRect(&r,h*10+2,(v>0 ? v*10+2 : 1),16*10+2,v*10+1+11);
 		EraseRect(&r);
 		SetRect(&r,0,v*10+10+2,16*10+2,6*10+2);
 		EraseRect(&r);
 		
-		/* ƒpƒŒƒbƒg©‘Ì */
+		/* ãƒ‘ãƒ¬ãƒƒãƒˆè‡ªä½“ */
 		for (i=0; i< 256; i++)
 		{
 			if (i >= colorNum) break;
@@ -858,7 +858,7 @@ void UpdateFavoritePalette(WindowPtr theWindow)
 	}
 }
 
-/* ƒyƒCƒ“ƒgƒEƒBƒ“ƒhƒE‚Ìƒ}ƒXƒN•\¦ */
+/* ãƒšã‚¤ãƒ³ãƒˆã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ãƒã‚¹ã‚¯è¡¨ç¤º */
 void DispPaintMask(WindowPtr theWindow)
 {
 	PaintWinRec	*eWinRec;
@@ -874,7 +874,7 @@ void DispPaintMask(WindowPtr theWindow)
 	
 	if (theWindow == nil || GetExtWindowKind(theWindow) != kWindowTypePaintWindow) return;
 	
-	/* Šeƒf[ƒ^‰Šú‰» */
+	/* å„ãƒ‡ãƒ¼ã‚¿åˆæœŸåŒ– */
 	HideCursor();
 	GetPort(&port);
 	eWinRec=GetPaintWinRec(theWindow);
@@ -884,7 +884,7 @@ void DispPaintMask(WindowPtr theWindow)
 	
 	effectRect=eWinRec->selectedRect;
 	
-	/* ƒyƒCƒ“ƒg—Ìˆæ‚Ì‚İ‚ğƒNƒŠƒbƒsƒ“ƒO */
+	/* ãƒšã‚¤ãƒ³ãƒˆé ˜åŸŸã®ã¿ã‚’ã‚¯ãƒªãƒƒãƒ”ãƒ³ã‚° */
 	SetPortWindowPort(theWindow);
 	clipRgn=NewRgn();
 	GetClip(clipRgn);
@@ -908,13 +908,13 @@ void DispPaintMask(WindowPtr theWindow)
 		UnlockGWorldPixels(maskGWorld);
 		
 		SetGWorld(cPort,cDevice);
-		/* ƒvƒŒƒrƒ…[ */
+		/* ãƒ—ãƒ¬ãƒ“ãƒ¥ãƒ¼ */
 		SetPortWindowPort(gPreviewWindow);
 		CopyBits(GetPortBitMapForCopyBits(maskGWorld),
 			GetPortBitMapForCopyBits(GetWindowPort(gPreviewWindow)),
 			&eWinRec->iconSize,&eWinRec->iconSize,srcCopy,nil);
 		
-		/* ƒEƒBƒ“ƒhƒE */
+		/* ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ */
 		SetPortWindowPort(theWindow);
 		CopyBits(GetPortBitMapForCopyBits(maskGWorld),
 			GetPortBitMapForCopyBits(GetWindowPort(theWindow)),
@@ -924,8 +924,8 @@ void DispPaintMask(WindowPtr theWindow)
 	}
 	else
 	{
-		/* ƒGƒ‰[‚ª‹N‚±‚Á‚½ê‡‚Í’¼Ú•`‰æ */
-		/* ƒvƒŒƒrƒ…[ */
+		/* ã‚¨ãƒ©ãƒ¼ãŒèµ·ã“ã£ãŸå ´åˆã¯ç›´æ¥æç”» */
+		/* ãƒ—ãƒ¬ãƒ“ãƒ¥ãƒ¼ */
 		SetPortWindowPort(gPreviewWindow);
 		EraseRect(&eWinRec->iconSize);
 		GetRegionBounds(eWinRec->selectionPos,&tempRect);
@@ -937,7 +937,7 @@ void DispPaintMask(WindowPtr theWindow)
 				GetPortBitMapForCopyBits(GetWindowPort(gPreviewWindow)),
 				&eWinRec->iconSize,&eWinRec->iconSize,srcOr,nil);
 		
-		/* ƒEƒBƒ“ƒhƒE */
+		/* ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ */
 		SetPortWindowPort(theWindow);
 		MapRect(&tempRect,&eWinRec->iconSize,&eWinRec->iconEditSize);
 		
@@ -952,7 +952,7 @@ void DispPaintMask(WindowPtr theWindow)
 	}
 	
 	#if TARGET_API_MAC_CARBON
-		/* ƒEƒBƒ“ƒhƒE‚Ì“à—e‚ğ‹­§ƒAƒbƒvƒf[ƒg */
+		/* ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®å†…å®¹ã‚’å¼·åˆ¶ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆ */
 		QDFlushPortBuffer(GetWindowPort(theWindow),nil);
 		QDFlushPortBuffer(GetWindowPort(gPreviewWindow),nil);
 	#endif
@@ -994,7 +994,7 @@ void DispPaintMask(WindowPtr theWindow)
 	return;
 }
 
-/* ƒEƒBƒ“ƒhƒE‚ÌƒY[ƒ€ */
+/* ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ã‚ºãƒ¼ãƒ  */
 void MyZoomWindow(WindowPtr theWindow,short thePart,const EventRecord *theEvent)
 {
 	switch (GetExtWindowKind(theWindow))
@@ -1030,7 +1030,7 @@ void MyZoomWindow(WindowPtr theWindow,short thePart,const EventRecord *theEvent)
 	}
 }
 
-/* ƒEƒBƒ“ƒhƒE‚ÌƒNƒŠƒbƒN */
+/* ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ã‚¯ãƒªãƒƒã‚¯ */
 void ContentClick(EventRecord *theEvent)
 {
 	WindowPtr	theWindow;
@@ -1047,7 +1047,7 @@ void ContentClick(EventRecord *theEvent)
 	
 	GlobalToLocal(&mousePt);
 	
-	/* ƒ‚ƒfƒBƒtƒ@ƒCƒAƒL[‚Ìó‘Ô */
+	/* ãƒ¢ãƒ‡ã‚£ãƒ•ã‚¡ã‚¤ã‚¢ã‚­ãƒ¼ã®çŠ¶æ…‹ */
 	optDown=((theEvent->modifiers & optionKey)!=0);
 	cmdDown=((theEvent->modifiers & cmdKey)!=0);
 	ctrlDown=((theEvent->modifiers & controlKey)!=0);
@@ -1059,7 +1059,7 @@ void ContentClick(EventRecord *theEvent)
 			break;
 		
 		case kWindowTypePreviewWindow:
-			/* ŒÅ’è”ÍˆÍ‘I‘ğ‹@”\H */
+			/* å›ºå®šç¯„å›²é¸æŠæ©Ÿèƒ½ï¼Ÿ */
 			break;
 		
 		case kWindowTypeIconListWindow:
@@ -1121,7 +1121,7 @@ void ContentClick(EventRecord *theEvent)
 	SetPortWindowPort(MyFrontNonFloatingWindow());
 }
 
-/* ƒyƒCƒ“ƒgƒEƒBƒ“ƒhƒE‚ÌƒNƒŠƒbƒN */
+/* ãƒšã‚¤ãƒ³ãƒˆã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ã‚¯ãƒªãƒƒã‚¯ */
 static void ClickPaintWindow(WindowPtr theWindow,Point localPt,EventRecord *theEvent)
 {
 	Rect	editRect;
@@ -1140,7 +1140,7 @@ static void ClickPaintWindow(WindowPtr theWindow,Point localPt,EventRecord *theE
 		
 		if (cmdDown && !optDown && PtInRgn(localPt,eWinRec->eSelectedRgn))
 		{
-			/* Drag‚ğŠJn‚·‚é */
+			/* Dragã‚’é–‹å§‹ã™ã‚‹ */
 			ResetRuler();
 			MyDoStartDragPaintWin(theWindow,theEvent);
 			return;
@@ -1172,7 +1172,7 @@ static void ClickPaintWindow(WindowPtr theWindow,Point localPt,EventRecord *theE
 					ratioRect.top,
 					ratioRect.right+kBackWidth,
 					ratioRect.bottom);
-		if (PtInRect(localPt,&ratioRect)) /* ”{—¦ */
+		if (PtInRect(localPt,&ratioRect)) /* å€ç‡ */
 		{
 			Point	popPt;
 			
@@ -1180,7 +1180,7 @@ static void ClickPaintWindow(WindowPtr theWindow,Point localPt,EventRecord *theE
 			LocalToGlobal(&popPt);
 			ChangeRatio(theWindow,popPt);
 		}
-		else if (PtInRect(localPt,&backRect)) /* ƒoƒbƒNƒOƒ‰ƒEƒ“ƒh */
+		else if (PtInRect(localPt,&backRect)) /* ãƒãƒƒã‚¯ã‚°ãƒ©ã‚¦ãƒ³ãƒ‰ */
 		{
 			UInt32	time=TickCount()+GetDblTime();
 			Point	popPt;
@@ -1189,7 +1189,7 @@ static void ClickPaintWindow(WindowPtr theWindow,Point localPt,EventRecord *theE
 			{
 				while (StillDown() && PtInRect(localPt,&backRect) && TickCount()<time)
 					GetMouse(&localPt);
-				if (!PtInRect(localPt,&backRect)) return; /* ”ÍˆÍŠO‚Éo‚½‚Í‚È‚É‚à‚µ‚È‚¢ */
+				if (!PtInRect(localPt,&backRect)) return; /* ç¯„å›²å¤–ã«å‡ºãŸæ™‚ã¯ãªã«ã‚‚ã—ãªã„ */
 				if (!StillDown())
 				{
 					GoBackgroundMode(theWindow);
@@ -1200,12 +1200,12 @@ static void ClickPaintWindow(WindowPtr theWindow,Point localPt,EventRecord *theE
 			LocalToGlobal(&popPt);
 			BackgroundPop(theWindow,popPt);
 		}
-		else /* ƒXƒNƒ[ƒ‹ƒo[ */
+		else /* ã‚¹ã‚¯ãƒ­ãƒ¼ãƒ«ãƒãƒ¼ */
 			DoScrollPaintWindow(theWindow,localPt);
 	}
 }
 
-/* ƒyƒCƒ“ƒgƒEƒBƒ“ƒhƒE‚ğƒNƒŠƒbƒNiƒƒCƒ“j */
+/* ãƒšã‚¤ãƒ³ãƒˆã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚’ã‚¯ãƒªãƒƒã‚¯ï¼ˆãƒ¡ã‚¤ãƒ³ï¼‰ */
 void ClickPaintWindowMain(WindowPtr theWindow,Point pt,long modifiers)
 {
 	short	tool;
@@ -1216,7 +1216,7 @@ void ClickPaintWindowMain(WindowPtr theWindow,Point pt,long modifiers)
 	Boolean shiftDown=((modifiers & shiftKey)!=0);
 	Boolean ctrlDown=((modifiers & controlKey)!=0);
 	
-	/* ƒhƒbƒg•`‰æƒ‚[ƒh‚È‚çA”²‚¯‚é */
+	/* ãƒ‰ãƒƒãƒˆæç”»ãƒ¢ãƒ¼ãƒ‰ãªã‚‰ã€æŠœã‘ã‚‹ */
 	if (eWinRec->isDotMode)
 	{
 		ResetDot(theWindow);
@@ -1226,13 +1226,13 @@ void ClickPaintWindowMain(WindowPtr theWindow,Point pt,long modifiers)
 		return;
 	}
 	
-	/* ƒ‹[ƒ‰•\¦‚ªƒIƒ“‚È‚çA•\¦‚³‚ê‚Ä‚¢‚éƒ‹[ƒ‰‚ğÁ‹ */
+	/* ãƒ«ãƒ¼ãƒ©è¡¨ç¤ºãŒã‚ªãƒ³ãªã‚‰ã€è¡¨ç¤ºã•ã‚Œã¦ã„ã‚‹ãƒ«ãƒ¼ãƒ©ã‚’æ¶ˆå» */
 	ResetRuler();
 	
 	mousePt=pt;
 	if (ctrlDown && !cmdDown)
 	{
-		/* ƒRƒ“ƒeƒNƒXƒgƒƒjƒ…[ */
+		/* ã‚³ãƒ³ãƒ†ã‚¯ã‚¹ãƒˆãƒ¡ãƒ‹ãƒ¥ãƒ¼ */
 		MenuHandle	contextMenu;
 		long		menuChoice=0;
 		
@@ -1272,7 +1272,7 @@ void ClickPaintWindowMain(WindowPtr theWindow,Point pt,long modifiers)
 	
 	tool=gSelectedTool;
 	
-	/* ƒ^ƒuƒŒƒbƒg‚ÌÁ‚µƒSƒ€‚ğg‚Á‚Ä‚¢‚é‚Æ‚«‚ÍÁ‚µƒSƒ€ */
+	/* ã‚¿ãƒ–ãƒ¬ãƒƒãƒˆã®æ¶ˆã—ã‚´ãƒ ã‚’ä½¿ã£ã¦ã„ã‚‹ã¨ãã¯æ¶ˆã—ã‚´ãƒ  */
 	if (isTabletAvailable && IsTabletInUse() && gTabletPrefs.useEraser && IsEraser())
 	{
 		tool=kEraserTool;
@@ -1281,7 +1281,7 @@ void ClickPaintWindowMain(WindowPtr theWindow,Point pt,long modifiers)
 			FixSelection(theWindow);
 	}
 	
-	/* ƒIƒvƒVƒ‡ƒ“‚ğ‰Ÿ‚µ‚Ä‚¢‚ê‚ÎƒXƒ|ƒCƒg */
+	/* ã‚ªãƒ—ã‚·ãƒ§ãƒ³ã‚’æŠ¼ã—ã¦ã„ã‚Œã°ã‚¹ãƒã‚¤ãƒˆ */
 	if (tool!=kMarqueeTool && optDown)
 		tool=kSpoitTool;
 	
@@ -1356,7 +1356,7 @@ void ClickColorPalette1(Point mousePt,Boolean optDown,Boolean cmdDown)
 				
 				ChangeColor(&newColor,false);
 				
-				/* ƒ_ƒuƒ‹ƒNƒŠƒbƒN”»’è */
+				/* ãƒ€ãƒ–ãƒ«ã‚¯ãƒªãƒƒã‚¯åˆ¤å®š */
 				SetRect(&box,mousePt.h-2,mousePt.v-2,mousePt.h+2,mousePt.v+2);
 				while(TickCount()<clickTime && !isDoubleClick)
 				{
@@ -1388,7 +1388,7 @@ void ClickColorPalette2(Point mousePt,Boolean optDown,Boolean cmdDown)
 	switch ((mousePt.h-1)/12)
 	{
 		case 0:
-			if (temp == 0) /* “§–¾F */
+			if (temp == 0) /* é€æ˜è‰² */
 			{
 				newColor=rgbWhiteColor;
 				newTransparent=true;
@@ -1442,7 +1442,7 @@ void ClickColorPalette2(Point mousePt,Boolean optDown,Boolean cmdDown)
 			
 			ChangeColor(&newColor,newTransparent);
 			
-			/* ƒ_ƒuƒ‹ƒNƒŠƒbƒN”»’è */
+			/* ãƒ€ãƒ–ãƒ«ã‚¯ãƒªãƒƒã‚¯åˆ¤å®š */
 			SetRect(&box,mousePt.h-2,mousePt.v-2,mousePt.h+2,mousePt.v+2);
 			while(TickCount()<clickTime && !isDoubleClick)
 			{
@@ -1475,14 +1475,14 @@ void ClickFavoritePalette(Point mousePt,Boolean optDown,Boolean cmdDown)
 	i = (mousePt.h-1)/10 + ((mousePt.v-1)/10)*16;
 	if (i>=colorNum)
 	{
-		/* ’Ç‰Á */
-		if (i >= 96) return; /* Å‘å’l */
-		if (gCurrentColor.isTransparent) return; /* “§‰ßF‚Í’Ç‰Á‚Å‚«‚È‚¢ */
+		/* è¿½åŠ  */
+		if (i >= 96) return; /* æœ€å¤§å€¤ */
+		if (gCurrentColor.isTransparent) return; /* é€éè‰²ã¯è¿½åŠ ã§ããªã„ */
 		
 		if (ColorExistsInPal(&gCurrentColor.rgb,gFavoriteColors,colorNum))
-			return; /* ‚·‚Å‚É“o˜^‚³‚ê‚Ä‚¢‚éF‚Í’Ç‰Á‚Å‚«‚È‚¢ */
+			return; /* ã™ã§ã«ç™»éŒ²ã•ã‚Œã¦ã„ã‚‹è‰²ã¯è¿½åŠ ã§ããªã„ */
 		
-		/* ‚P‚Â’Ç‰Á‚Å‚«‚é‚¾‚¯‚Ì—Ìˆæ‚ğŠm•Û */
+		/* ï¼‘ã¤è¿½åŠ ã§ãã‚‹ã ã‘ã®é ˜åŸŸã‚’ç¢ºä¿ */
 		SetHandleSize((Handle)gFavoriteColors,sizeof(ColorTable)+sizeof(ColorSpec)*colorNum);
 		(*gFavoriteColors)->ctSize ++;
 		cspec = &((*gFavoriteColors)->ctTable[0]);
@@ -1495,7 +1495,7 @@ void ClickFavoritePalette(Point mousePt,Boolean optDown,Boolean cmdDown)
 	
 	if (cmdDown)
 	{
-		/* íœ */
+		/* å‰Šé™¤ */
 		if (i < colorNum-1)
 			BlockMoveData(&cspec[i+1],&cspec[i],sizeof(ColorSpec)*(colorNum-i-1));
 		SetHandleSize((Handle)gFavoriteColors,sizeof(ColorTable)+sizeof(ColorSpec)*(colorNum-1-1));
@@ -1520,7 +1520,7 @@ void ClickFavoritePalette(Point mousePt,Boolean optDown,Boolean cmdDown)
 			
 			ChangeColor(&newColor,false);
 			
-			/* ƒ_ƒuƒ‹ƒNƒŠƒbƒN”»’è */
+			/* ãƒ€ãƒ–ãƒ«ã‚¯ãƒªãƒƒã‚¯åˆ¤å®š */
 			SetRect(&box,mousePt.h-2,mousePt.v-2,mousePt.h+2,mousePt.v+2);
 			while(TickCount()<clickTime && !isDoubleClick)
 			{
@@ -1580,7 +1580,7 @@ const static Rect	bColorRect[5]= {{28,19,42,33},{43,19,57,33},{58,19,72,33},
 									{73,19,87,33},{88,19,102,33}};
 const static Rect	kExchangeRect={13,13,17,22};
 
-/* ƒuƒŒƒ“ƒhƒpƒŒƒbƒg‚ÌƒNƒŠƒbƒN */
+/* ãƒ–ãƒ¬ãƒ³ãƒ‰ãƒ‘ãƒ¬ãƒƒãƒˆã®ã‚¯ãƒªãƒƒã‚¯ */
 void ClickBlendPalette(Point mousePt,Boolean optDown,Boolean cmdDown,Boolean ctrlDown)
 {
 	RGBColor	newColor;
@@ -1590,7 +1590,7 @@ void ClickBlendPalette(Point mousePt,Boolean optDown,Boolean cmdDown,Boolean ctr
 	
 	if (mousePt.h<0 || mousePt.v<0) return;
 	
-	/* ƒƒbƒN */
+	/* ãƒ­ãƒƒã‚¯ */
 	if (PtInRect(mousePt,&lockRect))
 	{
 		UInt32	time=TickCount()+GetDblTime();
@@ -1600,8 +1600,8 @@ void ClickBlendPalette(Point mousePt,Boolean optDown,Boolean cmdDown,Boolean ctr
 		{
 			while (StillDown() && PtInRect(mousePt,&lockRect) && TickCount()<time)
 				GetMouse(&mousePt);
-			if (!PtInRect(mousePt,&lockRect)) return; /* ”ÍˆÍŠO‚Éo‚½‚Í‰½‚à‚µ‚È‚¢ */
-			if (!StillDown()) /* ƒ{ƒ^ƒ“‚ª—£‚³‚ê‚Ä‚¢‚éê‡‚ÍƒƒbƒN‚ÌØ‚è‘Ö‚¦ */
+			if (!PtInRect(mousePt,&lockRect)) return; /* ç¯„å›²å¤–ã«å‡ºãŸæ™‚ã¯ä½•ã‚‚ã—ãªã„ */
+			if (!StillDown()) /* ãƒœã‚¿ãƒ³ãŒé›¢ã•ã‚Œã¦ã„ã‚‹å ´åˆã¯ãƒ­ãƒƒã‚¯ã®åˆ‡ã‚Šæ›¿ãˆ */
 			{
 				HandleBlendPaletteChoice(iBlendLock);
 				return;
@@ -1613,7 +1613,7 @@ void ClickBlendPalette(Point mousePt,Boolean optDown,Boolean cmdDown,Boolean ctr
 		return;
 	}
 	
-	/* ŒğŠ· */
+	/* äº¤æ› */
 	if (PtInRect(mousePt,&kExchangeRect))
 	{
 		if (!EqualColor(&gCurrentColor.rgb,&gBackColor.rgb) || gCurrentColor.isTransparent != gBackColor.isTransparent)
@@ -1624,7 +1624,7 @@ void ClickBlendPalette(Point mousePt,Boolean optDown,Boolean cmdDown,Boolean ctr
 		return;
 	}
 	
-	/* ‘OŒiF */
+	/* å‰æ™¯è‰² */
 	if (PtInRect(mousePt,&cColorRect[0]))
 	{
 		Str255	prompt;
@@ -1640,7 +1640,7 @@ void ClickBlendPalette(Point mousePt,Boolean optDown,Boolean cmdDown,Boolean ctr
 		return;
 	}
 	
-	/* ”wŒiF */
+	/* èƒŒæ™¯è‰² */
 	if (PtInRect(mousePt,&cColorRect[1]))
 	{
 		Str255	prompt;
@@ -1656,7 +1656,7 @@ void ClickBlendPalette(Point mousePt,Boolean optDown,Boolean cmdDown,Boolean ctr
 		return;
 	}
 	
-	/* ‚»‚êˆÈŠO‚Ìê‡ */
+	/* ãã‚Œä»¥å¤–ã®å ´åˆ */
 	if (ctrlDown)
 	{
 		ColorPalettePopup(mousePt);
@@ -1707,7 +1707,7 @@ void ClickBlendPalette(Point mousePt,Boolean optDown,Boolean cmdDown,Boolean ctr
 	}
 }
 
-/* î•ñƒEƒBƒ“ƒhƒE‚ÌƒNƒŠƒbƒN */
+/* æƒ…å ±ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ã‚¯ãƒªãƒƒã‚¯ */
 void ClickInfoWindow(Point mousePt)
 {
 	if (mousePt.h<0 || mousePt.v<0) return;
@@ -1723,7 +1723,7 @@ void ClickInfoWindow(Point mousePt)
 		ChangeTransparency();
 }
 
-/* ƒpƒ^[ƒ“ƒpƒŒƒbƒg‚ÌƒNƒŠƒbƒN */
+/* ãƒ‘ã‚¿ãƒ¼ãƒ³ãƒ‘ãƒ¬ãƒƒãƒˆã®ã‚¯ãƒªãƒƒã‚¯ */
 void ClickPatternPalette(Point localPt)
 {
 	short	n;
@@ -1740,7 +1740,7 @@ void ClickPatternPalette(Point localPt)
 	gPatternNo=n;
 }
 
-/* ƒJƒ‰[ƒpƒŒƒbƒg‚ÌƒRƒ“ƒgƒ[ƒ‹{ƒNƒŠƒbƒN */
+/* ã‚«ãƒ©ãƒ¼ãƒ‘ãƒ¬ãƒƒãƒˆã®ã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ«ï¼‹ã‚¯ãƒªãƒƒã‚¯ */
 void ColorPalettePopup(Point localPt)
 {
 	MenuHandle	menu;
@@ -1764,7 +1764,7 @@ void ColorPalettePopup(Point localPt)
 	HandlePaletteChoice(item);
 }
 
-/* ƒuƒŒƒ“ƒhƒpƒŒƒbƒg‚Ìƒ|ƒbƒvƒAƒbƒvƒƒjƒ…[ */
+/* ãƒ–ãƒ¬ãƒ³ãƒ‰ãƒ‘ãƒ¬ãƒƒãƒˆã®ãƒãƒƒãƒ—ã‚¢ãƒƒãƒ—ãƒ¡ãƒ‹ãƒ¥ãƒ¼ */
 void DoBlendPop(Point localPt)
 {
 	MenuHandle	menu;
@@ -1788,7 +1788,7 @@ void DoBlendPop(Point localPt)
 	ReleaseResource((Handle)menu);
 }
 
-/* ƒuƒŒƒ“ƒhƒpƒŒƒbƒg‚Ì’†g */
+/* ãƒ–ãƒ¬ãƒ³ãƒ‰ãƒ‘ãƒ¬ãƒƒãƒˆã®ä¸­èº« */
 void DrawBlend(void)
 {
 	RGBColor	tempColor,tempColor2;
@@ -1822,12 +1822,12 @@ void DrawBlend(void)
 	
 	RGBForeColor(&gCurrentColor.rgb);
 	
-	/* ‘OŒiF */
+	/* å‰æ™¯è‰² */
 	PaintRect(&cColorRect[0]);
 	cIconH=GetCIcon(1001);
 	PlotCIcon(&iconRect[0],cIconH);
 	DisposeCIcon(cIconH);
-	if (gCurrentColor.isTransparent) /* “§–¾F */
+	if (gCurrentColor.isTransparent) /* é€æ˜è‰² */
 	{
 		Str15	tStr="\pT";
 		
@@ -1837,13 +1837,13 @@ void DrawBlend(void)
 		DrawString(tStr);
 	}
 	
-	/* ”wŒiF */
+	/* èƒŒæ™¯è‰² */
 	RGBForeColor(&gBackColor.rgb);
 	PaintRect(&cColorRect[1]);
 	cIconH=GetCIcon(1002);
 	PlotCIcon(&iconRect[1],cIconH);
 	DisposeCIcon(cIconH);
-	if (gBackColor.isTransparent) /* “§–¾F */
+	if (gBackColor.isTransparent) /* é€æ˜è‰² */
 	{
 		Str15	tStr="\pT";
 		
@@ -1853,11 +1853,11 @@ void DrawBlend(void)
 		DrawString(tStr);
 	}
 	
-	/* ŒğŠ·‚ÌŠG */
+	/* äº¤æ›ã®çµµ */
 	pic=GetPicture(154);
 	DrawPicture(pic,&kExchangeRect);
 	
-	/* ƒƒbƒN‚³‚ê‚Ä‚¢‚é‚©‚Ç‚¤‚© */
+	/* ãƒ­ãƒƒã‚¯ã•ã‚Œã¦ã„ã‚‹ã‹ã©ã†ã‹ */
 	if (gBlendLocked)
 	{
 		pic=GetPicture(153);
@@ -1897,7 +1897,7 @@ void DrawBlend(void)
 		RGBForeColor(&gPrevColor.rgb);
 		PaintRect(&bColorRect[4]);
 		
-		/* ƒ`ƒFƒbƒNƒ}[ƒN‚ğ‚Â‚¯‚é*/
+		/* ãƒã‚§ãƒƒã‚¯ãƒãƒ¼ã‚¯ã‚’ã¤ã‘ã‚‹*/
 		if (gPaletteCheck>0)
 		{
 			#if !TARGET_API_MAC_CARBON
@@ -1991,7 +1991,7 @@ void BlendColor(RGBColor *dst,RGBColor *src)
 	dst->blue=temp;
 }
 
-/* ƒuƒŒƒ“ƒhƒpƒŒƒbƒgã‚Åƒ}ƒEƒXƒJ[ƒ\ƒ‹‚ÌXV */
+/* ãƒ–ãƒ¬ãƒ³ãƒ‰ãƒ‘ãƒ¬ãƒƒãƒˆä¸Šã§ãƒã‚¦ã‚¹ã‚«ãƒ¼ã‚½ãƒ«ã®æ›´æ–° */
 void UpdateCursorInBlendPalette(Point localPt)
 {
 	Point		offsetPt={0,0};
@@ -2002,12 +2002,12 @@ void UpdateCursorInBlendPalette(Point localPt)
 	
 	arrowRect.bottom=lockRect.bottom;
 	
-	/* ƒOƒ[ƒoƒ‹À•W•ÏŠ·—p */
+	/* ã‚°ãƒ­ãƒ¼ãƒãƒ«åº§æ¨™å¤‰æ›ç”¨ */
 	LocalToGlobal(&offsetPt);
 	RectRgn(arrowRgn,&arrowRect);
 	OffsetRgn(arrowRgn,offsetPt.h,offsetPt.v);
 	
-	if (PtInRect(localPt,&arrowRect)) /* ƒƒbƒNƒAƒCƒRƒ““à */
+	if (PtInRect(localPt,&arrowRect)) /* ãƒ­ãƒƒã‚¯ã‚¢ã‚¤ã‚³ãƒ³å†… */
 	{
 		MySetCursor(0);
 		CopyRgn(arrowRgn,gCurRgnHand);
@@ -2024,7 +2024,7 @@ void UpdateCursorInBlendPalette(Point localPt)
 	DisposeRgn(arrowRgn);
 }
 
-/* ƒuƒŒƒ“ƒhƒpƒŒƒbƒgã‚Åƒ}ƒEƒXƒJ[ƒ\ƒ‹‚ÌXV */
+/* ãƒ–ãƒ¬ãƒ³ãƒ‰ãƒ‘ãƒ¬ãƒƒãƒˆä¸Šã§ãƒã‚¦ã‚¹ã‚«ãƒ¼ã‚½ãƒ«ã®æ›´æ–° */
 void UpdateCursorInFavoritePalette(Point localPt,Boolean cmdDown)
 {
 	short		i,colorNum;
@@ -2045,7 +2045,7 @@ void UpdateCursorInFavoritePalette(Point localPt,Boolean cmdDown)
 	SetEmptyRgn(gCurRgnHand);
 }
 
-/* ƒ‹[ƒ‰‚ğ•`‚­i1.0b5‘å•C³j */
+/* ãƒ«ãƒ¼ãƒ©ã‚’æãï¼ˆ1.0b5å¤§å¹…ä¿®æ­£ï¼‰ */
 void DrawRuler(Point pt)
 {
 	PatHandle	gray;
@@ -2110,7 +2110,7 @@ void DrawRuler(Point pt)
 	
 	if (theWindow == targetWin)
 	{
-		/* V‚½‚Èƒ‹[ƒ‰‚ğ•`‚­ */
+		/* æ–°ãŸãªãƒ«ãƒ¼ãƒ©ã‚’æã */
 		if (PtInRect(mousePt,&winSize))
 		{
 			MoveTo(mousePt.h,0);
@@ -2122,12 +2122,12 @@ void DrawRuler(Point pt)
 	else
 		SetPt(&mousePt,-1,-1);
 	
-	/* ƒNƒŠƒbƒv‚ğ‹L‰¯‚µ‚Ä‚¨‚­ */
+	/* ã‚¯ãƒªãƒƒãƒ—ã‚’è¨˜æ†¶ã—ã¦ãŠã */
 	clipRgn=NewRgn();
 	GetClip(clipRgn);
 	SetClip(gRulerRgn);
 	
-	/* ŒÃ‚¢ƒ‹[ƒ‰‚ğÁ‚· */
+	/* å¤ã„ãƒ«ãƒ¼ãƒ©ã‚’æ¶ˆã™ */
 	if (PtInRect(gPrevRulerPt,&winSize))
 	{
 		MoveTo(gPrevRulerPt.h,0);
@@ -2147,7 +2147,7 @@ void DrawRuler(Point pt)
 	SetPort(port);
 }
 
-/* ƒ‹[ƒ‰Á‹ */
+/* ãƒ«ãƒ¼ãƒ©æ¶ˆå» */
 void ResetRuler(void)
 {
 	Point	pt;
@@ -2159,7 +2159,7 @@ void ResetRuler(void)
 	}
 }
 
-/* •ÒWƒEƒBƒ“ƒhƒE‚É”{—¦•\¦ */
+/* ç·¨é›†ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã«å€ç‡è¡¨ç¤º */
 void DrawRatio(WindowPtr theWindow)
 {
 	short	ratio=(GetPaintWinRec(theWindow))->ratio;
@@ -2183,7 +2183,7 @@ void DrawRatio(WindowPtr theWindow)
 	LineTo(ratioRect.right,ratioRect.bottom);
 }
 
-/* •ÒWƒEƒBƒ“ƒhƒE‚Ì”{—¦•ÏX‚Ìƒ|ƒbƒvƒAƒbƒvƒƒjƒ…[‚ğ•\¦ */
+/* ç·¨é›†ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®å€ç‡å¤‰æ›´ã®ãƒãƒƒãƒ—ã‚¢ãƒƒãƒ—ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã‚’è¡¨ç¤º */
 void ChangeRatio(WindowPtr theWindow,Point popPt)
 {
 	MenuHandle	popMenu;
@@ -2204,11 +2204,11 @@ void ChangeRatio(WindowPtr theWindow,Point popPt)
 	item=LoWord(selItem);
 	if (item==0 || item==ratio+1) return;
 	
-	/* ÀÛ‚É•ÏX‚·‚é */
+	/* å®Ÿéš›ã«å¤‰æ›´ã™ã‚‹ */
 	ChangeRatioMain(theWindow,item-1);
 }
 
-/* •ÒWƒEƒBƒ“ƒhƒE‚Ì”{—¦•ÏX */
+/* ç·¨é›†ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®å€ç‡å¤‰æ›´ */
 void ChangeRatioMain(WindowPtr theWindow,short ratio)
 {
 	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
@@ -2217,17 +2217,17 @@ void ChangeRatioMain(WindowPtr theWindow,short ratio)
 	
 	ResetDot(theWindow);
 	
-	/*@ƒƒjƒ…[‚Ìƒ`ƒFƒbƒN */
+	/*ã€€ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã®ãƒã‚§ãƒƒã‚¯ */
 	for (i=1; i<=5; i++)
 		CheckMenuItem(menu,i,(i==ratio+1));
 	
-	/* \‘¢‘Ì‚Ìƒƒ“ƒo‚ğXV */
+	/* æ§‹é€ ä½“ã®ãƒ¡ãƒ³ãƒã‚’æ›´æ–° */
 	eWinRec->ratio=ratio;
 	
 	UpdatePaintWindow(theWindow);
 }
 
-/* ƒyƒCƒ“ƒgƒEƒBƒ“ƒhƒE‚É”wŒiî•ñ•\¦ */
+/* ãƒšã‚¤ãƒ³ãƒˆã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã«èƒŒæ™¯æƒ…å ±è¡¨ç¤º */
 void DrawBackInfo(WindowPtr theWindow)
 {
 	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
@@ -2245,7 +2245,7 @@ void DrawBackInfo(WindowPtr theWindow)
 	DrawPicture(backPic,&backRect);
 }
 
-/* ”wŒiî•ñ‚ÌXV */
+/* èƒŒæ™¯æƒ…å ±ã®æ›´æ–° */
 void UpdateBackInfo(WindowPtr theWindow)
 {
 	GrafPtr	port;
@@ -2256,7 +2256,7 @@ void UpdateBackInfo(WindowPtr theWindow)
 	SetPort(port);
 }
 
-/* ƒoƒbƒNƒOƒ‰ƒEƒ“ƒhƒ|ƒbƒvƒAƒbƒv */
+/* ãƒãƒƒã‚¯ã‚°ãƒ©ã‚¦ãƒ³ãƒ‰ãƒãƒƒãƒ—ã‚¢ãƒƒãƒ— */
 void BackgroundPop(WindowPtr theWindow,Point popPt)
 {
 	MenuHandle	popMenu,subMenu;
@@ -2267,13 +2267,13 @@ void BackgroundPop(WindowPtr theWindow,Point popPt)
 	Str255		itemStr;
 	short		i;
 	
-	/* ƒƒjƒ…[‚ğ—pˆÓ */
+	/* ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã‚’ç”¨æ„ */
 	popMenu=GetMenu(mBackground);
 	InsertMenu(popMenu,-1);
 	subMenu=GetMenu(mPopForeTrans);
 	InsertMenu(subMenu,-1);
 	
-	/* “à—e‚Ì‰Šú‰» */
+	/* å†…å®¹ã®åˆæœŸåŒ– */
 	if (isBackAvailable)
 	{
 		MyEnableMenuItem(popMenu,iBUnionBack);
@@ -2345,7 +2345,7 @@ void BackgroundPop(WindowPtr theWindow,Point popPt)
 	}
 }
 
-/* •ÒWƒEƒBƒ“ƒhƒE‚ÌXV */
+/* ç·¨é›†ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®æ›´æ–° */
 void UpdatePaintWindow(WindowPtr theWindow)
 {
 	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
@@ -2360,7 +2360,7 @@ void UpdatePaintWindow(WindowPtr theWindow)
 	
 	SetRect(&eWinRec->iconEditSize,0,0,iconSize.right<<ratio,iconSize.bottom<<ratio);
 	
-	/* •ÒW‰æ–Ê‚Ì‘I‘ğ—Ìˆæ‚ÌXV */
+	/* ç·¨é›†ç”»é¢ã®é¸æŠé ˜åŸŸã®æ›´æ–° */
 	if (eWinRec->isSelected)
 	{
 		CopyRgn(eWinRec->selectionPos,eWinRec->eSelectedRgn);
@@ -2372,19 +2372,19 @@ void UpdatePaintWindow(WindowPtr theWindow)
 		MapRgn(eWinRec->ePrevSelectedRgn,&eWinRec->iconSize,&eWinRec->iconEditSize);
 	}
 	
-	/* •ÏX‘O‚ÌƒEƒBƒ“ƒhƒE‚ÌƒTƒCƒY */
+	/* å¤‰æ›´å‰ã®ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ã‚µã‚¤ã‚º */
 	GetWindowPortBounds(theWindow,&tempRect);
 	prevWidth=tempRect.right - tempRect.left - kScrollBarWidth;
 	prevHeight=tempRect.bottom - tempRect.top - kScrollBarHeight;
 	
 	SetPaintWindowSize(theWindow,&iconSize,ratio);
 	
-	/* •ÏXŒã‚ÌƒEƒBƒ“ƒhƒE‚ÌƒTƒCƒY */
+	/* å¤‰æ›´å¾Œã®ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ã‚µã‚¤ã‚º */
 	GetWindowPortBounds(theWindow,&tempRect);
 	width=tempRect.right - tempRect.left - kScrollBarWidth;
 	height=tempRect.bottom - tempRect.top - kScrollBarHeight;
 	
-	/* •ÏX‘O‚ÌƒXƒNƒ[ƒ‹‚³‚ê‚½—Ê */
+	/* å¤‰æ›´å‰ã®ã‚¹ã‚¯ãƒ­ãƒ¼ãƒ«ã•ã‚ŒãŸé‡ */
 	hValue=GetControlValue(hScroll);
 	vValue=GetControlValue(vScroll);
 	
@@ -2393,7 +2393,7 @@ void UpdatePaintWindow(WindowPtr theWindow)
 	SetControlValue(vScroll,(((prevHeight/2+vValue)<<ratio)/prevRatio)-height/2);
 	SetOrigin(GetControlValue(hScroll),GetControlValue(vScroll));
 	
-	/* ƒXƒNƒ[ƒ‹ƒo[‚ÌˆÊ’u‚ÆƒTƒCƒY‚ğ•ÏX */
+	/* ã‚¹ã‚¯ãƒ­ãƒ¼ãƒ«ãƒãƒ¼ã®ä½ç½®ã¨ã‚µã‚¤ã‚ºã‚’å¤‰æ›´ */
 	SetScrollBarRect(theWindow);
 	
 	GetWindowPortBounds(theWindow,&tempRect);
@@ -2401,7 +2401,7 @@ void UpdatePaintWindow(WindowPtr theWindow)
 	MyInvalWindowRect(theWindow,&tempRect);
 }
 
-/* ƒyƒCƒ“ƒgƒEƒBƒ“ƒhƒEƒTƒCƒY‚Ì•ÏX */
+/* ãƒšã‚¤ãƒ³ãƒˆã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚µã‚¤ã‚ºã®å¤‰æ›´ */
 void SetPaintWindowSize(WindowPtr theWindow,Rect *iconSize,short ratio)
 {
 	short	width,height;
@@ -2430,11 +2430,11 @@ void SetPaintWindowSize(WindowPtr theWindow,Rect *iconSize,short ratio)
 		height=pt.v - tempRect.top;
 	}
 	
-	/* ƒEƒBƒ“ƒhƒEƒTƒCƒY‚ğ•ÏX */
+	/* ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚µã‚¤ã‚ºã‚’å¤‰æ›´ */
 	SizeWindow(theWindow,width,height,false);
 }
 
-/* ƒXƒNƒ[ƒ‹ƒo[‚ÌÅ‘å’l‚ğİ’è */
+/* ã‚¹ã‚¯ãƒ­ãƒ¼ãƒ«ãƒãƒ¼ã®æœ€å¤§å€¤ã‚’è¨­å®š */
 void SetScrollBarMax(WindowPtr theWindow)
 {
 	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
@@ -2449,7 +2449,7 @@ void SetScrollBarMax(WindowPtr theWindow)
 	SetControlMaximum(eWinRec->vScroll,15+(eWinRec->iconSize.bottom<<eWinRec->ratio) - height);
 }
 
-/* w’è‚ÌƒtƒHƒ“ƒgƒTƒCƒY‚Åƒ|ƒbƒvƒAƒbƒvƒƒjƒ…[‚ğ•\¦ */
+/* æŒ‡å®šã®ãƒ•ã‚©ãƒ³ãƒˆã‚µã‚¤ã‚ºã§ãƒãƒƒãƒ—ã‚¢ãƒƒãƒ—ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã‚’è¡¨ç¤º */
 long PopUpMenuSelectWFontSize(MenuHandle popMenu,short top,short left,short firstSelectedItem,short fontSize)
 {
 	#if !TARGET_API_MAC_CARBON
@@ -2462,7 +2462,7 @@ long PopUpMenuSelectWFontSize(MenuHandle popMenu,short top,short left,short firs
 	if (gSystemVersion < 0x0850)
 	#endif
 	{
-		/* ƒVƒXƒeƒ€ƒtƒHƒ“ƒg‚ğ•ÏX‚·‚é */
+		/* ã‚·ã‚¹ãƒ†ãƒ ãƒ•ã‚©ãƒ³ãƒˆã‚’å¤‰æ›´ã™ã‚‹ */
 		sysFontSize=LMGetSysFontSize();
 		LMSetSysFontSize(fontSize);
 		LMSetLastSPExtra(-1);
@@ -2475,7 +2475,7 @@ long PopUpMenuSelectWFontSize(MenuHandle popMenu,short top,short left,short firs
 		SetMenuFont(popMenu,systemFont,fontSize);
 	#endif
 	
-	/* ƒ|ƒbƒvƒAƒbƒvƒƒjƒ…[‚ğ•\¦‚·‚é */
+	/* ãƒãƒƒãƒ—ã‚¢ãƒƒãƒ—ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã‚’è¡¨ç¤ºã™ã‚‹ */
 	result=PopUpMenuSelect(popMenu,top,left,firstSelectedItem);
 	
 	#if !TARGET_API_MAC_CARBON
@@ -2483,7 +2483,7 @@ long PopUpMenuSelectWFontSize(MenuHandle popMenu,short top,short left,short firs
 	if (gSystemVersion < 0x0850)
 	#endif
 	{
-		/* ƒVƒXƒeƒ€ƒtƒHƒ“ƒg‚ğŒ³‚É–ß‚· */
+		/* ã‚·ã‚¹ãƒ†ãƒ ãƒ•ã‚©ãƒ³ãƒˆã‚’å…ƒã«æˆ»ã™ */
 		LMSetSysFontSize(sysFontSize);
 		LMSetLastSPExtra(-1);
 	}
@@ -2492,7 +2492,7 @@ long PopUpMenuSelectWFontSize(MenuHandle popMenu,short top,short left,short firs
 	return result;
 }
 
-/* ƒOƒŠƒbƒh‚Ì•`‰æib’èƒo[ƒWƒ‡ƒ“j */
+/* ã‚°ãƒªãƒƒãƒ‰ã®æç”»ï¼ˆæš«å®šãƒãƒ¼ã‚¸ãƒ§ãƒ³ï¼‰ */
 void DrawGrid(WindowPtr theWindow)
 {
 	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
@@ -2502,7 +2502,7 @@ void DrawGrid(WindowPtr theWindow)
 	DrawGridMain(ratio,&iconSize);
 }
 
-/* ƒOƒŠƒbƒh•`‰æƒƒCƒ“ */
+/* ã‚°ãƒªãƒƒãƒ‰æç”»ãƒ¡ã‚¤ãƒ³ */
 void DrawGridMain(short ratio,Rect *iconSize)
 {
 	Pattern	gridPat;
@@ -2514,13 +2514,13 @@ void DrawGridMain(short ratio,Rect *iconSize)
 		switch (ratio)
 		{
 			case 2:
-				/* ‚S”{ */
+				/* ï¼”å€ */
 				GetIndPattern(&gridPat,128,normalGrid);
 				break;
 			
 			case 3:
 			case 4:
-				/* ‚W”{ */
+				/* ï¼˜å€ */
 				GetIndPattern(&gridPat,129,normalGrid);
 				break;
 		}
@@ -2560,7 +2560,7 @@ void DrawGridMain(short ratio,Rect *iconSize)
 		}
 	}
 	
-	/* ƒAƒCƒRƒ“—p‚ÌƒOƒŠƒbƒh */
+	/* ã‚¢ã‚¤ã‚³ãƒ³ç”¨ã®ã‚°ãƒªãƒƒãƒ‰ */
 	if (iconGrid>0)
 	{
 		short	iconHeight=iconSize->bottom;
@@ -2587,7 +2587,7 @@ void DrawGridMain(short ratio,Rect *iconSize)
 		PenPat(&gridPat);
 		PenMode(patOr);
 		RGBForeColor(&gToolPrefs.gridColor2);
-		/* ƒOƒŠƒbƒh‚Ì•`‰æ */
+		/* ã‚°ãƒªãƒƒãƒ‰ã®æç”» */
 		a=5+1-iconGrid;
 		b=a+ratio;
 		for (i=1; i<=(iconWidth>>a); i++)
@@ -2605,7 +2605,7 @@ void DrawGridMain(short ratio,Rect *iconSize)
 	}
 }
 
-/* ƒEƒBƒ“ƒhƒEˆÊ’u‚Ì•Û‘¶ */
+/* ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ä½ç½®ã®ä¿å­˜ */
 void SaveWindowPos(void)
 {
 	GrafPtr	port;
@@ -2619,61 +2619,61 @@ void SaveWindowPos(void)
 	
 	GetPort(&port);
 	
-	/* ƒJƒ‰[ƒpƒŒƒbƒgi‰¡j‚ÌˆÊ’u */
+	/* ã‚«ãƒ©ãƒ¼ãƒ‘ãƒ¬ãƒƒãƒˆï¼ˆæ¨ªï¼‰ã®ä½ç½® */
 	SetPortWindowPort(ColorPalette1);
 	SetPt(&pt,0,0);
 	LocalToGlobal(&pt);
 	err=AddDataToPrefs(&pt,sizeof(Point),'WPOS',kColorPalette1ResID,"\pColorPalette1 pos");
 	
-	/* ƒJƒ‰[ƒpƒŒƒbƒgicj‚ÌˆÊ’u */
+	/* ã‚«ãƒ©ãƒ¼ãƒ‘ãƒ¬ãƒƒãƒˆï¼ˆç¸¦ï¼‰ã®ä½ç½® */
 	SetPortWindowPort(ColorPalette2);
 	SetPt(&pt,0,0);
 	LocalToGlobal(&pt);
 	err=AddDataToPrefs(&pt,sizeof(Point),'WPOS',kColorPalette2ResID,"\pColorPalette2 pos");
 	
-	/* ƒvƒŒƒrƒ…[‰æ–Ê‚ÌˆÊ’u */
+	/* ãƒ—ãƒ¬ãƒ“ãƒ¥ãƒ¼ç”»é¢ã®ä½ç½® */
 	SetPortWindowPort(gPreviewWindow);
 	SetPt(&pt,0,0);
 	LocalToGlobal(&pt);
 	err=AddDataToPrefs(&pt,sizeof(Point),'WPOS',kPreviewWindowResID,"\pPreviewWin pos");
 	
-	/* ƒc[ƒ‹ƒpƒŒƒbƒg‚ÌˆÊ’u */
+	/* ãƒ„ãƒ¼ãƒ«ãƒ‘ãƒ¬ãƒƒãƒˆã®ä½ç½® */
 	SetPortWindowPort(gToolPalette);
 	SetPt(&pt,0,0);
 	LocalToGlobal(&pt);
 	err=AddDataToPrefs(&pt,sizeof(Point),'WPOS',kToolPaletteResID,"\pToolPalette pos");
 	
-	/* ƒuƒŒƒ“ƒhƒpƒŒƒbƒg‚ÌˆÊ’u */
+	/* ãƒ–ãƒ¬ãƒ³ãƒ‰ãƒ‘ãƒ¬ãƒƒãƒˆã®ä½ç½® */
 	SetPortWindowPort(gBlendPalette);
 	SetPt(&pt,0,0);
 	LocalToGlobal(&pt);
 	err=AddDataToPrefs(&pt,sizeof(Point),'WPOS',kBlendPaletteResID,"\pBlendPalette pos");
 	
-	/* ƒ^ƒCƒgƒ‹‰æ–Ê‚ÌˆÊ’u */
+	/* ã‚¿ã‚¤ãƒˆãƒ«ç”»é¢ã®ä½ç½® */
 	SetPortWindowPort(TitleWindow);
 	SetPt(&pt,0,0);
 	LocalToGlobal(&pt);
 	err=AddDataToPrefs(&pt,sizeof(Point),'WPOS',kTitleWindowResID,"\pTitleWin pos");
 	
-	/* î•ñƒEƒBƒ“ƒhƒE‚ÌˆÊ’u */
+	/* æƒ…å ±ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ä½ç½® */
 	SetPortWindowPort(InfoWindow);
 	SetPt(&pt,0,0);
 	LocalToGlobal(&pt);
 	err=AddDataToPrefs(&pt,sizeof(Point),'WPOS',kInfoWindowResID,"\pInfoWin pos");
 	
-	/* ƒpƒ^[ƒ“ƒpƒŒƒbƒg‚ÌˆÊ’u */
+	/* ãƒ‘ã‚¿ãƒ¼ãƒ³ãƒ‘ãƒ¬ãƒƒãƒˆã®ä½ç½® */
 	SetPortWindowPort(PatternPalette);
 	SetPt(&pt,0,0);
 	LocalToGlobal(&pt);
 	err=AddDataToPrefs(&pt,sizeof(Point),'WPOS',kPatternPaletteWindowResID,"\pPattern pos");
 	
-	/* •`‰æ“_ƒpƒŒƒbƒg‚ÌˆÊ’u */
+	/* æç”»ç‚¹ãƒ‘ãƒ¬ãƒƒãƒˆã®ä½ç½® */
 	SetPortWindowPort(DotModePalette);
 	SetPt(&pt,0,0);
 	LocalToGlobal(&pt);
 	err=AddDataToPrefs(&pt,sizeof(Point),'WPOS',kDotModePaletteWindowResID,"\pDotModePalette pos");
 	
-	/* ‚¨‹C‚É“ü‚èƒpƒŒƒbƒg‚ÌˆÊ’u */
+	/* ãŠæ°—ã«å…¥ã‚Šãƒ‘ãƒ¬ãƒƒãƒˆã®ä½ç½® */
 	SetPortWindowPort(FavoritePalette);
 	SetPt(&pt,0,0);
 	LocalToGlobal(&pt);
@@ -2681,43 +2681,43 @@ void SaveWindowPos(void)
 	
 	SetPort(port);
 	
-	/* ƒEƒBƒ“ƒhƒE‚ª•\¦‚³‚ê‚Ä‚¢‚é‚©‚Ç‚¤‚©‚ğ‹L˜^‚·‚é */
-	/* ƒJƒ‰[ƒpƒŒƒbƒg‚P */
+	/* ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ãŒè¡¨ç¤ºã•ã‚Œã¦ã„ã‚‹ã‹ã©ã†ã‹ã‚’è¨˜éŒ²ã™ã‚‹ */
+	/* ã‚«ãƒ©ãƒ¼ãƒ‘ãƒ¬ãƒƒãƒˆï¼‘ */
 	vis=IsWindowVisible(ColorPalette1);
 	err=AddDataToPrefs(&vis,sizeof(Boolean),'WVis',kColorPalette1ResID,"\pColorPalette1 vis");
 	
-	/* ƒJƒ‰[ƒpƒŒƒbƒg‚Q */
+	/* ã‚«ãƒ©ãƒ¼ãƒ‘ãƒ¬ãƒƒãƒˆï¼’ */
 	vis=IsWindowVisible(ColorPalette2);
 	err=AddDataToPrefs(&vis,sizeof(Boolean),'WVis',kColorPalette2ResID,"\pColorPalette2 vis");
 	
-	/* ƒc[ƒ‹ƒpƒŒƒbƒg */
+	/* ãƒ„ãƒ¼ãƒ«ãƒ‘ãƒ¬ãƒƒãƒˆ */
 	vis=IsWindowVisible(gToolPalette);
 	err=AddDataToPrefs(&vis,sizeof(Boolean),'WVis',kToolPaletteResID,"\pToolPalette vis");
 	
-	/* ƒuƒŒƒ“ƒhƒpƒŒƒbƒg */
+	/* ãƒ–ãƒ¬ãƒ³ãƒ‰ãƒ‘ãƒ¬ãƒƒãƒˆ */
 	vis=IsWindowVisible(gBlendPalette);
 	err=AddDataToPrefs(&vis,sizeof(Boolean),'WVis',kBlendPaletteResID,"\pBlendPalette vis");
 	
-	/* ƒ^ƒCƒgƒ‹‰æ–Ê */
+	/* ã‚¿ã‚¤ãƒˆãƒ«ç”»é¢ */
 	vis=IsWindowVisible(TitleWindow);
 	err=AddDataToPrefs(&vis,sizeof(Boolean),'WVis',kTitleWindowResID,"\pTitleWin vis");
 	
-	/* î•ñƒEƒBƒ“ƒhƒE */
+	/* æƒ…å ±ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ */
 	vis=IsWindowVisible(InfoWindow);
 	err=AddDataToPrefs(&vis,sizeof(Boolean),'WVis',kInfoWindowResID,"\pInfoWin vis");
 	
-	/* ƒpƒ^[ƒ“ƒpƒŒƒbƒg */
+	/* ãƒ‘ã‚¿ãƒ¼ãƒ³ãƒ‘ãƒ¬ãƒƒãƒˆ */
 	vis=IsWindowVisible(PatternPalette);
 	err=AddDataToPrefs(&vis,sizeof(Boolean),'WVis',kPatternPaletteWindowResID,"\pPatternPalette vis");
 	
-	/* ƒpƒ^[ƒ“ƒpƒŒƒbƒg */
+	/* ãƒ‘ã‚¿ãƒ¼ãƒ³ãƒ‘ãƒ¬ãƒƒãƒˆ */
 	vis=IsWindowVisible(FavoritePalette);
 	err=AddDataToPrefs(&vis,sizeof(Boolean),'WVis',kFavoritePaletteResID,"\pFavoritePalette vis");
 	
 	UseResFile(gApplRefNum);
 }
 
-/* ŠeƒpƒŒƒbƒg‚Ì•\¦^”ñ•\¦‚ÌØ‚è‘Ö‚¦ */
+/* å„ãƒ‘ãƒ¬ãƒƒãƒˆã®è¡¨ç¤ºï¼éè¡¨ç¤ºã®åˆ‡ã‚Šæ›¿ãˆ */
 void ShowHidePalette(WindowPtr theWindow,Boolean visible)
 {
 	MenuHandle	menu;
@@ -2765,7 +2765,7 @@ void ShowHidePalette(WindowPtr theWindow,Boolean visible)
 	}
 }
 
-/* ƒpƒŒƒbƒg‚Ì•\¦ó‘Ô‚Ì•ÏXiƒƒjƒ…[‘I‘ğ‚É‚æ‚éj */
+/* ãƒ‘ãƒ¬ãƒƒãƒˆã®è¡¨ç¤ºçŠ¶æ…‹ã®å¤‰æ›´ï¼ˆãƒ¡ãƒ‹ãƒ¥ãƒ¼é¸æŠã«ã‚ˆã‚‹ï¼‰ */
 void ShowHidePalette2(short item)
 {
 	MenuHandle	menu;
@@ -2831,7 +2831,7 @@ void ShowAllPalettes(void)
 	ShowHidePalette(FavoritePalette,true);
 }
 
-/* ƒJƒ‰[ƒpƒŒƒbƒg‚Ìƒ`ƒFƒbƒN‚ÌƒAƒbƒvƒf[ƒg */
+/* ã‚«ãƒ©ãƒ¼ãƒ‘ãƒ¬ãƒƒãƒˆã®ãƒã‚§ãƒƒã‚¯ã®ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆ */
 void UpdatePaletteCheck(void)
 {
 	GrafPtr	port;
@@ -2844,7 +2844,7 @@ void UpdatePaletteCheck(void)
 	SetPort(port);
 }
 
-/* ‘I‘ğF‚ÌƒnƒCƒ‰ƒCƒg */
+/* é¸æŠè‰²ã®ãƒã‚¤ãƒ©ã‚¤ãƒˆ */
 void HiliteSelectedColor(short palNo,Boolean hilite)
 {
 	short	r,g,b;
@@ -2866,7 +2866,7 @@ void HiliteSelectedColor(short palNo,Boolean hilite)
 		notRealColor = false;
 	else
 	{
-		/* ƒVƒXƒeƒ€256‚É‚¨‚³‚Ü‚éF‚©‚Ç‚¤‚© */
+		/* ã‚·ã‚¹ãƒ†ãƒ 256ã«ãŠã•ã¾ã‚‹è‰²ã‹ã©ã†ã‹ */
 		GetGWorld(&cPort,&cDevice);
 		SetGWorld(gBlendPalettePtr,0);
 		notRealColor=!RealColor(&gCurrentColor.rgb);
@@ -2876,7 +2876,7 @@ void HiliteSelectedColor(short palNo,Boolean hilite)
 	switch (palNo)
 	{
 		case 1:
-			/* ƒJƒ‰[ƒpƒŒƒbƒg‚P */
+			/* ã‚«ãƒ©ãƒ¼ãƒ‘ãƒ¬ãƒƒãƒˆï¼‘ */
 			if (notRealColor || r%3+g%3+b%3>0 || gCurrentColor.isTransparent) return;
 			SetPortWindowPort((theWindow = ColorPalette1));
 			r/=3; g/=3; b/=3;
@@ -2887,7 +2887,7 @@ void HiliteSelectedColor(short palNo,Boolean hilite)
 			break;
 		
 		case 2:
-			/* ƒJƒ‰[ƒpƒŒƒbƒg‚Q */
+			/* ã‚«ãƒ©ãƒ¼ãƒ‘ãƒ¬ãƒƒãƒˆï¼’ */
 			if (notRealColor || !((r==0 && (g==0 || b==0)) || (g==0 && b==0) || (r==b && r==g)))
 				return;
 			SetPortWindowPort((theWindow = ColorPalette2));
@@ -2913,7 +2913,7 @@ void HiliteSelectedColor(short palNo,Boolean hilite)
 			break;
 		
 		case 3:
-			/* ‚¨‹C‚É“ü‚è */
+			/* ãŠæ°—ã«å…¥ã‚Š */
 			if (gCurrentColor.isTransparent) return;
 			
 			SetPortWindowPort((theWindow = FavoritePalette));
@@ -2956,7 +2956,7 @@ void HiliteSelectedColor(short palNo,Boolean hilite)
 	SetPort(port);
 }
 
-/* ƒJƒ‰[ƒpƒŒƒbƒg‚Éƒhƒbƒg‚ğ•\¦ */
+/* ã‚«ãƒ©ãƒ¼ãƒ‘ãƒ¬ãƒƒãƒˆã«ãƒ‰ãƒƒãƒˆã‚’è¡¨ç¤º */
 void DrawPaletteCheck(short palNo,short palKind)
 {
 	CTabHandle	ctab;
@@ -3013,7 +3013,7 @@ void DrawPaletteCheck(short palNo,short palKind)
 		}
 	}
 	
-	/* ƒJƒ‰[ƒpƒŒƒbƒg‚ğ”jŠü */
+	/* ã‚«ãƒ©ãƒ¼ãƒ‘ãƒ¬ãƒƒãƒˆã‚’ç ´æ£„ */
 	HUnlock((Handle)ctab);
 	if (gPaletteCheck == kPaletteCheckUsed)
 		DisposeHandle((Handle)ctab);
@@ -3021,7 +3021,7 @@ void DrawPaletteCheck(short palNo,short palKind)
 		DisposeCTable(ctab);
 }
 
-/* w’è‚ÌƒpƒŒƒbƒg‚ğ“¾‚é */
+/* æŒ‡å®šã®ãƒ‘ãƒ¬ãƒƒãƒˆã‚’å¾—ã‚‹ */
 CTabHandle GetCheckPalette(short palKind,short *colorNum)
 {
 	CTabHandle	ctab=nil;
@@ -3035,13 +3035,13 @@ CTabHandle GetCheckPalette(short palKind,short *colorNum)
 			break;
 		
 		case kPaletteCheck16:
-			/* 16FBROM‚©‚çæ‚èo‚· */
+			/* 16è‰²ã€‚ROMã‹ã‚‰å–ã‚Šå‡ºã™ */
 			ctab=GetCTable(131);
 			*colorNum=(**ctab).ctSize+1;
 			break;
 		
 		case kPaletteCheckUsed:
-			/* g—p’†‚ÌFBƒtƒƒ“ƒgƒEƒBƒ“ƒhƒE‚©‚çæ“¾ */
+			/* ä½¿ç”¨ä¸­ã®è‰²ã€‚ãƒ•ãƒ­ãƒ³ãƒˆã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‹ã‚‰å–å¾— */
 			{
 				WindowPtr		theWindow=MyFrontNonFloatingWindow();
 				PaintWinRec		*eWinRec;
@@ -3079,7 +3079,7 @@ CTabHandle GetCheckPalette(short palKind,short *colorNum)
 	return ctab;
 }
 
-/* ‚ ‚éF‚ªƒpƒŒƒbƒg‚É‚ ‚é‚©‚Ç‚¤‚©‚ğƒ`ƒFƒbƒN */
+/* ã‚ã‚‹è‰²ãŒãƒ‘ãƒ¬ãƒƒãƒˆã«ã‚ã‚‹ã‹ã©ã†ã‹ã‚’ãƒã‚§ãƒƒã‚¯ */
 Boolean ColorExistsInPal(RGBColor *color,CTabHandle ctab,short colorNum)
 {
 	short		i;
@@ -3101,7 +3101,7 @@ Boolean ColorExistsInPal(RGBColor *color,CTabHandle ctab,short colorNum)
 	return result;
 }
 
-/* ‘I‘ğ’†‚Ìƒpƒ^[ƒ“‚ğƒnƒCƒ‰ƒCƒg‚³‚¹‚é */
+/* é¸æŠä¸­ã®ãƒ‘ã‚¿ãƒ¼ãƒ³ã‚’ãƒã‚¤ãƒ©ã‚¤ãƒˆã•ã›ã‚‹ */
 void HilitePattern(short n,Boolean hiliteFlag)
 {
 	#pragma unused(hiliteFlag)
@@ -3126,7 +3126,7 @@ void HilitePattern(short n,Boolean hiliteFlag)
 	SetPort(port);
 }
 
-/* ƒEƒBƒ“ƒhƒE‚ÌˆÊ’u‚ğ’²®‚·‚é */
+/* ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ä½ç½®ã‚’èª¿æ•´ã™ã‚‹ */
 void StackWindowPos(Point *startPt,Point offsetPt,Rect *validRect)
 {
 	Boolean		done=false;
@@ -3148,7 +3148,7 @@ void StackWindowPos(Point *startPt,Point offsetPt,Rect *validRect)
 	}
 }
 
-/* w’èÀ•W‚ÉƒEƒBƒ“ƒhƒE‚ª‘¶İ‚·‚é‚©‚Ç‚¤‚© */
+/* æŒ‡å®šåº§æ¨™ã«ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ãŒå­˜åœ¨ã™ã‚‹ã‹ã©ã†ã‹ */
 Boolean WindowExistsAtPt(Point globPt)
 {
 	WindowPtr	theWindow=MyFrontNonFloatingWindow();
@@ -3180,7 +3180,7 @@ Boolean WindowExistsAtPt(Point globPt)
 	return result;
 }
 
-/* ƒ_ƒCƒAƒƒO‚ÌˆÊ’u‚ğÅ‘S–Ê‚ÌƒEƒBƒ“ƒhƒE‚Ì’†‰›‚ÉˆÚ“® */
+/* ãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã®ä½ç½®ã‚’æœ€å…¨é¢ã®ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ä¸­å¤®ã«ç§»å‹• */
 void MoveDialogToParentWindow(DialogPtr theDialog)
 {
 	GrafPtr		port;
@@ -3193,12 +3193,12 @@ void MoveDialogToParentWindow(DialogPtr theDialog)
 	GetWindowPortBounds(theWindow,&wRect);
 	GetPort(&port);
 	
-	/* ‚Ü‚¸ƒEƒBƒ“ƒhƒE‚ÌˆÊ’u‚ğ“¾‚é */
+	/* ã¾ãšã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ä½ç½®ã‚’å¾—ã‚‹ */
 	SetPortWindowPort(theWindow);
 	SetPt(&pt,wRect.left,wRect.top);
 	LocalToGlobal(&pt);
 	
-	/* ƒEƒBƒ“ƒhƒE‚ÌƒTƒCƒY‚©‚çA’†‰›‚ÌˆÊ’u‚ğ’²‚×‚é */
+	/* ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ã‚µã‚¤ã‚ºã‹ã‚‰ã€ä¸­å¤®ã®ä½ç½®ã‚’èª¿ã¹ã‚‹ */
 	SetPt(&pt,
 		pt.h+20,
 		pt.v+20);
@@ -3212,7 +3212,7 @@ void MoveDialogToParentWindow(DialogPtr theDialog)
 	SetPort(port);
 }
 
-/* •ÒWƒEƒBƒ“ƒhƒE‚ÌƒŠƒTƒCƒY */
+/* ç·¨é›†ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ãƒªã‚µã‚¤ã‚º */
 void ResizePaintWindow(WindowPtr eWindow,Point globPt)
 {
 	long	result;
@@ -3240,7 +3240,7 @@ void ResizePaintWindow(WindowPtr eWindow,Point globPt)
 	}
 }
 
-/* ƒŠƒTƒCƒYƒƒCƒ“ */
+/* ãƒªã‚µã‚¤ã‚ºãƒ¡ã‚¤ãƒ³ */
 void ResizePaintWindowMain(WindowPtr eWindow)
 {
 	short	windowWidth,windowHeight;
@@ -3268,11 +3268,11 @@ void ResizePaintWindowMain(WindowPtr eWindow)
 	if (newOrigin.v < 0) newOrigin.v = 0;
 	SetOrigin(newOrigin.h,newOrigin.v);
 	
-	/* ƒXƒNƒ[ƒ‹ƒo[‚Ì’l‚ğİ’è‚µ‚È‚¨‚· (Thanks > Kageyama) */
+	/* ã‚¹ã‚¯ãƒ­ãƒ¼ãƒ«ãƒãƒ¼ã®å€¤ã‚’è¨­å®šã—ãªãŠã™ (Thanks > Kageyama) */
 	SetControlValue(eWinRec->hScroll,newOrigin.h);
 	SetControlValue(eWinRec->vScroll,newOrigin.v);
 	
-	/* portRect‚ğæ‚è’¼‚· (Thanks > Kageyama) */
+	/* portRectã‚’å–ã‚Šç›´ã™ (Thanks > Kageyama) */
 	GetWindowPortBounds(eWindow,&tempRect);
 	
 	ClipRect(&tempRect);
@@ -3284,7 +3284,7 @@ void ResizePaintWindowMain(WindowPtr eWindow)
 	ShowControl(eWinRec->vScroll);
 }
 
-/* ƒXƒNƒ[ƒ‹ƒo[‚Ì—Ìˆæ‚ğİ’è‚·‚é */
+/* ã‚¹ã‚¯ãƒ­ãƒ¼ãƒ«ãƒãƒ¼ã®é ˜åŸŸã‚’è¨­å®šã™ã‚‹ */
 void SetScrollBarRect(WindowPtr eWindow)
 {
 	PaintWinRec	*eWinRec=GetPaintWinRec(eWindow);
@@ -3304,7 +3304,7 @@ void SetScrollBarRect(WindowPtr eWindow)
 	SetControlBounds(eWinRec->vScroll,&scrollBarRect);
 }
 
-/* ƒOƒ‰ƒuƒXƒNƒ[ƒ‹ */
+/* ã‚°ãƒ©ãƒ–ã‚¹ã‚¯ãƒ­ãƒ¼ãƒ« */
 void GrabScrollPaintWindow(WindowPtr theWindow,Point globPt)
 {
 	PaintWinRec	*eWinRec;
@@ -3325,16 +3325,16 @@ void GrabScrollPaintWindow(WindowPtr theWindow,Point globPt)
 	
 	if (theWindow == nil || GetExtWindowKind(theWindow) != kWindowTypePaintWindow) return;
 	
-	/* ƒXƒNƒ[ƒ‹ƒo[‚Ìó‘Ô */
+	/* ã‚¹ã‚¯ãƒ­ãƒ¼ãƒ«ãƒãƒ¼ã®çŠ¶æ…‹ */
 	eWinRec=GetPaintWinRec(theWindow);
 	hMax=GetControlMaximum(eWinRec->hScroll);
 	vMax=GetControlMaximum(eWinRec->vScroll);
-	if (hMax+vMax == 0) /* ƒXƒNƒ[ƒ‹‚Å‚«‚È‚¢‚Í‰½‚à‚µ‚È‚¢ */
+	if (hMax+vMax == 0) /* ã‚¹ã‚¯ãƒ­ãƒ¼ãƒ«ã§ããªã„æ™‚ã¯ä½•ã‚‚ã—ãªã„ */
 		return;
 	
 	showSelection=(eWinRec->isSelected && eWinRec->showSelection);
 	
-	/* •`‰æ‚Ég—p‚·‚éƒCƒ[ƒW‚ğ“¾‚é */
+	/* æç”»ã«ä½¿ç”¨ã™ã‚‹ã‚¤ãƒ¡ãƒ¼ã‚¸ã‚’å¾—ã‚‹ */
 	tempGWorld=MakePaintImage(eWinRec,nil);
 	if (tempGWorld == nil)
 	{
@@ -3349,7 +3349,7 @@ void GrabScrollPaintWindow(WindowPtr theWindow,Point globPt)
 	hValue=GetControlValue(eWinRec->hScroll);
 	vValue=GetControlValue(eWinRec->vScroll);
 	
-	/* •`‰æ‚·‚éêŠ */
+	/* æç”»ã™ã‚‹å ´æ‰€ */
 	tempRect=eWinRec->iconEditSize;
 	OffsetRect(&tempRect,hValue,vValue);
 	if (showSelection) // && !isPaintSize)
@@ -3369,7 +3369,7 @@ void GrabScrollPaintWindow(WindowPtr theWindow,Point globPt)
 	/* set mouse cursor */
 	MySetCursor(141);
 	
-	/* •`‰æ‰Â”\ˆÊ’u‚ğİ’è */
+	/* æç”»å¯èƒ½ä½ç½®ã‚’è¨­å®š */
 	GetPort(&port);
 	SetPortWindowPort(theWindow);
 	clipRgn=NewRgn();
@@ -3403,7 +3403,7 @@ void GrabScrollPaintWindow(WindowPtr theWindow,Point globPt)
 		mousePt.h = -mousePt.h;
 		mousePt.v = -mousePt.v;
 		
-		/* “®‚©‚¹‚é”ÍˆÍ“à‚É’²®‚·‚é */
+		/* å‹•ã‹ã›ã‚‹ç¯„å›²å†…ã«èª¿æ•´ã™ã‚‹ */
 		if (!PtInRect(mousePt,&validRect))
 		{
 			if (mousePt.h < 0) mousePt.h = 0;
@@ -3412,13 +3412,13 @@ void GrabScrollPaintWindow(WindowPtr theWindow,Point globPt)
 			else if (mousePt.v > vMax) mousePt.v = vMax;
 		}
 		
-		if (EqualPt(prevPt,mousePt)) continue; /* ˆÊ’u‚ª•Ï‚í‚Á‚Ä‚¢‚È‚¯‚ê‚Î‰½‚à‚µ‚È‚¢ */
+		if (EqualPt(prevPt,mousePt)) continue; /* ä½ç½®ãŒå¤‰ã‚ã£ã¦ã„ãªã‘ã‚Œã°ä½•ã‚‚ã—ãªã„ */
 		
-		/* •\¦ˆÊ’u‚ğ‚¸‚ç‚· */
+		/* è¡¨ç¤ºä½ç½®ã‚’ãšã‚‰ã™ */
 		editRect=tempRect;
 		OffsetRect(&editRect,-mousePt.h,-mousePt.v);
 		
-		/* ƒCƒ[ƒW‚ğ•\¦‚·‚é */
+		/* ã‚¤ãƒ¡ãƒ¼ã‚¸ã‚’è¡¨ç¤ºã™ã‚‹ */
 		ClipRect(&imageRect);
 		if (isPaintSize)
 		{
@@ -3437,7 +3437,7 @@ void GrabScrollPaintWindow(WindowPtr theWindow,Point globPt)
 				&eWinRec->iconSize,&editRect,srcCopy,nil);
 		}
 		
-		/* ‘I‘ğ”ÍˆÍ */
+		/* é¸æŠç¯„å›² */
 		if (showSelection)
 		{
 			PenNormal();
@@ -3454,27 +3454,27 @@ void GrabScrollPaintWindow(WindowPtr theWindow,Point globPt)
 		}
 		prevPt=mousePt;
 		
-		/* ƒXƒNƒ[ƒ‹ƒo[‚Ì•`‰æ */
+		/* ã‚¹ã‚¯ãƒ­ãƒ¼ãƒ«ãƒãƒ¼ã®æç”» */
 		SetClip(clipRgn);
 		SetControlValue(eWinRec->hScroll,mousePt.h);
 		SetControlValue(eWinRec->vScroll,mousePt.v);
 	}
 	
-	/* “®‚©‚³‚ê‚½‚Ô‚ñ‚¾‚¯“®‚©‚· */
+	/* å‹•ã‹ã•ã‚ŒãŸã¶ã‚“ã ã‘å‹•ã‹ã™ */
 	SetOrigin(mousePt.h,mousePt.v);
 	
 	DisposeRgn(upRgn);
 	
 	FlushEvents(mDownMask,0);
 	
-	/* Šm•Û‚µ‚½ƒƒ‚ƒŠ‚Ì”jŠü */
+	/* ç¢ºä¿ã—ãŸãƒ¡ãƒ¢ãƒªã®ç ´æ£„ */
 	if (isPaintSize || eWinRec->backgroundGWorld != nil)
 		DisposeGWorld(tempGWorld);
 	
 	if (showSelection) // && !isPaintSize)
 		DisposeRgn(selectedRgn);
 	
-	/* ƒXƒNƒ[ƒ‹ƒo[‚ÌˆÊ’u‚ğ’²®‚µAÄ•`‰æ‚³‚¹‚é */
+	/* ã‚¹ã‚¯ãƒ­ãƒ¼ãƒ«ãƒãƒ¼ã®ä½ç½®ã‚’èª¿æ•´ã—ã€å†æç”»ã•ã›ã‚‹ */
 	SetScrollBarRect(theWindow);
 	GetWindowPortBounds(theWindow,&imageRect);
 //	SetClip(clipRgn);
@@ -3590,7 +3590,7 @@ static void DoScrollPaintWindowMain(WindowPtr theWindow,short hDelta,short vDelt
 	}
 }
 
-/* ƒXƒNƒ[ƒ‹—p‰æ‘œ */
+/* ã‚¹ã‚¯ãƒ­ãƒ¼ãƒ«ç”¨ç”»åƒ */
 static GWorldPtr	gTempGWorld;
 static Rect			gTempRect;
 static short		gTempValue;
@@ -3609,7 +3609,7 @@ static void DoScrollPaintWindow(WindowPtr theWindow,Point localPt)
 	part=FindControl(localPt,theWindow,&control);
 	if (part && control)
 	{
-		/* ƒXƒNƒ[ƒ‹ƒo[ */
+		/* ã‚¹ã‚¯ãƒ­ãƒ¼ãƒ«ãƒãƒ¼ */
 		PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
 		short	value;
 		ControlActionUPP	caUPP=NewControlActionUPP(MyScrollHandler);
@@ -3698,14 +3698,14 @@ static void DoScrollPaintWindow(WindowPtr theWindow,Point localPt)
 			SetScrollBarRect(theWindow);
 			Draw1Control(control);
 			
-			/* clip region‚ÌXV */
+			/* clip regionã®æ›´æ–° */
 			UpdatePaintClipRect(theWindow);
 		}
 		DisposeControlActionUPP(caUPP);
 	}
 }
 
-/* ƒXƒNƒ[ƒ‹ƒo[‚ÌƒAƒNƒVƒ‡ƒ“ */
+/* ã‚¹ã‚¯ãƒ­ãƒ¼ãƒ«ãƒãƒ¼ã®ã‚¢ã‚¯ã‚·ãƒ§ãƒ³ */
 pascal void MyScrollHandler(ControlHandle theControl,short part)
 {
 	short	moving=0,value,newValue;
@@ -3778,7 +3778,7 @@ pascal void MyScrollHandler(ControlHandle theControl,short part)
 	}
 }
 
-/* “à—e‚ğƒXƒNƒ[ƒ‹‚³‚¹‚éˆ— */
+/* å†…å®¹ã‚’ã‚¹ã‚¯ãƒ­ãƒ¼ãƒ«ã•ã›ã‚‹å‡¦ç† */
 void ContentScroll(WindowPtr theWindow,ControlHandle theControl,short delta)
 {
 	RgnHandle	upRgn;
@@ -3802,7 +3802,7 @@ void ContentScroll(WindowPtr theWindow,ControlHandle theControl,short delta)
 	
 	GetWindowPortBounds(theWindow,&tempRect);
 //	SetOrigin(tempRect.left+offset.h,tempRect.top+offset.v);
-//	GetWindowPortBounds(theWindow,&tempRect); /* ƒXƒNƒ[ƒ‹‚É‚æ‚èPortBounds‚ª•Ï‚í‚é */
+//	GetWindowPortBounds(theWindow,&tempRect); /* ã‚¹ã‚¯ãƒ­ãƒ¼ãƒ«ã«ã‚ˆã‚ŠPortBoundsãŒå¤‰ã‚ã‚‹ */
 	ClipRect(&tempRect);
 	scrollArea=tempRect;
 	scrollArea.right-=kScrollBarWidth;
@@ -3845,7 +3845,7 @@ void ContentScroll(WindowPtr theWindow,ControlHandle theControl,short delta)
 //	SetScrollBarRect(theWindow);
 }
 
-/* ƒY[ƒ€ */
+/* ã‚ºãƒ¼ãƒ  */
 void ZoomPaintWindow(WindowPtr theWindow,short thePart)
 {
 	PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
@@ -3876,8 +3876,8 @@ void ZoomPaintWindow(WindowPtr theWindow,short thePart)
 	}
 }
 
-/* ClipRect‚ÌXV */
-/* ƒ|[ƒg‚Íİ’è‚³‚ê‚Ä‚¢‚é‚±‚Æ‚ğ‘O’ñ */
+/* ClipRectã®æ›´æ–° */
+/* ãƒãƒ¼ãƒˆã¯è¨­å®šã•ã‚Œã¦ã„ã‚‹ã“ã¨ã‚’å‰æ */
 void UpdatePaintClipRect(WindowPtr theWindow)
 {
 	Rect	clipRect;
@@ -3895,7 +3895,7 @@ void UpdatePaintClipRect(WindowPtr theWindow)
 	SetPort(port);
 }
 
-/* ƒhƒ‰ƒbƒO‚ğŠJn‚·‚éiƒhƒ‰ƒbƒO‚Ìƒf[ƒ^‚ğì¬j */
+/* ãƒ‰ãƒ©ãƒƒã‚°ã‚’é–‹å§‹ã™ã‚‹ï¼ˆãƒ‰ãƒ©ãƒƒã‚°ã®ãƒ‡ãƒ¼ã‚¿ã‚’ä½œæˆï¼‰ */
 void MyDoStartDragPaintWin(WindowPtr eWindow,EventRecord *theEvent)
 {
 	DragReference   theDrag;
@@ -3931,7 +3931,7 @@ exit:
 	DisposeDragSendDataUPP(dsdUPP);
 }
 
-/* ƒhƒ‰ƒbƒOƒf[ƒ^‚Éflavor‚ğ’Ç‰Á‚·‚é */
+/* ãƒ‰ãƒ©ãƒƒã‚°ãƒ‡ãƒ¼ã‚¿ã«flavorã‚’è¿½åŠ ã™ã‚‹ */
 OSErr MyDoAddPaintWinFlavors(WindowPtr eWindow,DragReference theDrag)
 {
 	#pragma unused(eWindow)
@@ -3942,7 +3942,7 @@ OSErr MyDoAddPaintWinFlavors(WindowPtr eWindow,DragReference theDrag)
 	return err;
 }
 
-/* ƒhƒ‰ƒbƒOƒŠ[ƒWƒ‡ƒ“‚Ìì¬ */
+/* ãƒ‰ãƒ©ãƒƒã‚°ãƒªãƒ¼ã‚¸ãƒ§ãƒ³ã®ä½œæˆ */
 OSErr MyGetDragPaintWinRegion(WindowPtr eWindow,RgnHandle dragRegion,
 								DragReference theDragRef)
 {
@@ -3966,7 +3966,7 @@ OSErr MyGetDragPaintWinRegion(WindowPtr eWindow,RgnHandle dragRegion,
 	return(noErr);
 }
 
-/* —v‹‚³‚ê‚½flavorƒf[ƒ^‚ğ’ñ‹Ÿ‚·‚é */
+/* è¦æ±‚ã•ã‚ŒãŸflavorãƒ‡ãƒ¼ã‚¿ã‚’æä¾›ã™ã‚‹ */
 pascal short MySendPaintWinDataProc(FlavorType theType,void *dragSendRefCon,
 									ItemReference theItem,DragReference theDrag)
 {
@@ -3978,7 +3978,7 @@ pascal short MySendPaintWinDataProc(FlavorType theType,void *dragSendRefCon,
 	
 	switch (theType) {
 		case 'PICT':
-			/* “n‚·PICTƒf[ƒ^‚ğì¬ */
+			/* æ¸¡ã™PICTãƒ‡ãƒ¼ã‚¿ã‚’ä½œæˆ */
 			picture=GetSelectionPic(eWindow,false);
 			HLock((Handle)picture);
 			err=SetDragItemFlavorData(theDrag,theItem,'PICT',*picture,

@@ -1,1 +1,301 @@
-/* ------------------------------------------------------------ *//*  ExternalEditorSupport.c                                     *//*      äOïîÉGÉfÉBÉ^ÇÃÉTÉ|Å[ÉgÉãÅ[É`Éì                          *//*                                                              *//*                 2001.1.27 - 2000.1.27  naoki iimura        	*//* ------------------------------------------------------------ *//* includes */#ifdef __APPLE_CC__#include	<Carbon/Carbon.h>#else#include	<Sound.h>#include	<Script.h>#endif#include	"Definition.h"#include	"ExternalEditorSupport.h"#include	"UsefulRoutines.h"#include	"FileRoutines.h"#include	"IconRoutines.h"#include	"IconFamilyWindow.h"#include	"IPIconSupport.h"#include	"PreCarbonSupport.h"/* structures *//* äOïîÉGÉfÉBÉ^ï“èWóp */struct MyXIconRec {	FSSpec				tempFile;		/* àÍéûÉtÉ@ÉCÉã */	UInt32				modDate;		/* ÉtÉ@ÉCÉãÇÃèCê≥ì˙éû */	WindowPtr			parentWindow;	/* êeÉEÉBÉìÉhÉEÅiÉtÉ@É~ÉäÉEÉBÉìÉhÉEÅj */	SInt16				iconKind;		/* ÉAÉCÉRÉìÇÃéÌóﬁ */	struct MyXIconRec	*next;};typedef struct MyXIconRec	MyXIconRec;/* globals */static MyXIconRec	*gXIconList=nil;/* prototypes */static OSErr	LoadXIcon(MyXIconRec *xIconPtr);static OSErr	OpenByExternalEditorMain(FSSpec *tempFile);static OSErr	OpenByExternalEditor2(MyXIconRec *xIconPtr);/* routines *//* äOïîÉGÉfÉBÉ^Ç≈ï“èWíÜÇÃÉAÉCÉRÉìÉäÉXÉgÇçXêV */void UpdateXIconList(void){	UInt32		modDate;	MyXIconRec	*xIconPtr=gXIconList,				*prevIconPtr=nil;	OSErr		err;		while (xIconPtr != nil)	{		err=FSpGetModDate(&xIconPtr->tempFile,&modDate);		if (err==fnfErr)		{			if (prevIconPtr == nil)				gXIconList=xIconPtr->next;			else				prevIconPtr->next=xIconPtr->next;			DisposePtr((Ptr)xIconPtr);		}		else if (err==noErr)		{			if (modDate > xIconPtr->modDate)				if (LoadXIcon(xIconPtr)==noErr)					xIconPtr->modDate=modDate;		}		prevIconPtr=xIconPtr;		xIconPtr=xIconPtr->next;	}}/* äOïîÉGÉfÉBÉ^Ç≈ï“èWíÜÇÃÉAÉCÉRÉìÇì«Ç›çûÇﬁ */OSErr LoadXIcon(MyXIconRec *xIconPtr){	PicHandle	picture;	IconFamilyWinRec	*fWinRec;	GrafPtr		port;		picture=LoadFromPict(&xIconPtr->tempFile);	if (picture == nil) return -1;		fWinRec=GetIconFamilyRec(xIconPtr->parentWindow);	fWinRec->selectedIcon=xIconPtr->iconKind;		SavePictureToIconData(picture,fWinRec,gOtherPrefs.maskAutoConvert);		KillPicture(picture);		GetPort(&port);	SetPortWindowPort(xIconPtr->parentWindow);	MyInvalWindowPortBounds(xIconPtr->parentWindow);	SetPort(port);		return noErr;}/* äOïîÉGÉfÉBÉ^Ç≈ÉAÉCÉRÉìÇäJÇ≠ */OSErr OpenByExternalEditor(WindowPtr fWindow){	IconFamilyWinRec	*fWinRec;	MyXIconRec			*xIconPtr;	PicHandle			picture;	FSSpec				tempFile;	OSErr				err,igErr;		fWinRec=GetIconFamilyRec(fWindow);	picture=IPIconToPicture(&fWinRec->ipIcon,fWinRec->selectedIcon);	if (picture==nil) return memFullErr;		/* ÉeÉìÉ|ÉâÉäÉtÉ@ÉCÉãÇÃçÏê¨ */	err=MakeTempFile(&tempFile,false); /* data fork */	if (err!=noErr)	{		KillPicture(picture);		return err;	}		/* PICTÉfÅ[É^ÇÃï€ë∂ */	err=SaveAsPictMain(picture,&tempFile);	if (err!=noErr)	{		KillPicture(picture);		igErr=FSpDelete(&tempFile);		return err;	}	KillPicture(picture);		/* ÉfÅ[É^Çì¸ÇÍÇÈ */	xIconPtr=(MyXIconRec *)NewPtr(sizeof(MyXIconRec));	xIconPtr->tempFile=tempFile;	err=FSpGetModDate(&tempFile,&xIconPtr->modDate);	if (err!=noErr) xIconPtr->modDate=0;	xIconPtr->parentWindow=fWindow;	xIconPtr->iconKind=fWinRec->selectedIcon;		/* Ç¬Ç»Ç¨Ç»Ç®Çµ */	xIconPtr->next=gXIconList;	gXIconList=xIconPtr;		return OpenByExternalEditorMain(&tempFile);}/* AppleEventÇëóïtÇµÇƒÉtÉ@ÉCÉãÇäJÇ≠ */OSErr OpenByExternalEditorMain(FSSpec *tempFile){	ProcessSerialNumber	psn;	OSErr				err=noErr;	ProcessInfoRec		procInfo;	Boolean				found=false;	FSSpec				theFile;	AppleEvent			aeEvent={typeNull,NULL};		psn.highLongOfPSN=0;	psn.lowLongOfPSN=kNoProcess;		procInfo.processInfoLength=sizeof(ProcessInfoRec);	procInfo.processName=nil;	procInfo.processAppSpec=&theFile;	procInfo.processLocation=nil;		while(GetNextProcess(&psn)==noErr)	{		if (GetProcessInformation(&psn,&procInfo)==noErr)		{			if (EqualFile(&gExternalEditor,procInfo.processAppSpec))			{				found=true;				break;			}		}	}	if (found)	{		err=MakeOpenDocumentEvent(&psn,tempFile,&aeEvent);		if (err==noErr)			/* AppleÉCÉxÉìÉgÇëóïtÇ∑ÇÈ */			err=AESend(&aeEvent,nil,kAENoReply+kAECanSwitchLayer+kAEAlwaysInteract,						kAENormalPriority,kNoTimeOut,nil,nil);		err=AEDisposeDesc(&aeEvent);				err=SetFrontProcess(&psn);	}	else		AEOpenFileWithApplication(tempFile,&gExternalEditor);		return err;}/* äOïîÉGÉfÉBÉ^Ç≈ï“èWíÜÇ©Ç«Ç§Ç©Çí≤Ç◊ÇÈ */Boolean IsOpenedByExternalEditor(WindowPtr fWindow,short iconKind,short mode){	MyXIconRec	*xIconPtr=gXIconList;	Boolean		found=false;	OSErr		err;		while (xIconPtr != nil)	{		if (xIconPtr->parentWindow == fWindow && xIconPtr->iconKind == iconKind)		{			found=true;			break;		}		xIconPtr=xIconPtr->next;	}		if (found)		switch (mode)		{			case kXIconOpenMode:				err=OpenByExternalEditor2(xIconPtr);				if (err!=noErr) SysBeep(0);				break;		}		return found;}/* Ç∑Ç≈Ç…äJÇ©ÇÍÇƒÇ¢ÇÈÉAÉCÉRÉìÇÇ≥ÇÁÇ…äJÇ≠ */OSErr OpenByExternalEditor2(MyXIconRec *xIconPtr){	IconFamilyWinRec	*fWinRec;	PicHandle			picture;	OSErr				err,igErr;	FInfo				fileInfo;		err=FSpGetFInfo(&xIconPtr->tempFile,&fileInfo);	if (err==fnfErr)	{		fWinRec=GetIconFamilyRec(xIconPtr->parentWindow);		picture=IPIconToPicture(&fWinRec->ipIcon,fWinRec->selectedIcon);		if (picture==nil) return memFullErr;				/* ÉeÉìÉ|ÉâÉäÉtÉ@ÉCÉãÇÃçÏê¨ */		err=FSpCreate(&xIconPtr->tempFile,kIconPartyCreator,kPICTFileType,smSystemScript);		if (err!=noErr)		{			KillPicture(picture);			return err;		}				/* PICTÉfÅ[É^ÇÃï€ë∂ */		err=SaveAsPictMain(picture,&xIconPtr->tempFile);		if (err!=noErr)		{			KillPicture(picture);			igErr=FSpDelete(&xIconPtr->tempFile);			return err;		}		KillPicture(picture);	}		/* ÉfÅ[É^ÇçXêV */	err=FSpGetModDate(&xIconPtr->tempFile,&xIconPtr->modDate);	if (err!=noErr) xIconPtr->modDate=0;		return OpenByExternalEditorMain(&xIconPtr->tempFile);}/* äOïîÉGÉfÉBÉ^Ç≈ï“èWíÜÇÃÉAÉCÉRÉìÇï¬Ç∂ÇÈ */OSErr CloseXIcon(WindowPtr fWindow){	MyXIconRec	*xIconPtr=gXIconList;	OSErr		err=noErr;		while (xIconPtr != nil)	{		if (xIconPtr->parentWindow == fWindow)		{			err=FSpDelete(&xIconPtr->tempFile);			if (err!=noErr) return err;		}		xIconPtr=xIconPtr->next;	}		return err;}/* äOïîÉGÉfÉBÉ^Ç≈ï“èWíÜÇÃÉAÉCÉRÉìÇêÿÇËó£Ç∑ */OSErr DropFromExternalEditor(WindowPtr fWindow,short selectedIcon){	MyXIconRec	*xIconPtr=gXIconList;	OSErr		err=noErr;		while (xIconPtr != nil)	{		if (xIconPtr->parentWindow == fWindow && xIconPtr->iconKind == selectedIcon)		{			err=FSpDelete(&xIconPtr->tempFile);			return err;		}		xIconPtr=xIconPtr->next;	}		return err;}
+/* ------------------------------------------------------------ */
+/*  ExternalEditorSupport.c                                     */
+/*      Â§ñÈÉ®„Ç®„Éá„Ç£„Çø„ÅÆ„Çµ„Éù„Éº„Éà„É´„Éº„ÉÅ„É≥                          */
+/*                                                              */
+/*                 2001.1.27 - 2000.1.27  naoki iimura        	*/
+/* ------------------------------------------------------------ */
+
+/* includes */
+#ifdef __APPLE_CC__
+#include	<Carbon/Carbon.h>
+#else
+#include	<Sound.h>
+#include	<Script.h>
+#endif
+
+#include	"Definition.h"
+
+#include	"ExternalEditorSupport.h"
+#include	"UsefulRoutines.h"
+#include	"FileRoutines.h"
+#include	"IconRoutines.h"
+#include	"IconFamilyWindow.h"
+#include	"IPIconSupport.h"
+#include	"PreCarbonSupport.h"
+
+/* structures */
+/* Â§ñÈÉ®„Ç®„Éá„Ç£„ÇøÁ∑®ÈõÜÁî® */
+struct MyXIconRec {
+	FSSpec				tempFile;		/* ‰∏ÄÊôÇ„Éï„Ç°„Ç§„É´ */
+	UInt32				modDate;		/* „Éï„Ç°„Ç§„É´„ÅÆ‰øÆÊ≠£Êó•ÊôÇ */
+	WindowPtr			parentWindow;	/* Ë¶™„Ç¶„Ç£„É≥„Éâ„Ç¶Ôºà„Éï„Ç°„Éü„É™„Ç¶„Ç£„É≥„Éâ„Ç¶Ôºâ */
+	SInt16				iconKind;		/* „Ç¢„Ç§„Ç≥„É≥„ÅÆÁ®ÆÈ°û */
+	struct MyXIconRec	*next;
+};
+typedef struct MyXIconRec	MyXIconRec;
+
+/* globals */
+static MyXIconRec	*gXIconList=nil;
+
+
+/* prototypes */
+static OSErr	LoadXIcon(MyXIconRec *xIconPtr);
+static OSErr	OpenByExternalEditorMain(FSSpec *tempFile);
+static OSErr	OpenByExternalEditor2(MyXIconRec *xIconPtr);
+
+
+/* routines */
+/* Â§ñÈÉ®„Ç®„Éá„Ç£„Çø„ÅßÁ∑®ÈõÜ‰∏≠„ÅÆ„Ç¢„Ç§„Ç≥„É≥„É™„Çπ„Éà„ÇíÊõ¥Êñ∞ */
+void UpdateXIconList(void)
+{
+	UInt32		modDate;
+	MyXIconRec	*xIconPtr=gXIconList,
+				*prevIconPtr=nil;
+	OSErr		err;
+	
+	while (xIconPtr != nil)
+	{
+		err=FSpGetModDate(&xIconPtr->tempFile,&modDate);
+		if (err==fnfErr)
+		{
+			if (prevIconPtr == nil)
+				gXIconList=xIconPtr->next;
+			else
+				prevIconPtr->next=xIconPtr->next;
+			DisposePtr((Ptr)xIconPtr);
+		}
+		else if (err==noErr)
+		{
+			if (modDate > xIconPtr->modDate)
+				if (LoadXIcon(xIconPtr)==noErr)
+					xIconPtr->modDate=modDate;
+		}
+		prevIconPtr=xIconPtr;
+		xIconPtr=xIconPtr->next;
+	}
+}
+
+/* Â§ñÈÉ®„Ç®„Éá„Ç£„Çø„ÅßÁ∑®ÈõÜ‰∏≠„ÅÆ„Ç¢„Ç§„Ç≥„É≥„ÇíË™≠„ÅøËæº„ÇÄ */
+OSErr LoadXIcon(MyXIconRec *xIconPtr)
+{
+	PicHandle	picture;
+	IconFamilyWinRec	*fWinRec;
+	GrafPtr		port;
+	
+	picture=LoadFromPict(&xIconPtr->tempFile);
+	if (picture == nil) return -1;
+	
+	fWinRec=GetIconFamilyRec(xIconPtr->parentWindow);
+	fWinRec->selectedIcon=xIconPtr->iconKind;
+	
+	SavePictureToIconData(picture,fWinRec,gOtherPrefs.maskAutoConvert);
+	
+	KillPicture(picture);
+	
+	GetPort(&port);
+	SetPortWindowPort(xIconPtr->parentWindow);
+	MyInvalWindowPortBounds(xIconPtr->parentWindow);
+	SetPort(port);
+	
+	return noErr;
+}
+
+/* Â§ñÈÉ®„Ç®„Éá„Ç£„Çø„Åß„Ç¢„Ç§„Ç≥„É≥„ÇíÈñã„Åè */
+OSErr OpenByExternalEditor(WindowPtr fWindow)
+{
+	IconFamilyWinRec	*fWinRec;
+	MyXIconRec			*xIconPtr;
+	PicHandle			picture;
+	FSSpec				tempFile;
+	OSErr				err,igErr;
+	
+	fWinRec=GetIconFamilyRec(fWindow);
+	picture=IPIconToPicture(&fWinRec->ipIcon,fWinRec->selectedIcon);
+	if (picture==nil) return memFullErr;
+	
+	/* „ÉÜ„É≥„Éù„É©„É™„Éï„Ç°„Ç§„É´„ÅÆ‰ΩúÊàê */
+	err=MakeTempFile(&tempFile,false); /* data fork */
+	if (err!=noErr)
+	{
+		KillPicture(picture);
+		return err;
+	}
+	
+	/* PICT„Éá„Éº„Çø„ÅÆ‰øùÂ≠ò */
+	err=SaveAsPictMain(picture,&tempFile);
+	if (err!=noErr)
+	{
+		KillPicture(picture);
+		igErr=FSpDelete(&tempFile);
+		return err;
+	}
+	KillPicture(picture);
+	
+	/* „Éá„Éº„Çø„ÇíÂÖ•„Çå„Çã */
+	xIconPtr=(MyXIconRec *)NewPtr(sizeof(MyXIconRec));
+	xIconPtr->tempFile=tempFile;
+	err=FSpGetModDate(&tempFile,&xIconPtr->modDate);
+	if (err!=noErr) xIconPtr->modDate=0;
+	xIconPtr->parentWindow=fWindow;
+	xIconPtr->iconKind=fWinRec->selectedIcon;
+	
+	/* „Å§„Å™„Åé„Å™„Åä„Åó */
+	xIconPtr->next=gXIconList;
+	gXIconList=xIconPtr;
+	
+	return OpenByExternalEditorMain(&tempFile);
+}
+
+/* AppleEvent„ÇíÈÄÅ‰ªò„Åó„Å¶„Éï„Ç°„Ç§„É´„ÇíÈñã„Åè */
+OSErr OpenByExternalEditorMain(FSSpec *tempFile)
+{
+	ProcessSerialNumber	psn;
+	OSErr				err=noErr;
+	ProcessInfoRec		procInfo;
+	Boolean				found=false;
+	FSSpec				theFile;
+	AppleEvent			aeEvent={typeNull,NULL};
+	
+	psn.highLongOfPSN=0;
+	psn.lowLongOfPSN=kNoProcess;
+	
+	procInfo.processInfoLength=sizeof(ProcessInfoRec);
+	procInfo.processName=nil;
+	procInfo.processAppSpec=&theFile;
+	procInfo.processLocation=nil;
+	
+	while(GetNextProcess(&psn)==noErr)
+	{
+		if (GetProcessInformation(&psn,&procInfo)==noErr)
+		{
+			if (EqualFile(&gExternalEditor,procInfo.processAppSpec))
+			{
+				found=true;
+				break;
+			}
+		}
+	}
+	if (found)
+	{
+		err=MakeOpenDocumentEvent(&psn,tempFile,&aeEvent);
+		if (err==noErr)
+			/* Apple„Ç§„Éô„É≥„Éà„ÇíÈÄÅ‰ªò„Åô„Çã */
+			err=AESend(&aeEvent,nil,kAENoReply+kAECanSwitchLayer+kAEAlwaysInteract,
+						kAENormalPriority,kNoTimeOut,nil,nil);
+		err=AEDisposeDesc(&aeEvent);
+		
+		err=SetFrontProcess(&psn);
+	}
+	else
+		AEOpenFileWithApplication(tempFile,&gExternalEditor);
+	
+	return err;
+}
+
+/* Â§ñÈÉ®„Ç®„Éá„Ç£„Çø„ÅßÁ∑®ÈõÜ‰∏≠„Åã„Å©„ÅÜ„Åã„ÇíË™ø„Åπ„Çã */
+Boolean IsOpenedByExternalEditor(WindowPtr fWindow,short iconKind,short mode)
+{
+	MyXIconRec	*xIconPtr=gXIconList;
+	Boolean		found=false;
+	OSErr		err;
+	
+	while (xIconPtr != nil)
+	{
+		if (xIconPtr->parentWindow == fWindow && xIconPtr->iconKind == iconKind)
+		{
+			found=true;
+			break;
+		}
+		xIconPtr=xIconPtr->next;
+	}
+	
+	if (found)
+		switch (mode)
+		{
+			case kXIconOpenMode:
+				err=OpenByExternalEditor2(xIconPtr);
+				if (err!=noErr) SysBeep(0);
+				break;
+		}
+	
+	return found;
+}
+
+/* „Åô„Åß„Å´Èñã„Åã„Çå„Å¶„ÅÑ„Çã„Ç¢„Ç§„Ç≥„É≥„Çí„Åï„Çâ„Å´Èñã„Åè */
+OSErr OpenByExternalEditor2(MyXIconRec *xIconPtr)
+{
+	IconFamilyWinRec	*fWinRec;
+	PicHandle			picture;
+	OSErr				err,igErr;
+	FInfo				fileInfo;
+	
+	err=FSpGetFInfo(&xIconPtr->tempFile,&fileInfo);
+	if (err==fnfErr)
+	{
+		fWinRec=GetIconFamilyRec(xIconPtr->parentWindow);
+		picture=IPIconToPicture(&fWinRec->ipIcon,fWinRec->selectedIcon);
+		if (picture==nil) return memFullErr;
+		
+		/* „ÉÜ„É≥„Éù„É©„É™„Éï„Ç°„Ç§„É´„ÅÆ‰ΩúÊàê */
+		err=FSpCreate(&xIconPtr->tempFile,kIconPartyCreator,kPICTFileType,smSystemScript);
+		if (err!=noErr)
+		{
+			KillPicture(picture);
+			return err;
+		}
+		
+		/* PICT„Éá„Éº„Çø„ÅÆ‰øùÂ≠ò */
+		err=SaveAsPictMain(picture,&xIconPtr->tempFile);
+		if (err!=noErr)
+		{
+			KillPicture(picture);
+			igErr=FSpDelete(&xIconPtr->tempFile);
+			return err;
+		}
+		KillPicture(picture);
+	}
+	
+	/* „Éá„Éº„Çø„ÇíÊõ¥Êñ∞ */
+	err=FSpGetModDate(&xIconPtr->tempFile,&xIconPtr->modDate);
+	if (err!=noErr) xIconPtr->modDate=0;
+	
+	return OpenByExternalEditorMain(&xIconPtr->tempFile);
+}
+
+/* Â§ñÈÉ®„Ç®„Éá„Ç£„Çø„ÅßÁ∑®ÈõÜ‰∏≠„ÅÆ„Ç¢„Ç§„Ç≥„É≥„ÇíÈñâ„Åò„Çã */
+OSErr CloseXIcon(WindowPtr fWindow)
+{
+	MyXIconRec	*xIconPtr=gXIconList;
+	OSErr		err=noErr;
+	
+	while (xIconPtr != nil)
+	{
+		if (xIconPtr->parentWindow == fWindow)
+		{
+			err=FSpDelete(&xIconPtr->tempFile);
+			if (err!=noErr) return err;
+		}
+		xIconPtr=xIconPtr->next;
+	}
+	
+	return err;
+}
+
+/* Â§ñÈÉ®„Ç®„Éá„Ç£„Çø„ÅßÁ∑®ÈõÜ‰∏≠„ÅÆ„Ç¢„Ç§„Ç≥„É≥„ÇíÂàá„ÇäÈõ¢„Åô */
+OSErr DropFromExternalEditor(WindowPtr fWindow,short selectedIcon)
+{
+	MyXIconRec	*xIconPtr=gXIconList;
+	OSErr		err=noErr;
+	
+	while (xIconPtr != nil)
+	{
+		if (xIconPtr->parentWindow == fWindow && xIconPtr->iconKind == selectedIcon)
+		{
+			err=FSpDelete(&xIconPtr->tempFile);
+			return err;
+		}
+		xIconPtr=xIconPtr->next;
+	}
+	
+	return err;
+}

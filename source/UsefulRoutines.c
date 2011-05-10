@@ -1,1 +1,1643 @@
-/* ------------------------------------------------------------ *//*  Useful Routines.c                                           *//*     g‚¦‚éƒ‹[ƒ`ƒ“i‹êÎj                                   *//*                                                              *//*                 1997.1.11 - 2001.2.3  naoki iimura        	*//* ------------------------------------------------------------ *//* includes */#ifdef __APPLE_CC__#include	<Carbon/Carbon.h>#include	<QuickTime/QuickTime.h>#else#include	<Fonts.h>#include	<NumberFormatting.h>#include	<StringCompare.h>#include	<TextUtils.h>#include	<Controls.h>#ifndef kControlButtonPart#include	<ControlDefinitions.h>#endif#include	<Resources.h>#include	<QuickTimeComponents.h>#include	<PictUtils.h>#include	<FinderRegistry.h>#endif#ifdef __APPLE_CC__#include	"MoreFilesX.h"#else#include	"MoreFilesExtras.h"#endif#include	"Globals.h"#include	"UsefulRoutines.h"#include	"PreCarbonSupport.h"/* local routine */static pascal void MyGetDepthProc(const BitMap *bitPtr,const Rect *srcRect,const Rect *dstRect,	short mode,RgnHandle maskRgn);/* -> IconParty.c */extern void MySetCursor(short id);/* -> window.c */extern void	DoUpdate(EventRecord *theEvent);/* ƒc[ƒ‹ƒ{ƒbƒNƒX‚Ì‰Šú‰» */void ToolBoxInit(void){	#if !TARGET_API_MAC_CARBON	InitGraf(&qd.thePort);	InitFonts();	InitWindows();	InitMenus();	TEInit();	InitDialogs(nil);	#endif	InitCursor();}/* ƒGƒ‰[•\¦ */void ErrorAlert(const StringPtr errStr){	DeactivateFloatersAndFirstDocumentWindow();		ParamText(errStr,"\p","\p","\p");		Alert(201,0);		ActivateFloatersAndFirstDocumentWindow();}/* ƒGƒ‰[•\¦2iƒGƒ‰[ƒR[ƒh‚Â‚«j */void ErrorAlert2(const StringPtr errStr,short errCode){	Str255	errCodeStr;		DeactivateFloatersAndFirstDocumentWindow();		NumToString(errCode,errCodeStr);	ParamText(errStr,errCodeStr,"\p","\p");		Alert(202,0);		ActivateFloatersAndFirstDocumentWindow();}/* ƒGƒ‰[•\¦iƒŠƒ\[ƒX‚©‚çj */void ErrorAlertFromResource(short res_id,short num){	Str255	errStr;		GetIndString(errStr,res_id,num);	ErrorAlert(errStr);}/* ƒ†[ƒU‚É¥”ñ‚ğ–â‚¤ */OSErr MyConfirmDialog(const StringPtr prompt,const StringPtr okString,	short *defaultSelection){	short		dialogID;	DialogPtr	theDialog;	short		item;	ModalFilterUPP	mfUPP;		if (defaultSelection == NULL)		dialogID = 150;	else	{		if (*defaultSelection == ok) return noErr;		if (*defaultSelection == cancel) return userCanceledErr;				dialogID = 151;	}		MySetCursor(0);//	DeactivateFloatersAndFirstDocumentWindow();		ParamText(prompt,"\p","\p","\p");	theDialog = GetNewDialog(dialogID,NULL,kFirstWindowOfClass);	if (okString) SetDialogControlTitle(theDialog,ok,okString);		SetDialogDefaultItem(theDialog,ok);	SetDialogCancelItem(theDialog,ok);	ShowWindow(GetDialogWindow(theDialog));		item = 3;	mfUPP=NewModalFilterUPP(MyModalDialogFilter);	while (item != ok && item != cancel)	{		ModalDialog(mfUPP,&item);				if (item == 3 && defaultSelection != NULL)		{			SetDialogControlValue(theDialog,3,!GetDialogControlValue(theDialog,3));		}	}		DisposeDialog(theDialog);	DisposeModalFilterUPP(mfUPP);//	ActivateFloatersAndFirstDocumentWindow();		return (item == ok ? noErr : userCanceledErr);}/* ƒNƒŠƒG[ƒ^ƒR[ƒh‚©‚çƒAƒvƒŠƒP[ƒVƒ‡ƒ“‚ÌƒpƒX‚ğ‹‚ß‚é */OSErr GetApplSpec(OSType creator,FSSpec *applSpec){	short 			i = 0;	OSErr			err;	HVolumeParam	vparamRec;	DTPBRec			paramBlock;	Boolean			boolFoundIt=false;		vparamRec.ioCompletion = NULL;	vparamRec.ioNamePtr = NULL;	applSpec->name[0]=0;		do {			vparamRec.ioVRefNum = 0;			vparamRec.ioVolIndex = ++i;					err = PBHGetVInfoSync( (HParmBlkPtr)&vparamRec );//														grab desktop database			if ( err == noErr ) 			{				paramBlock.ioNamePtr = NULL;				paramBlock.ioVRefNum = vparamRec.ioVRefNum;				err = PBDTGetPath( &paramBlock );//														search desktop for app				if ( err == noErr ) 				{					paramBlock.ioIndex = 0;	/* ì¬“ú‚ªˆê”ÔÅ‹ß‚ÌƒAƒvƒŠƒP[ƒVƒ‡ƒ“‚ğ’T‚· */					paramBlock.ioNamePtr = applSpec->name;					paramBlock.ioFileCreator = creator;					paramBlock.ioCompletion = NULL;					err = PBDTGetAPPLSync( &paramBlock );					if ( err == noErr )						boolFoundIt = true;				}				err = noErr;			}		} while ( !boolFoundIt && ( err == noErr ) );//														store data in fsspec	if ( boolFoundIt ) 	{		err = noErr;	/* ‚¢‚ç‚ñ‚© */		applSpec->vRefNum = paramBlock.ioVRefNum;		applSpec->parID = paramBlock.ioAPPLParID;	}	else		err = afpItemNotFound;		return err;}/* ƒNƒŠƒG[ƒ^ƒR[ƒh‚©‚çƒAƒvƒŠƒP[ƒVƒ‡ƒ“–¼‚ğ‹‚ß‚é */OSErr CreatorToAppl(OSType creator,Str255 applName){	OSErr	err;	FSSpec	applSpec;		err=GetApplSpec(creator,&applSpec);		if (err == noErr)	{		PStrCpy(applSpec.name,applName);	}	else		GetIndString(applName,153,1);		return err;}/* ƒtƒ@ƒCƒ‹ƒI[ƒvƒ“ƒ_ƒCƒAƒƒO‚ÌƒtƒBƒ‹ƒ^i•s‰Â‹ƒtƒ@ƒCƒ‹‚ğ”ñ•\¦j */pascal Boolean FilterInvisFiles(CInfoPBPtr pb){	if ((pb->hFileInfo.ioFlFndrInfo.fdFlags) & fInvisible)		return true;	else		return false;}/* ƒGƒCƒŠƒAƒX‚ÌŒ³ƒtƒ@ƒCƒ‹‚ğ’T‚·Bƒ†[ƒUƒCƒ“ƒ^ƒ‰ƒNƒVƒ‡ƒ“‚ğ‹–‰Â‚µ‚È‚¢ */OSErr ResolveAliasFileWithNoUI(FSSpec *fromFile,Boolean resolveAliasChains,Boolean *wasAliased){	OSErr	err;	Boolean	isFolder;		err=MyIsAliasFile(fromFile,wasAliased,&isFolder);	if (*wasAliased)	{		err=ResolveAliasFileWithNoUIMain(fromFile,resolveAliasChains);	}		return err;}/* ƒ†[ƒUƒCƒ“ƒ^ƒ‰ƒNƒVƒ‡ƒ“‚È‚µ‚ÅƒGƒCƒŠƒAƒXƒtƒ@ƒCƒ‹‚ğ‰ğŒˆ‚·‚é */OSErr ResolveAliasFileWithNoUIMain(FSSpec *fromFile,Boolean resolveAliasChains){	OSErr	err;	short	refNum;	AliasHandle	theAlias;	Boolean	needsUpdate,wasChanged;	FSSpec	theSpec;	Boolean	isAlias,isFolder;	short	count=1;		refNum=FSpOpenResFile(fromFile,fsRdPerm);	if (refNum <= 0) return ResError();		theAlias=(AliasHandle)Get1Resource(rAliasType,0);	if (theAlias == nil) return -1;		err=MatchAlias(nil,kARMNoUI+kARMMultVols+kARMSearch,theAlias,&count,&theSpec,&needsUpdate,nil,nil);	if (err==noErr)	{		*fromFile=theSpec;		if (needsUpdate)			err=UpdateAlias(nil,&theSpec,theAlias,&wasChanged);	}	CloseResFile(refNum);		if (err==noErr && resolveAliasChains)	{		err=MyIsAliasFile(fromFile,&isAlias,&isFolder);		if (err==noErr && isAlias)			err=ResolveAliasFileWithNoUIMain(fromFile,resolveAliasChains);	}		return err;}/* ƒGƒCƒŠƒAƒX‚©‚Ç‚¤‚©‚ğƒ`ƒFƒbƒN */OSErr MyIsAliasFile(const FSSpec *fileFSSpec,Boolean *aliasFileFlag,Boolean *folderFlag){	OSErr	err;	#ifdef __MOREFILESX__	FSRef	fsRef;	FinderInfo	info;	Boolean	isDirectory;	#else	FInfo	fInfo;	#endif		*aliasFileFlag=false;	*folderFlag=false;		#ifdef __MOREFILESX__	err = FSpMakeFSRef(fileFSSpec,&fsRef);	err = FSGetFinderInfo(&fsRef,&info,NULL,&isDirectory);		if (err == noErr) {		if (!isDirectory)			*aliasFileFlag = ((info.file.finderFlags & kIsAlias) != 0);		*folderFlag = isDirectory;	}		#else	err=FSpGetFInfo(fileFSSpec,&fInfo);	if (err==noErr)	{		*aliasFileFlag = (fInfo.fdFlags & kIsAlias) != 0;	}	else	{		DInfo	dInfo;				err=FSpGetDInfo(fileFSSpec,&dInfo);		if (err==noErr) *folderFlag=true;	}	#endif		return err;}/* ƒ†[ƒUƒCƒ“ƒ^ƒ‰ƒNƒVƒ‡ƒ“‚È‚µ‚ÅƒGƒCƒŠƒAƒX‚ğ‰ğŒˆ‚·‚é */OSErr ResolveAliasWithNoUI(AliasHandle theAlias,FSSpec *theFile,Boolean resolveAliasChains){	OSErr	err;	Boolean	needsUpdate,wasChanged;	FSSpec	theSpec;	Boolean	isAlias,isFolder;	short	count=1;		err=MatchAlias(nil,kARMNoUI+kARMMultVols+kARMSearch,theAlias,&count,&theSpec,&needsUpdate,nil,nil);	if (err==noErr)	{		*theFile=theSpec;		if (needsUpdate)			err=UpdateAlias(nil,&theSpec,theAlias,&wasChanged);	}		if (err==noErr && resolveAliasChains)	{		err=MyIsAliasFile(&theSpec,&isAlias,&isFolder);		if (err==noErr && isAlias)			err=ResolveAliasFileWithNoUIMain(&theSpec,resolveAliasChains);	}		return err;}/* ƒ{ƒ^ƒ“‚ğƒnƒCƒ‰ƒCƒg‚³‚¹‚é */void HiliteButton(DialogPtr dp,short item){	short	itemType;	Rect	box;	Handle	itemHandle;	unsigned long	tilticks;		GetDialogItem(dp,item,&itemType,&itemHandle,&box);	if (itemType!=ctrlItem+btnCtrl && itemType!=ctrlItem+resCtrl) return;		HiliteControl((ControlHandle)itemHandle,kControlButtonPart);	Delay(kMyButtonDelay,&tilticks);	HiliteControl((ControlHandle)itemHandle,false);}/* •¶š—ñ‚Ì’u‚«Š·‚¦ */void ReplaceString(Str255 base,Str255 subs,Str15 key){	Handle	baseH,subsH;	OSErr	err;	short	result;		err=PtrToHand(&base[1],&baseH,*base);	err=PtrToHand(&subs[1],&subsH,*subs);		result=ReplaceText(baseH,subsH,key);		if (result>0)	{		*base=GetHandleSize(baseH);		BlockMoveData(*baseH,&base[1],*base);	}		DisposeHandle(baseH);	DisposeHandle(subsH);}/* check 2 colors are equal or not */Boolean EqualColor(RGBColor *color1,RGBColor *color2){	return (color1->red==color2->red)&&(color1->green==color2->green)&&		(color1->blue==color2->blue);}/* RGBColor‚©‚çƒCƒ“ƒfƒbƒNƒX‚É•ÏŠ· */short RGBColorToIndex(RGBColor *color){	short	r=0xf & (short)color->red,g=0xf & (short)color->green,b=0xf & (short)color->blue;		if (r==0 && g==0 && b==0) return 255; /* • */	if (r%3==0 && g%3==0 && b%3==0) /* 216F */		return (5-b/3)+(5-g/3)*6+(5-r/3)*36;	else		if (g==0) /* red or blue */			if (b==0) return 215+9-(r*2/3); /* red */			else return 235+9-(b*2/3); /* blue */		else /* green or gray */			if (r==0) return 225+9-(g*2/3); /* green */			else return 245+9-(r*2/3); /* gray */}/* ƒCƒ“ƒfƒbƒNƒX‚©‚çRGBColor‚É•ÏŠ· */void IndexToRGBColor(short index,RGBColor *color){	if (index < 215)		Set256RGBColor(color,(5-index/36)*3,(5-(index/6)%6)*3,(5-index%6)*3); /* 216 */	else if (index < 225)		Set256RGBColor(color,14-(index-215)*3/2,0,0); /* red */	else if (index < 235)		Set256RGBColor(color,0,14-(index-225)*3/2,0); /* green */	else if (index < 245)		Set256RGBColor(color,0,0,14-(index-235)*3/2); /* blue */	else if (index < 255)		Set256RGBColor(color,14-(index-245)*3/2,14-(index-245)*3/2,14-(index-245)*3/2); /* gray */	else		Set256RGBColor(color,0,0,0); /* black */}/* F‚ğİ’è */void Set256RGBColor(RGBColor *color,short r,short g,short b){	color->red=0x1111U*r;	color->green=0x1111U*g;	color->blue=0x1111U*b;}/* set color */void SetRGBColor(RGBColor *color,unsigned short red,unsigned short green,unsigned short blue){	color->red=red;	color->green=green;	color->blue=blue;}/* ƒ‚[ƒ_ƒ‹ƒ_ƒCƒAƒƒO‚ÌƒtƒBƒ‹ƒ^ */pascal Boolean MyModalDialogFilter(DialogPtr theDialog,EventRecord *theEvent,short *theItemHit){	Boolean		eventHandled=false;	WindowPtr	theWindow;	short		part;	char		key;		switch (theEvent->what)	{		case updateEvt:			theWindow=(WindowPtr)theEvent->message;			if (theWindow!=nil && GetWindowKind(theWindow)!=kDialogWindowKind)					DoUpdate(theEvent);			break;				case keyDown:		case autoKey:			key=theEvent->message & charCodeMask;			if ((theEvent->modifiers & cmdKey)!=0)				if (key==kPeriod)					key=kEscapeKey;						switch (key)			{				case kReturnKey:				case kEnterKey:					*theItemHit=ok;					HiliteButton(theDialog,ok);					eventHandled=true;					break;								case kEscapeKey:					*theItemHit=cancel;					HiliteButton(theDialog,cancel);					eventHandled=true;					break;								case kUpArrowKey:				case kDownArrowKey:					{						SInt16	itemNo=GetDialogKeyboardFocusItem(theDialog);						Handle	theItemHandle;						Str255	theText;						SInt16	i;						SInt16	itemType;						Rect	r;						Boolean	numOK=true;						SInt32	number;												/* ƒGƒfƒBƒbƒgƒeƒLƒXƒg‚ª‘I‘ğ‚³‚ê‚Ä‚¢‚È‚¢‚Í‰½‚à‚µ‚È‚¢ */						if (itemNo <= 0) break;												/* –{“–‚ÉƒGƒfƒBƒbƒgƒeƒLƒXƒg‚©‚Ç‚¤‚©‚ğ”»’è‚·‚é */						GetDialogItem(theDialog,itemNo,&itemType,&theItemHandle,&r);						if (itemType != kEditTextDialogItem) break;												/* •¶š‚ª“ü—Í‚³‚ê‚Ä‚¢‚é‚©‚Ç‚¤‚©‚ğ”»’è‚·‚é */						GetDialogItemText(theItemHandle,theText);						if (theText[0]==0) break;												/* •¶š‚ª”š‚¾‚¯‚©‚Ç‚¤‚©‚ğ”»’è‚·‚é */						for (i=1; i<=theText[0]; i++)						{							if (theText[i] < '0' || theText[i] > '9') {numOK=false; break;}						}						if (!numOK) break;												/* ”š‚ğ“¾‚é */						StringToNum(theText,&number);												/* –îˆóƒL[‚Ì•ûŒü‚É‚æ‚èA’l‚ğ•ÏX */						number+=(key == kUpArrowKey ? 1 : -1)*((theEvent->modifiers & shiftKey) ? 10 : 1);						if (number < 0) number=0;												NumToString(number,theText);						SetDialogItemText(theItemHandle,theText);						SelectDialogItemText(theDialog,itemNo,0,theText[0]);												*theItemHit=itemNo;						eventHandled=true;					}					break;			}			break;				case mouseDown:			part=FindWindow(theEvent->where,&theWindow);			if (part==inDrag && theWindow==GetDialogWindow(theDialog))			{				Rect	myScreenRect;								GetRegionBounds(GetGrayRgn(),&myScreenRect);				DragWindow(theWindow,theEvent->where,&myScreenRect);				eventHandled=true;			}			break;				case nullEvent:			break;				case osEvt:			if ((unsigned long)(theEvent->message & osEvtMessageMask) >> 24 == suspendResumeMessage)			{				if (theEvent->message & resumeFlag) /* resume */				{					ActivateDialogControl(theDialog);					ActivateFloatersAndFirstDocumentWindow();				}				else				{					DeactivateFloatersAndFirstDocumentWindow();					DeactivateDialogControl(theDialog);				}				MyInvalWindowPortBounds(GetDialogWindow(theDialog));			}			break;			}		return eventHandled;}#if !TARGET_API_MAC_CARBON/* ƒJƒXƒ^ƒ€ƒZ[ƒuƒ_ƒCƒAƒƒO‚ÌƒAƒNƒeƒBƒx[ƒgƒ‹[ƒ`ƒ“ */pascal void MyActivate(DialogPtr theDialog,short item,Boolean activating,void *userData){	#pragma unused(activating,userData)		Rect	box;	RgnHandle	rgn;		if (GetWRefCon(GetDialogWindow(theDialog))!=sfMainDialogRefCon)		return;		switch (item)	{		case sfItemFileListUser:			break;				case sfItemFileNameTextEdit:			GetDialogItemRect(theDialog,item,&box);			rgn=NewRgn();			RectRgn(rgn,&box);			UpdateDialog(theDialog,rgn);			DisposeRgn(rgn);			break;	}}#endif/* ƒ_ƒCƒAƒƒO‚ÌƒRƒ“ƒgƒ[ƒ‹‚ğDeactivate */void DeactivateDialogControl(DialogPtr theDialog){	ControlHandle	theControl;	short			i;	short			itemType;	Handle			itemHandle;	Rect			itemRect;	short			itemNum;	UInt16			h;		itemNum=CountDITL(theDialog);	for (i=1; i<=itemNum; i++)	{		GetDialogItem(theDialog,i,&itemType,&itemHandle,&itemRect);		switch (itemType)		{			case kButtonDialogItem:			case kCheckBoxDialogItem:			case kRadioButtonDialogItem:			case kResourceControlDialogItem:				theControl=(ControlHandle)itemHandle;				h=GetControlHilite(theControl);				if (h != 255)				{					SetDialogItem(theDialog,i,itemType+kItemDisableBit,itemHandle,&itemRect);					HiliteControl(theControl,255);				}				break;		}	}}/* ƒ_ƒCƒAƒƒO‚ÌƒRƒ“ƒgƒ[ƒ‹‚ğActivate */void ActivateDialogControl(DialogPtr theDialog){	ControlHandle	theControl;	short			i;	short			itemType;	Handle			itemHandle;	Rect			itemRect;	short			itemNum;	UInt16			h;		itemNum=CountDITL(theDialog);	for (i=1; i<=itemNum; i++)	{		GetDialogItem(theDialog,i,&itemType,&itemHandle,&itemRect);		switch (itemType)		{			case kButtonDialogItem+kItemDisableBit:			case kCheckBoxDialogItem+kItemDisableBit:			case kRadioButtonDialogItem+kItemDisableBit:			case kResourceControlDialogItem+kItemDisableBit:				theControl=(ControlHandle)itemHandle;				h=GetControlHilite(theControl);				if (h == 255)				{					SetDialogItem(theDialog,i,itemType-kItemDisableBit,itemHandle,&itemRect);					HiliteControl(theControl,0);				}				break;		}	}}/* ƒEƒBƒ“ƒhƒE‚ÌƒRƒ“ƒgƒ[ƒ‹‚ğDeactivate */void DeactivateWindowControl(WindowPtr theWindow){	ControlHandle	theControl;	OSErr			err;		if (theWindow==nil) return;		err=MyGetRootControl(theWindow,&theControl);	if (err!=noErr) return;		#if TARGET_API_MAC_CARBON	{		UInt16	index,count;		ControlHandle	outControl;				err=CountSubControls(theControl,&count);		for (index = 1; index <= count; index++)		{			err=GetIndexedSubControl(theControl,index,&outControl);			DeactivateControl(outControl);		}	}	#else	while (theControl != nil)	{		if (isAppearanceAvailable)			DeactivateControl(theControl);		else			HiliteControl(theControl,255);				theControl=(*theControl)->nextControl;	}	#endif}/* ƒEƒBƒ“ƒhƒE‚ÌƒRƒ“ƒgƒ[ƒ‹‚ğActivate */void ActivateWindowControl(WindowPtr theWindow){	ControlHandle	theControl;	OSErr			err;		if (theWindow==nil) return;		err=MyGetRootControl(theWindow,&theControl);	if (err!=noErr) return;		#if TARGET_API_MAC_CARBON	{		UInt16	index,count;		ControlHandle	outControl;				err=CountSubControls(theControl,&count);		for (index = 1; index <= count; index++)		{			err=GetIndexedSubControl(theControl,index,&outControl);			ActivateControl(outControl);		}	}	#else	while (theControl != nil)	{		if (isAppearanceAvailable)			ActivateControl(theControl);		else			HiliteControl(theControl,0);				theControl=(*theControl)->nextControl;	}	#endif}/* ƒ_ƒCƒAƒƒO‚©‚çƒRƒ“ƒgƒ[ƒ‹‚ğæ‚èo‚· */Handle GetDialogItemHandle(DialogPtr theDialog,short itemNo){	short	itemType;	Rect	box;	Handle	h;		GetDialogItem(theDialog,itemNo,&itemType,&h,&box);	return h;}/* ƒ_ƒCƒAƒƒO‚ÌƒAƒCƒeƒ€‚ÌˆÊ’u‚ğ“¾‚é */void GetDialogItemRect(DialogPtr theDialog,short itemNo,Rect *r){	short	itemType;	Handle	h;		GetDialogItem(theDialog,itemNo,&itemType,&h,r);}/* ƒ_ƒCƒAƒƒO‚ÌƒRƒ“ƒgƒ[ƒ‹‚©‚ç’l‚ğæ‚èo‚· */short GetDialogControlValue(DialogPtr theDialog,short itemNo){	return GetControlValue((ControlHandle)GetDialogItemHandle(theDialog,itemNo));}/* ƒ_ƒCƒAƒƒO‚ÌƒRƒ“ƒgƒ[ƒ‹‚É’l‚ğİ’è‚·‚é */void SetDialogControlValue(DialogPtr theDialog,short itemNo,short value){	SetControlValue((ControlHandle)GetDialogItemHandle(theDialog,itemNo),value);}/* ƒ_ƒCƒAƒƒO‚ÌƒRƒ“ƒgƒ[ƒ‹‚ÌÅ‘å’l‚ğİ’è‚·‚é */void SetDialogControlMaximum(DialogPtr theDialog,short itemNo,short value){	SetControlMaximum((ControlHandle)GetDialogItemHandle(theDialog,itemNo),value);}/* ƒ_ƒCƒAƒƒO‚ÌƒRƒ“ƒgƒ[ƒ‹‚ÌƒnƒCƒ‰ƒCƒg‚ğİ’è‚·‚é */void SetDialogControlHilite(DialogPtr theDialog,short itemNo,short value){	HiliteControl((ControlHandle)GetDialogItemHandle(theDialog,itemNo),value);}/* ƒ_ƒCƒAƒƒO‚ÌƒRƒ“ƒgƒ[ƒ‹‚Ìƒ^ƒCƒgƒ‹‚ğİ’è‚·‚é */void SetDialogControlTitle(DialogPtr theDialog,short itemNo,Str255 title){	SetControlTitle((ControlHandle)GetDialogItemHandle(theDialog,itemNo),title);}/* ƒ_ƒCƒAƒƒO‚ÌƒAƒCƒeƒ€‚©‚çƒeƒLƒXƒg‚ğæ‚èo‚· */void GetDialogItemText2(DialogPtr theDialog,short itemNo,Str255 string){	GetDialogItemText(GetDialogItemHandle(theDialog,itemNo),string);}/* ƒ_ƒCƒAƒƒO‚ÌƒAƒCƒeƒ€‚ÉƒeƒLƒXƒg‚ğİ’è‚·‚é */void SetDialogItemText2(DialogPtr theDialog,short itemNo,Str255 string){	SetDialogItemText(GetDialogItemHandle(theDialog,itemNo),string);}/* ƒ_ƒCƒAƒƒO‚ÌƒGƒfƒBƒbƒgƒeƒLƒXƒg‚ğƒXƒ^ƒeƒBƒbƒNƒeƒLƒXƒg‚É•ÏX‚·‚é */void SetDialogItemToStaticText(DialogPtr theDialog,short itemNo){	Handle	h;	Rect	box;	short	itemType;		GetDialogItem(theDialog,itemNo,&itemType,&h,&box);	if (itemType == editText)	SetDialogItem(theDialog,itemNo,statText,h,&box);}/* C•¶š—ñ‚©‚çPascal•¶š—ñ‚Ö•ÏŠ· */void MyCToPStr(const char *src,Str255 dst){	short	count;	char	*dstP=(char *)&dst[1];		for (count=0; count <= 255 && *src != 0; count++)		*dstP++=*src++;		if (count > 255) dst[0]=255;	else dst[0]=count;}/* CopyDeepMaskˆÀ‘Sƒo[ƒWƒ‡ƒ“ */void SafeCopyDeepMask(const BitMap *srcBits,const BitMap *maskBits,const BitMap *dstBits,						const Rect *srcRect,const Rect *maskRect,const Rect *dstRect,						short mode,RgnHandle maskRgn){	short	offset;		if ((offset = dstRect->left & 3) != 0)	{		Rect		tSrcRect=*srcRect,tMaskRect=*maskRect,tDstRect=*dstRect;		RgnHandle	tempRgn;				tSrcRect.left-=offset;		tMaskRect.left-=offset;		tDstRect.left-=offset;				if (maskRgn == nil)		{			tempRgn=NewRgn();			RectRgn(tempRgn,dstRect);		}		else tempRgn=maskRgn;				CopyDeepMask(srcBits,maskBits,dstBits,&tSrcRect,&tMaskRect,&tDstRect,mode,tempRgn);				if (maskRgn == nil)			DisposeRgn(tempRgn);	}	else		CopyDeepMask(srcBits,maskBits,dstBits,srcRect,maskRect,dstRect,mode,maskRgn);}#define	kExtraGrowSize	1024	/* 1k bytes */static OSErr	mError;static Size		mPictureSize;static CQDProcs	mProcs,*mSavedProcs;static Size		mHandleSize;static Handle	mPictureHnd;static PicHandle	mPicture;static RgnHandle	mClipRgn;/* ƒeƒ“ƒ|ƒ‰ƒŠƒƒ‚ƒŠg—p‚ÌOpenCPicture */OSErr TempOpenCPicture(OpenCPicParams *params){	Picture	dummyPict;	OSErr	err;	GWorldPtr	cPort;	GDHandle	cDevice;		/* ƒƒ‚ƒŠŠm•Û */	mPictureHnd=TempNewHandle(sizeof(Picture) + kExtraGrowSize,&err);	if (err!=noErr)		return err;		/* •Ï”‰Šú‰» */	mError=noErr;	mPictureSize=0L;	mHandleSize=sizeof(Picture) + kExtraGrowSize;	dummyPict.picSize=0;	dummyPict.picFrame=params->srcRect;		/* ƒwƒbƒ_•”•ª‚Ì‘‚«‚İ */	BlockMoveData(&dummyPict,*mPictureHnd,sizeof(Picture));	mPictureSize=sizeof(Picture);		/* PutPicture‚Ì’u‚«Š·‚¦ */	GetGWorld(&cPort,&cDevice);	mSavedProcs=GetPortGrafProcs(cPort);	SetStdCProcs(&mProcs);	mProcs.putPicProc=NewQDPutPicUPP(PutPicToTempMem);	SetPortCGrafProcs(cPort,&mProcs);		/* ƒNƒŠƒbƒvƒŠ[ƒWƒ‡ƒ“‚Ì‹L˜^ */	mClipRgn=NewRgn();	GetClip(mClipRgn);		mPicture=OpenCPicture(params);	mError=QDError();	if (mError!=noErr)	{		TempDisposeHandle(mPictureHnd,&err);		ClosePicture(); /* ‚¢‚ç‚ñ‚Ì‚©‚à */				SetPortCGrafProcs(cPort,mSavedProcs);		DisposeQDPutPicUPP(mProcs.putPicProc);	}	return mError;}OSErr CheckPictureByte(void){	if (mError == noErr && (mPictureSize & 1))	{		char	c;				if (mPictureSize == mHandleSize)		{			SetHandleSize(mPictureHnd,mPictureSize+1);			mError=MemError();			if (mError!=noErr) return mError;		}				c=0;		BlockMoveData(&c,*mPictureHnd+mPictureSize,sizeof(char));		mPictureSize++;	}		return mError;}OSErr TempClosePicture(PicHandle *resultPict){	OSErr	err;	GWorldPtr	cPort;	GDHandle	cDevice;		/* 1ƒoƒCƒg•â³ */	mError=CheckPictureByte();		/* ƒsƒNƒ`ƒƒ‹L˜^I—¹ */	ClosePicture();		/* PutPicture‚ğŒ³‚É–ß‚· */	GetGWorld(&cPort,&cDevice);	SetPortCGrafProcs(cPort,mSavedProcs);	DisposeQDPutPicUPP(mProcs.putPicProc);	DisposeHandle((Handle)mPicture);		/* ƒNƒŠƒbƒvƒŠ[ƒWƒ‡ƒ“‚ğŒ³‚É–ß‚· */	SetClip(mClipRgn);	DisposeRgn(mClipRgn);		if (mError!=noErr)	{		TempDisposeHandle(mPictureHnd,&err);		*resultPict = nil;	}	else if (mPictureSize != mHandleSize)	{		SetHandleSize(mPictureHnd,mPictureSize);		*resultPict = (PicHandle)mPictureHnd;	}		return mError;}pascal void PutPicToTempMem(const void *p,SInt16 bytes){	const SInt32    needSize = mPictureSize + bytes;	if ( mError )  return;      // error‚ª‹N‚±‚Á‚½‚çŒã‚Í skip		if (mHandleSize < needSize) {		// Grow‰ñ”‚ğŒ¸‚ç‚µ‚Ä‚‘¬‰»‚·‚é‚½‚ß‘å‚«‚ß‚Å’§í		SetHandleSize(mPictureHnd,needSize + kExtraGrowSize);		mError = MemError();		if ( mError ) {			// ‚Ò‚Á‚½‚è‚Ì‘å‚«‚³‚ÅÄ’§í			SetHandleSize(mPictureHnd,needSize);			mError = MemError();			if ( mError )  return;		}		mHandleSize = GetHandleSize(mPictureHnd);	}	BlockMoveData(p,*mPictureHnd + mPictureSize,bytes);	mPictureSize += bytes;}/* ƒOƒŒ[ƒXƒP[ƒ‹‚ÌƒJƒ‰[ƒe[ƒuƒ‹‚ğ“¾‚é *//* order = true‚ÌA~‡ */CTabHandle GetGrayscaleCTable(short depth,Boolean order){	CTabHandle	ctab;	ColorSpec	*cspec;	short		num_palette=1<<depth;		ctab=(CTabHandle)NewHandle(sizeof(ColorTable)+sizeof(ColorSpec)*(num_palette-1));	if (ctab != nil)	{		short	i;		UInt16	c;				/* ƒJƒ‰[ƒe[ƒuƒ‹‚É’l‚ğ‘ã“ü */		HLock((Handle)ctab);		(*ctab)->ctSeed=UniqueID('clut');		(*ctab)->ctFlags=0;		(*ctab)->ctSize=num_palette-1;				cspec = &(*ctab)->ctTable[0];		for (i=0; i<num_palette; i++)		{			c=0xFFFFUL*i/(num_palette-1);			if (order) c^=0xFFFF;						cspec[i].value=i;			cspec[i].rgb.red=c;			cspec[i].rgb.green=c;			cspec[i].rgb.blue=c;		}		HUnlock((Handle)ctab);	}	return ctab;}/* PixMap‚Åg‚í‚ê‚Ä‚¢‚éF‚ğ’²‚×‚éi256FŒÀ’èj */OSErr GetPixMapColors(PixMapHandle pmh,CTabHandle *ctab,short *colorNum){	short	x,y,i;	UInt8	*colors,*dataAddr,*temp;	short	rowBytes;	Rect	bounds;	CTabHandle	ctable,ori_ctable;	ColorSpec	*cspec,*ori_cspec;	short	num;	short	num_palette;		/* 256FˆÈŠO‚Ìê‡‚ÍƒGƒ‰[ */	if ((*pmh)->pixelSize != 8) return paramErr;		/* FƒŠƒXƒg‚Ì‰Šú‰» */	num_palette = 256;	colors = (UInt8 *)NewPtrClear(num_palette);	if (colors == nil)		return memFullErr;		LockPixels(pmh);		/* ƒAƒhƒŒƒX‚È‚Ç‚Ì‰Šú‰» */	temp = dataAddr = (UInt8 *)(*pmh)->baseAddr;	rowBytes = (*pmh)->rowBytes & 0x3fff;	bounds = (*pmh)->bounds;		/* g‚í‚ê‚Ä‚¢‚éF‚ğ’²‚×‚é */	for (y = bounds.top; y < bounds.bottom; y++)	{		for (x = bounds.left; x < bounds.right; x++)		{			colors[*dataAddr++] = 1;		}		temp += rowBytes;		dataAddr = temp;	}		UnlockPixels(pmh);		/* g‚í‚ê‚Ä‚¢‚éF‚ÅƒJƒ‰[ƒe[ƒuƒ‹‚ğì¬ */	num = 0;	ctable = (CTabHandle)NewHandle(sizeof(ColorTable)+sizeof(ColorSpec)*(num_palette-1));	if (ctable == nil)	{		DisposePtr((Ptr)colors);		return memFullErr;	}		ori_ctable = (*pmh)->pmTable;	HLock((Handle)ctable);	HLock((Handle)ori_ctable);	cspec = &(*ctable)->ctTable[0];	ori_cspec = &(*ori_ctable)->ctTable[0];	(*ctable)->ctSeed = UniqueID('clut');	(*ctable)->ctFlags = 0;	for (i=0; i<num_palette; i++)	{		if (colors[i])		{			cspec[num].value=num;			cspec[num].rgb = ori_cspec[i].rgb;						num++;		}	}		(*ctable)->ctSize = num - 1;	HUnlock((Handle)ctable);	HUnlock((Handle)ori_ctable);	DisposePtr((Ptr)colors);		SetHandleSize((Handle)ctable,sizeof(ColorTable)+sizeof(ColorSpec)*(num-1));		*ctab = ctable;	*colorNum = num;		return noErr;}/* Picture‚ÌF”‚ğ’²‚×‚é */OSErr GetPictureUniqueColors(PicHandle picture,long *uniqueColors){	PictInfo	pictInfo;	OSErr		err;		err=GetPictInfo(picture,&pictInfo,0,0,0,0);	if (err==noErr)		*uniqueColors = pictInfo.uniqueColors;	return err;}static short gMaxDepth;/* PICT‚Åg‚í‚ê‚Ä‚¢‚éBitMap(PixMap)‚ÌÅ‘å[“x‚ğ’²‚×‚é */OSErr GetPictureMaxDepth(PicHandle picture,short *depth){	GrafPtr	curPort;	QDProcs		theQDProcs;	CQDProcs	theCQDProcs;	PicHandle	dummyPICT;	QDProcsPtr	tempProcs;		SetPortWindowPort(gPreviewWindow);	GetPort(&curPort);		gMaxDepth = 0;		/* bitsProc‚ğ’u‚«Š·‚¦‚ÄCopyBits‚ğ‰¡æ‚è‚·‚é */	tempProcs=(QDProcsPtr)GetPortGrafProcs(curPort);		if (IsPortColor(curPort))	{		SetStdCProcs(&theCQDProcs);		theCQDProcs.bitsProc=NewQDBitsUPP(MyGetDepthProc);		SetPortGrafProcs(curPort,&theCQDProcs);	}	else	{		SetStdProcs(&theQDProcs);		theQDProcs.bitsProc=NewQDBitsUPP(MyGetDepthProc);		SetPortGrafProcs(curPort,(CQDProcs *)&theQDProcs);	}		dummyPICT=OpenPicture(&(*picture)->picFrame);	DrawPicture(picture,&(*picture)->picFrame);	ClosePicture();	KillPicture(dummyPICT);		/* bitsProc‚ğŒ³‚É–ß‚· */	SetPortGrafProcs(curPort,(CQDProcs *)tempProcs);	SetPort(curPort);		*depth = gMaxDepth;	return noErr;}/* “n‚³‚ê‚½BitMap(PixMap)‚Ì[“x‚ğ’²‚×‚é */static pascal void MyGetDepthProc(const BitMap *bitPtr,const Rect *srcRect,const Rect *dstRect,	short mode,RgnHandle maskRgn){	#pragma unused(srcRect,dstRect,mode,maskRgn)	PixMapPtr aPixMap;	short tempRB;		tempRB = (*bitPtr).rowBytes;	if (tempRB < 0) {		if ((tempRB<<1) < 0)			aPixMap = (PixMapPtr) bitPtr;		else			aPixMap = (PixMapPtr) bitPtr;		if ((*aPixMap).pixelSize > gMaxDepth)	/* deepest pixmap so far? */			gMaxDepth = (*aPixMap).pixelSize;	}	else {		/* It's just a BitMap */		if (1 > gMaxDepth)			gMaxDepth = 1;	}}/* ƒvƒƒZƒX‚ÌŒŸõ */Boolean FindProcessFromCreatorAndType(OSType creator,OSType type,ProcessSerialNumber *psn){	ProcessInfoRec	procInfo;	Boolean			found=false;		psn->highLongOfPSN=0;	psn->lowLongOfPSN=kNoProcess;		procInfo.processInfoLength=sizeof(ProcessInfoRec);	procInfo.processName=nil;	procInfo.processAppSpec=nil;	procInfo.processLocation=nil;		while (GetNextProcess(psn)==noErr)	{		if (GetProcessInformation(psn,&procInfo)==noErr)		{			if (procInfo.processType==type && procInfo.processSignature==creator)			{				found=true;				break;			}		}	}	return found;}/* ƒtƒ@ƒCƒ‹‚ÌC³“ú‚ğ“¾‚é */OSErr FSpGetModDate(FSSpec *spec,unsigned long *modDate){	CInfoPBRec	cInfo;	OSErr	err;		cInfo.hFileInfo.ioFDirIndex=0;	/* ‚±‚ê‚ğ‚O‚É‚·‚é‚±‚Æ‚É‚æ‚Á‚ÄAioVRefNum‚Å¦‚³‚ê‚éƒ{ƒŠƒ…[ƒ€ƒŠƒtƒ@ƒŒƒ“ƒXA	   ioDirID‚Å¦‚³‚ê‚éƒfƒBƒŒƒNƒgƒŠ‚©‚çƒtƒ@ƒCƒ‹‚ğ“Á’è‚·‚é */	cInfo.hFileInfo.ioVRefNum=spec->vRefNum;	cInfo.hFileInfo.ioDirID=spec->parID;	cInfo.hFileInfo.ioNamePtr=(StringPtr)spec->name;		err=PBGetCatInfoSync(&cInfo);		if (err!=noErr) return err;	else	{		*modDate=cInfo.hFileInfo.ioFlMdDat;		return noErr;	}}/* Šg’£qŠÖŒW *//* ƒtƒ@ƒCƒ‹–¼‚ÌŠg’£qˆÈŠO‚Ì•”•ª‚ğ“¾‚é */short GetBodyLength(Str255 filename){	short	i;	Boolean	n=false;	UInt8	c;		for (i=filename[0]; i>0; i--)	{		c = filename[i];		if (c=='.' && n) break;		if (c<'0' || c>'9') n=true;	}	if (i>0)		return i-1;	else		return filename[0];}/* ƒtƒ@ƒCƒ‹–¼‚ÌŠg’£qˆÈŠO‚Ì•”•ª‚ğ“¾‚é */short GetBodyLength2(Str255 filename){	short	i;	UInt8	c;		for (i=filename[0]; i>0; i--)	{		c = filename[i];		if (c<'0' || c>'9' || c=='.') break;	}	if (i>0)		if (c=='.')			return i-1;		else			return i;	else		return filename[0];}/* ƒtƒ@ƒCƒ‹–¼‚ÌŠg’£q‚ğ•ÏX‚·‚é */short ChangeSuffix(Str255 filename,Str255 suffix){	short	bodyLength;		filename[0]=GetBodyLength(filename);	bodyLength=GetBodyLength2(filename);	TruncPString(filename,filename,min(bodyLength,31-suffix[0]));		PStrCat(suffix,filename);		return bodyLength;}/* Šg’£q‚ğ“¾‚é */void GetSuffix(Str255 filename,Str255 suffix){	short	bodyLength;		bodyLength=GetBodyLength(filename);	suffix[0] = filename[0]-bodyLength;	BlockMoveData(&filename[bodyLength+1],&suffix[1],suffix[0]);}/* Šg’£q‚©‚çƒtƒ@ƒCƒ‹ƒ^ƒCƒv‚É•ÏŠ· */OSErr GetFileTypeFromSuffix(Str255 filename,OSType *fileType){	Str255	suffix;	Str15	suffixList[] = {"\p.pict","\p.pct","\p.png","\p.icns","\p.jpeg","\p.jpg","\p.gif",							"\p.psd","\p.bmp","\p.rsrc","\p.ico"};	OSType	typeList[] = {kPICTFileType,kPICTFileType,kPNGFileType,kXIconFileType,kQTFileTypeJPEG,							kQTFileTypeJPEG,kGIFFileType,kQTFileTypePhotoShop,kQTFileTypeBMP,							kResourceFileType,kWinIconFileType};	const short	num = 11;	short	i;		GetSuffix(filename,suffix);		for (i=0; i<num; i++)	{		if (EqualString(suffix,suffixList[i],false,true))			break;	}		if (i < num) *fileType = typeList[i];		return noErr;}/* w’è‚ÌƒAƒvƒŠƒP[ƒVƒ‡ƒ“‚Åƒtƒ@ƒCƒ‹‚ğŠJ‚­ */void AEOpenFileWithApplication(FSSpec *theFile,FSSpec *theApplication){	#if TARGET_RT_MAC_MACHO	{		/* Launch Service‚ğg‚¤ */		FSRef	appRef;		FSRef	itemRef;		OSErr	err;		LSLaunchFSRefSpec	launchSpec;				err = FSpMakeFSRef(theApplication,&appRef);		if (err != noErr) return;				err = FSpMakeFSRef(theFile,&itemRef);		if (err != noErr) return;				launchSpec.appRef = &appRef;		launchSpec.numDocs = 1;		launchSpec.itemRefs = &itemRef;		launchSpec.passThruParams = NULL;		launchSpec.launchFlags = kLSLaunchDefaults;		launchSpec.asyncRefCon = NULL;				err = LSOpenFromRefSpec(&launchSpec,NULL);	}	#else	{		ProcessSerialNumber	psn;		LaunchParamBlockRec	launchParams;		AEDesc				launchParamDesc={typeNull,NULL};		OSErr				err;		AppleEvent			aeEvent={typeNull,NULL};				/* ‚È‚É‚©‚ÌProcessSerialNumber‚ª•K—v‚È‚Ì‚Å‚Æ‚è‚ ‚¦‚¸©•ª©g‚Ì‚à‚Ì‚ğg‚¤ */		GetCurrentProcess(&psn);			err=MakeOpenDocumentEvent(&psn,theFile,&aeEvent);		if (err==noErr)		{			/* ‚Å‚«‚½AppleƒCƒxƒ“ƒg‚ğtypeAppParametersƒ^ƒCƒv‚ÌƒfƒXƒNƒŠƒvƒ^‚É•ÏŠ· */			err=AECoerceDesc(&aeEvent,typeAppParameters,&launchParamDesc);			if (err==noErr)			{				/* launchParams‚Éƒpƒ‰ƒ[ƒ^‚ğİ’è */				launchParams.launchBlockID		= extendedBlock;				launchParams.launchEPBLength	= extendedBlockLen;				launchParams.launchFileFlags	= 0;				launchParams.launchControlFlags	= launchContinue+launchNoFileFlags;				launchParams.launchAppSpec		= theApplication;								#if TARGET_API_MAC_CARBON				{					Size	dataSize;										dataSize=AEGetDescDataSize(&launchParamDesc);					launchParams.launchAppParameters=(AppParametersPtr)NewPtr(dataSize);					err=AEGetDescData(&launchParamDesc,launchParams.launchAppParameters,dataSize);				}				#else				HLock(launchParamDesc.dataHandle);				launchParams.launchAppParameters= (AppParametersPtr)*(launchParamDesc.dataHandle);				#endif								err = LaunchApplication(&launchParams);								#if TARGET_API_MAC_CARBON				DisposePtr((Ptr)launchParams.launchAppParameters);				#else				HUnlock((Handle)launchParamDesc.dataHandle);				#endif				err=AEDisposeDesc(&launchParamDesc);			}		}	}	#endif}/* 'odoc'ƒCƒxƒ“ƒg‚ğì‚é */OSErr MakeOpenDocumentEvent(ProcessSerialNumber *targetPSN,FSSpec *theIconFile,AppleEvent *odocEvent){	OSErr		err;	AppleEvent	aeEvent={typeNull,NULL};	AEDesc		target={typeNull,NULL};	AEDescList	fileList={typeNull,NULL};	AliasHandle	fileAlias=nil;		/* ƒ^[ƒQƒbƒgƒAƒvƒŠƒP[ƒVƒ‡ƒ“‚ÌƒfƒXƒNƒŠƒvƒ^‚ğì¬ */	err=AECreateDesc(typeProcessSerialNumber,targetPSN,sizeof(ProcessSerialNumber),&target);		/* AppleƒCƒxƒ“ƒg‚ğì¬ */	err=AECreateAppleEvent(kCoreEventClass,kAEOpenDocuments,&target,kAutoGenerateReturnID,							kAnyTransactionID,&aeEvent);		/* ŠJ‚­ƒtƒ@ƒCƒ‹‚ÌƒŠƒXƒg‚ğì¬ */	err=AECreateList(nil,0,false,&fileList);		/* ƒŠƒXƒg‚Éƒtƒ@ƒCƒ‹‚ğ’Ç‰Á */	err=NewAlias(nil,theIconFile,&fileAlias);	if (err==noErr)	{		HLock((Handle)fileAlias);#if __AL_USE_OPAQUE_RECORD__		Size aliasSize = GetAliasSize( fileAlias );#else		unsigned short aliasSize = (*fileAlias)->aliasSize;#endif		err=AEPutPtr(&fileList,1,typeAlias,(Ptr)*fileAlias,aliasSize);		HUnlock((Handle)fileAlias);		DisposeHandle((Handle)fileAlias);	}		/* ì¬‚µ‚½ƒtƒ@ƒCƒ‹ƒŠƒXƒg‚ğAppleEvent‚ÌkeyDirectObjectƒpƒ‰ƒ[ƒ^‚Éİ’è */	err=AEPutParamDesc(&aeEvent,keyDirectObject,&fileList);		/* ‚Å‚«‚½ƒCƒxƒ“ƒg‚ğ•Ô‚· */	*odocEvent=aeEvent;		/* ì¬‚µ‚½ƒfƒXƒNƒŠƒvƒ^‚ğ”jŠü */	err=AEDisposeDesc(&target);	err=AEDisposeDesc(&fileList);		return err;}/* 'fupd'ƒCƒxƒ“ƒg‚ğì‚é */OSErr MakeUpdateEvent(const FSSpec *theFile,AppleEvent *result){	OSErr		err;	AppleEvent	aeEvent={typeNull,NULL};	AEDesc		target={typeNull,NULL};	AEDesc		fileDesc={typeNull,NULL};	AliasHandle	fileAlias=NULL;	ProcessSerialNumber	psn;		/* Finder‚ğ’T‚· */	if (!FindProcessFromCreatorAndType(kFinderCreator,kFinderType,&psn)) return -1;		/* ƒ^[ƒQƒbƒgƒAƒvƒŠƒP[ƒVƒ‡ƒ“‚ÌƒfƒXƒNƒŠƒvƒ^‚ğì¬ */	err=AECreateDesc(typeProcessSerialNumber,&psn,sizeof(ProcessSerialNumber),&target);	if (err!=noErr) return err;		/* AppleƒCƒxƒ“ƒg‚ğì¬ */	err=AECreateAppleEvent(kAEFinderSuite,kAESync,&target,kAutoGenerateReturnID,							kAnyTransactionID,&aeEvent);	if (err!=noErr) return err;		/* XV‚·‚éƒtƒ@ƒCƒ‹‚ÌƒfƒXƒNƒŠƒvƒ^‚ğì¬ */	err=NewAlias(NULL,theFile,&fileAlias);	if (err!=noErr) return err;		HLock((Handle)fileAlias);#if __AL_USE_OPAQUE_RECORD__	Size aliasSize = GetAliasSize( fileAlias );#else	unsigned short aliasSize = (*fileAlias)->aliasSize;#endif	err=AECreateDesc(typeAlias,(Ptr)*fileAlias,aliasSize,&fileDesc);	HUnlock((Handle)fileAlias);	DisposeHandle((Handle)fileAlias);		/* XV‚·‚éƒtƒ@ƒCƒ‹‚ÌƒfƒXƒNƒŠƒvƒ^‚ğkeyDirectObject‚Éw’è */	err=AEPutParamDesc(&aeEvent,keyDirectObject,&fileDesc);		/* ‚Å‚«‚½ƒCƒxƒ“ƒg‚ğ•Ô‚· */	*result = aeEvent;		/* ì¬‚µ‚½ƒfƒXƒNƒŠƒvƒ^‚ğ”jŠü */	AEDisposeDesc(&target);	AEDisposeDesc(&fileDesc);		return err;}/* System Folder‚Ì‚ ‚éƒ{ƒŠƒ…[ƒ€ƒŠƒtƒ@ƒŒƒ“ƒX‚ğ“¾‚é *//* thanks > Mr. Hideaki Iimori */SInt16  GetFindFolderVRefNum(void){	SInt16      vRefNum = kOnSystemDisk;	SInt32      response;	OSStatus    err = Gestalt(gestaltFindFolderAttr,&response);	if (err == noErr) {		if ((response & (1L << gestaltFolderMgrSupportsDomains)) != 0) {			vRefNum = kUserDomain;		}		else if ((response & (1L << gestaltFolderMgrSupportsExtendedCalls)) != 0) {			vRefNum = kOnAppropriateDisk;		}	}		return vRefNum;}/* Drag & DropŠÖ˜A *//* ƒhƒ‰ƒbƒO‚³‚ê‚½ˆÊ’u‚ğ“¾‚é */pascal OSErr GetDropDirectory (DragReference dragRef, FSSpecPtr fssOut){	OSErr err = noErr;		AEDesc dropLocAlias = { typeNull, nil };		if (!(err = GetDropLocation (dragRef, &dropLocAlias)))	{		if (dropLocAlias.descriptorType != typeAlias)			err = paramErr;		else		{			AEDesc dropLocFSS = { typeNull, nil };			if (!(err = AECoerceDesc(&dropLocAlias, typeFSS, &dropLocFSS)))			{				#if TARGET_API_MAC_CARBON				err = AEGetDescData(&dropLocFSS,&fssOut,sizeof(FSSpec));				#else				BlockMoveData(*(dropLocFSS.dataHandle),fssOut,sizeof(FSSpec));								#endif				err = AEDisposeDesc (&dropLocFSS);			}		}				if (dropLocAlias.dataHandle)		{			OSErr err2 = AEDisposeDesc (&dropLocAlias);			if (!err) err = err2;		}	}		return err;}/* ƒZƒ‹‚Ì‘I‘ğ‚ğ‰ğœ‚·‚é */void CancelSelect(ListHandle theList){	Cell	theCell={0,0};		while (LGetSelect(true,&theCell,theList))		LSetSelect(false,theCell,theList);}/* UnicodeŠÖ˜A *//* FSSpec‚©‚çƒtƒ@ƒCƒ‹–¼‚ğ“¾‚éiUnicode‘Î‰j */void FSpGetFileName(const FSSpec *theFile,Str255 filename){	#if !TARGET_API_MAC_CARBON		PStrCpy(theFile->name,filename);	#else		FSRef			fileRef;		OSErr			err;		HFSUniStr255	name;		CFStringRef		strRef;				/* ‚Ü‚¸AFSRef‚É•ÏŠ· */		err = FSpMakeFSRef(theFile,&fileRef);		if (err != noErr) return ;				/* FSGetCatalogInfo‚ÅUnicode‚Ìƒtƒ@ƒCƒ‹–¼‚ğ“¾‚é */		err = FSGetCatalogInfo(&fileRef,kFSCatInfoNone,NULL,&name,NULL,NULL);				/* Unicode•¶š—ñ‚ğCFString‚É•ÏŠ· */		strRef = CFStringCreateWithCharacters(kCFAllocatorDefault,			name.unicode,name.length);				/* CFString‚ğPascal•¶š—ñ‚É•ÏŠ· */		#if 0		{			short length = CFStringGetLength(strRef);			if (length > 255) length = 255;			filename[0] = CFStringGetBytes(strRef,CFRangeMake(0,length),				kTextEncodingMacJapanese,'^',false,&filename[1],255,NULL);		}		#else		CFStringGetPascalString(strRef,filename,255,kTextEncodingMacJapanese);		#endif				CFRelease(strRef);	#endif}/* from MoreFilesExtras.c */#ifdef __MOREFILESX__pascal	void	TruncPString(StringPtr destination,							 ConstStr255Param source,							 short maxLength){	short	charType;		if ( source != NULL && destination != NULL )	/* don't do anything stupid */	{		if ( source[0] > maxLength )		{			/* Make sure the string isn't truncated in the middle of */			/* a multi-byte character. */			while (maxLength != 0)			{				/* Note: CharacterByteType's textOffset parameter is zero-based from the textPtr parameter */				charType = CharacterByteType((Ptr)&source[1], maxLength - 1, smSystemScript);				if ( (charType == smSingleByte) || (charType == smLastByte) )					break;	/* source[maxLength] is now a valid last character */ 				--maxLength;			}		}		else		{			maxLength = source[0];		}		/* Set the destination string length */		destination[0] = maxLength;		/* and copy maxLength characters (if needed) */		if ( source != destination )		{			while ( maxLength != 0 )			{				destination[maxLength] = source[maxLength];				--maxLength;			}		}	}}#endif
+/* ------------------------------------------------------------ */
+/*  Useful Routines.c                                           */
+/*     ä½¿ãˆã‚‹ãƒ«ãƒ¼ãƒãƒ³ï¼ˆè‹¦ç¬‘ï¼‰                                   */
+/*                                                              */
+/*                 1997.1.11 - 2001.2.3  naoki iimura        	*/
+/* ------------------------------------------------------------ */
+
+/* includes */
+#ifdef __APPLE_CC__
+#include	<Carbon/Carbon.h>
+#include	<QuickTime/QuickTime.h>
+#else
+#include	<Fonts.h>
+#include	<NumberFormatting.h>
+#include	<StringCompare.h>
+#include	<TextUtils.h>
+#include	<Controls.h>
+#ifndef kControlButtonPart
+#include	<ControlDefinitions.h>
+#endif
+#include	<Resources.h>
+#include	<QuickTimeComponents.h>
+#include	<PictUtils.h>
+#include	<FinderRegistry.h>
+#endif
+
+#ifdef __APPLE_CC__
+#include	"MoreFilesX.h"
+#else
+#include	"MoreFilesExtras.h"
+#endif
+
+#include	"Globals.h"
+#include	"UsefulRoutines.h"
+#include	"PreCarbonSupport.h"
+
+/* local routine */
+static pascal void MyGetDepthProc(const BitMap *bitPtr,const Rect *srcRect,const Rect *dstRect,
+	short mode,RgnHandle maskRgn);
+
+
+/* -> IconParty.c */
+extern void MySetCursor(short id);
+
+/* -> window.c */
+extern void	DoUpdate(EventRecord *theEvent);
+
+/* ãƒ„ãƒ¼ãƒ«ãƒœãƒƒã‚¯ã‚¹ã®åˆæœŸåŒ– */
+void ToolBoxInit(void)
+{
+	#if !TARGET_API_MAC_CARBON
+	InitGraf(&qd.thePort);
+	InitFonts();
+	InitWindows();
+	InitMenus();
+	TEInit();
+	InitDialogs(nil);
+	#endif
+	InitCursor();
+}
+
+/* ã‚¨ãƒ©ãƒ¼è¡¨ç¤º */
+void ErrorAlert(const StringPtr errStr)
+{
+	DeactivateFloatersAndFirstDocumentWindow();
+	
+	ParamText(errStr,"\p","\p","\p");
+	
+	Alert(201,0);
+	
+	ActivateFloatersAndFirstDocumentWindow();
+}
+
+/* ã‚¨ãƒ©ãƒ¼è¡¨ç¤º2ï¼ˆã‚¨ãƒ©ãƒ¼ã‚³ãƒ¼ãƒ‰ã¤ãï¼‰ */
+void ErrorAlert2(const StringPtr errStr,short errCode)
+{
+	Str255	errCodeStr;
+	
+	DeactivateFloatersAndFirstDocumentWindow();
+	
+	NumToString(errCode,errCodeStr);
+	ParamText(errStr,errCodeStr,"\p","\p");
+	
+	Alert(202,0);
+	
+	ActivateFloatersAndFirstDocumentWindow();
+}
+
+/* ã‚¨ãƒ©ãƒ¼è¡¨ç¤ºï¼ˆãƒªã‚½ãƒ¼ã‚¹ã‹ã‚‰ï¼‰ */
+void ErrorAlertFromResource(short res_id,short num)
+{
+	Str255	errStr;
+	
+	GetIndString(errStr,res_id,num);
+	ErrorAlert(errStr);
+}
+
+/* ãƒ¦ãƒ¼ã‚¶ã«æ˜¯éã‚’å•ã† */
+OSErr MyConfirmDialog(const StringPtr prompt,const StringPtr okString,
+	short *defaultSelection)
+{
+	short		dialogID;
+	DialogPtr	theDialog;
+	short		item;
+	ModalFilterUPP	mfUPP;
+	
+	if (defaultSelection == NULL)
+		dialogID = 150;
+	else
+	{
+		if (*defaultSelection == ok) return noErr;
+		if (*defaultSelection == cancel) return userCanceledErr;
+		
+		dialogID = 151;
+	}
+	
+	MySetCursor(0);
+//	DeactivateFloatersAndFirstDocumentWindow();
+	
+	ParamText(prompt,"\p","\p","\p");
+	theDialog = GetNewDialog(dialogID,NULL,kFirstWindowOfClass);
+	if (okString) SetDialogControlTitle(theDialog,ok,okString);
+	
+	SetDialogDefaultItem(theDialog,ok);
+	SetDialogCancelItem(theDialog,ok);
+	ShowWindow(GetDialogWindow(theDialog));
+	
+	item = 3;
+	mfUPP=NewModalFilterUPP(MyModalDialogFilter);
+	while (item != ok && item != cancel)
+	{
+		ModalDialog(mfUPP,&item);
+		
+		if (item == 3 && defaultSelection != NULL)
+		{
+			SetDialogControlValue(theDialog,3,!GetDialogControlValue(theDialog,3));
+		}
+	}
+	
+	DisposeDialog(theDialog);
+	DisposeModalFilterUPP(mfUPP);
+//	ActivateFloatersAndFirstDocumentWindow();
+	
+	return (item == ok ? noErr : userCanceledErr);
+}
+
+/* ã‚¯ãƒªã‚¨ãƒ¼ã‚¿ã‚³ãƒ¼ãƒ‰ã‹ã‚‰ã‚¢ãƒ—ãƒªã‚±ãƒ¼ã‚·ãƒ§ãƒ³ã®ãƒ‘ã‚¹ã‚’æ±‚ã‚ã‚‹ */
+OSErr GetApplSpec(OSType creator,FSSpec *applSpec)
+{
+	short 			i = 0;
+	OSErr			err;
+	HVolumeParam	vparamRec;
+	DTPBRec			paramBlock;
+	Boolean			boolFoundIt=false;
+	
+	vparamRec.ioCompletion = NULL;
+	vparamRec.ioNamePtr = NULL;
+	applSpec->name[0]=0;
+	
+	do {
+			vparamRec.ioVRefNum = 0;
+			vparamRec.ioVolIndex = ++i;
+		
+			err = PBHGetVInfoSync( (HParmBlkPtr)&vparamRec );
+//														grab desktop database
+			if ( err == noErr ) 
+			{
+				paramBlock.ioNamePtr = NULL;
+				paramBlock.ioVRefNum = vparamRec.ioVRefNum;
+				err = PBDTGetPath( &paramBlock );
+//														search desktop for app
+				if ( err == noErr ) 
+				{
+					paramBlock.ioIndex = 0;	/* ä½œæˆæ—¥ãŒä¸€ç•ªæœ€è¿‘ã®ã‚¢ãƒ—ãƒªã‚±ãƒ¼ã‚·ãƒ§ãƒ³ã‚’æ¢ã™ */
+					paramBlock.ioNamePtr = applSpec->name;
+					paramBlock.ioFileCreator = creator;
+					paramBlock.ioCompletion = NULL;
+					err = PBDTGetAPPLSync( &paramBlock );
+					if ( err == noErr )
+						boolFoundIt = true;
+				}
+				err = noErr;
+			}
+		} while ( !boolFoundIt && ( err == noErr ) );
+//														store data in fsspec
+	if ( boolFoundIt ) 
+	{
+		err = noErr;	/* ã„ã‚‰ã‚“ã‹ */
+		applSpec->vRefNum = paramBlock.ioVRefNum;
+		applSpec->parID = paramBlock.ioAPPLParID;
+	}
+	else
+		err = afpItemNotFound;
+	
+	return err;
+}
+
+/* ã‚¯ãƒªã‚¨ãƒ¼ã‚¿ã‚³ãƒ¼ãƒ‰ã‹ã‚‰ã‚¢ãƒ—ãƒªã‚±ãƒ¼ã‚·ãƒ§ãƒ³åã‚’æ±‚ã‚ã‚‹ */
+OSErr CreatorToAppl(OSType creator,Str255 applName)
+{
+	OSErr	err;
+	FSSpec	applSpec;
+	
+	err=GetApplSpec(creator,&applSpec);
+	
+	if (err == noErr)
+	{
+		PStrCpy(applSpec.name,applName);
+	}
+	else
+		GetIndString(applName,153,1);
+	
+	return err;
+}
+
+/* ãƒ•ã‚¡ã‚¤ãƒ«ã‚ªãƒ¼ãƒ—ãƒ³ãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã®ãƒ•ã‚£ãƒ«ã‚¿ï¼ˆä¸å¯è¦–ãƒ•ã‚¡ã‚¤ãƒ«ã‚’éè¡¨ç¤ºï¼‰ */
+pascal Boolean FilterInvisFiles(CInfoPBPtr pb)
+{
+	if ((pb->hFileInfo.ioFlFndrInfo.fdFlags) & fInvisible)
+		return true;
+	else
+		return false;
+}
+
+/* ã‚¨ã‚¤ãƒªã‚¢ã‚¹ã®å…ƒãƒ•ã‚¡ã‚¤ãƒ«ã‚’æ¢ã™ã€‚ãƒ¦ãƒ¼ã‚¶ã‚¤ãƒ³ã‚¿ãƒ©ã‚¯ã‚·ãƒ§ãƒ³ã‚’è¨±å¯ã—ãªã„ */
+OSErr ResolveAliasFileWithNoUI(FSSpec *fromFile,Boolean resolveAliasChains,Boolean *wasAliased)
+{
+	OSErr	err;
+	Boolean	isFolder;
+	
+	err=MyIsAliasFile(fromFile,wasAliased,&isFolder);
+	if (*wasAliased)
+	{
+		err=ResolveAliasFileWithNoUIMain(fromFile,resolveAliasChains);
+	}
+	
+	return err;
+}
+
+/* ãƒ¦ãƒ¼ã‚¶ã‚¤ãƒ³ã‚¿ãƒ©ã‚¯ã‚·ãƒ§ãƒ³ãªã—ã§ã‚¨ã‚¤ãƒªã‚¢ã‚¹ãƒ•ã‚¡ã‚¤ãƒ«ã‚’è§£æ±ºã™ã‚‹ */
+OSErr ResolveAliasFileWithNoUIMain(FSSpec *fromFile,Boolean resolveAliasChains)
+{
+	OSErr	err;
+	short	refNum;
+	AliasHandle	theAlias;
+	Boolean	needsUpdate,wasChanged;
+	FSSpec	theSpec;
+	Boolean	isAlias,isFolder;
+	short	count=1;
+	
+	refNum=FSpOpenResFile(fromFile,fsRdPerm);
+	if (refNum <= 0) return ResError();
+	
+	theAlias=(AliasHandle)Get1Resource(rAliasType,0);
+	if (theAlias == nil) return -1;
+	
+	err=MatchAlias(nil,kARMNoUI+kARMMultVols+kARMSearch,theAlias,&count,&theSpec,&needsUpdate,nil,nil);
+	if (err==noErr)
+	{
+		*fromFile=theSpec;
+		if (needsUpdate)
+			err=UpdateAlias(nil,&theSpec,theAlias,&wasChanged);
+	}
+	CloseResFile(refNum);
+	
+	if (err==noErr && resolveAliasChains)
+	{
+		err=MyIsAliasFile(fromFile,&isAlias,&isFolder);
+		if (err==noErr && isAlias)
+			err=ResolveAliasFileWithNoUIMain(fromFile,resolveAliasChains);
+	}
+	
+	return err;
+}
+
+/* ã‚¨ã‚¤ãƒªã‚¢ã‚¹ã‹ã©ã†ã‹ã‚’ãƒã‚§ãƒƒã‚¯ */
+OSErr MyIsAliasFile(const FSSpec *fileFSSpec,Boolean *aliasFileFlag,Boolean *folderFlag)
+{
+	OSErr	err;
+	#ifdef __MOREFILESX__
+	FSRef	fsRef;
+	FinderInfo	info;
+	Boolean	isDirectory;
+	#else
+	FInfo	fInfo;
+	#endif
+	
+	*aliasFileFlag=false;
+	*folderFlag=false;
+	
+	#ifdef __MOREFILESX__
+	err = FSpMakeFSRef(fileFSSpec,&fsRef);
+	err = FSGetFinderInfo(&fsRef,&info,NULL,&isDirectory);
+	
+	if (err == noErr) {
+		if (!isDirectory)
+			*aliasFileFlag = ((info.file.finderFlags & kIsAlias) != 0);
+		*folderFlag = isDirectory;
+	}
+	
+	#else
+	err=FSpGetFInfo(fileFSSpec,&fInfo);
+	if (err==noErr)
+	{
+		*aliasFileFlag = (fInfo.fdFlags & kIsAlias) != 0;
+	}
+	else
+	{
+		DInfo	dInfo;
+		
+		err=FSpGetDInfo(fileFSSpec,&dInfo);
+		if (err==noErr) *folderFlag=true;
+	}
+	#endif
+	
+	return err;
+}
+
+/* ãƒ¦ãƒ¼ã‚¶ã‚¤ãƒ³ã‚¿ãƒ©ã‚¯ã‚·ãƒ§ãƒ³ãªã—ã§ã‚¨ã‚¤ãƒªã‚¢ã‚¹ã‚’è§£æ±ºã™ã‚‹ */
+OSErr ResolveAliasWithNoUI(AliasHandle theAlias,FSSpec *theFile,Boolean resolveAliasChains)
+{
+	OSErr	err;
+	Boolean	needsUpdate,wasChanged;
+	FSSpec	theSpec;
+	Boolean	isAlias,isFolder;
+	short	count=1;
+	
+	err=MatchAlias(nil,kARMNoUI+kARMMultVols+kARMSearch,theAlias,&count,&theSpec,&needsUpdate,nil,nil);
+	if (err==noErr)
+	{
+		*theFile=theSpec;
+		if (needsUpdate)
+			err=UpdateAlias(nil,&theSpec,theAlias,&wasChanged);
+	}
+	
+	if (err==noErr && resolveAliasChains)
+	{
+		err=MyIsAliasFile(&theSpec,&isAlias,&isFolder);
+		if (err==noErr && isAlias)
+			err=ResolveAliasFileWithNoUIMain(&theSpec,resolveAliasChains);
+	}
+	
+	return err;
+}
+
+/* ãƒœã‚¿ãƒ³ã‚’ãƒã‚¤ãƒ©ã‚¤ãƒˆã•ã›ã‚‹ */
+void HiliteButton(DialogPtr dp,short item)
+{
+	short	itemType;
+	Rect	box;
+	Handle	itemHandle;
+	unsigned long	tilticks;
+	
+	GetDialogItem(dp,item,&itemType,&itemHandle,&box);
+	if (itemType!=ctrlItem+btnCtrl && itemType!=ctrlItem+resCtrl) return;
+	
+	HiliteControl((ControlHandle)itemHandle,kControlButtonPart);
+	Delay(kMyButtonDelay,&tilticks);
+	HiliteControl((ControlHandle)itemHandle,false);
+}
+
+/* æ–‡å­—åˆ—ã®ç½®ãæ›ãˆ */
+void ReplaceString(Str255 base,Str255 subs,Str15 key)
+{
+	Handle	baseH,subsH;
+	OSErr	err;
+	short	result;
+	
+	err=PtrToHand(&base[1],&baseH,*base);
+	err=PtrToHand(&subs[1],&subsH,*subs);
+	
+	result=ReplaceText(baseH,subsH,key);
+	
+	if (result>0)
+	{
+		*base=GetHandleSize(baseH);
+		BlockMoveData(*baseH,&base[1],*base);
+	}
+	
+	DisposeHandle(baseH);
+	DisposeHandle(subsH);
+}
+
+/* check 2 colors are equal or not */
+Boolean EqualColor(RGBColor *color1,RGBColor *color2)
+{
+	return (color1->red==color2->red)&&(color1->green==color2->green)&&
+		(color1->blue==color2->blue);
+}
+
+/* RGBColorã‹ã‚‰ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã«å¤‰æ› */
+short RGBColorToIndex(RGBColor *color)
+{
+	short	r=0xf & (short)color->red,g=0xf & (short)color->green,b=0xf & (short)color->blue;
+	
+	if (r==0 && g==0 && b==0) return 255; /* é»’ */
+	if (r%3==0 && g%3==0 && b%3==0) /* 216è‰² */
+		return (5-b/3)+(5-g/3)*6+(5-r/3)*36;
+	else
+		if (g==0) /* red or blue */
+			if (b==0) return 215+9-(r*2/3); /* red */
+			else return 235+9-(b*2/3); /* blue */
+		else /* green or gray */
+			if (r==0) return 225+9-(g*2/3); /* green */
+			else return 245+9-(r*2/3); /* gray */
+}
+
+/* ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã‹ã‚‰RGBColorã«å¤‰æ› */
+void IndexToRGBColor(short index,RGBColor *color)
+{
+	if (index < 215)
+		Set256RGBColor(color,(5-index/36)*3,(5-(index/6)%6)*3,(5-index%6)*3); /* 216 */
+	else if (index < 225)
+		Set256RGBColor(color,14-(index-215)*3/2,0,0); /* red */
+	else if (index < 235)
+		Set256RGBColor(color,0,14-(index-225)*3/2,0); /* green */
+	else if (index < 245)
+		Set256RGBColor(color,0,0,14-(index-235)*3/2); /* blue */
+	else if (index < 255)
+		Set256RGBColor(color,14-(index-245)*3/2,14-(index-245)*3/2,14-(index-245)*3/2); /* gray */
+	else
+		Set256RGBColor(color,0,0,0); /* black */
+}
+
+/* è‰²ã‚’è¨­å®š */
+void Set256RGBColor(RGBColor *color,short r,short g,short b)
+{
+	color->red=0x1111U*r;
+	color->green=0x1111U*g;
+	color->blue=0x1111U*b;
+}
+
+/* set color */
+void SetRGBColor(RGBColor *color,unsigned short red,unsigned short green,unsigned short blue)
+{
+	color->red=red;
+	color->green=green;
+	color->blue=blue;
+}
+
+/* ãƒ¢ãƒ¼ãƒ€ãƒ«ãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã®ãƒ•ã‚£ãƒ«ã‚¿ */
+pascal Boolean MyModalDialogFilter(DialogPtr theDialog,EventRecord *theEvent,short *theItemHit)
+{
+	Boolean		eventHandled=false;
+	WindowPtr	theWindow;
+	short		part;
+	char		key;
+	
+	switch (theEvent->what)
+	{
+		case updateEvt:
+			theWindow=(WindowPtr)theEvent->message;
+			if (theWindow!=nil && GetWindowKind(theWindow)!=kDialogWindowKind)
+					DoUpdate(theEvent);
+			break;
+		
+		case keyDown:
+		case autoKey:
+			key=theEvent->message & charCodeMask;
+			if ((theEvent->modifiers & cmdKey)!=0)
+				if (key==kPeriod)
+					key=kEscapeKey;
+			
+			switch (key)
+			{
+				case kReturnKey:
+				case kEnterKey:
+					*theItemHit=ok;
+					HiliteButton(theDialog,ok);
+					eventHandled=true;
+					break;
+				
+				case kEscapeKey:
+					*theItemHit=cancel;
+					HiliteButton(theDialog,cancel);
+					eventHandled=true;
+					break;
+				
+				case kUpArrowKey:
+				case kDownArrowKey:
+					{
+						SInt16	itemNo=GetDialogKeyboardFocusItem(theDialog);
+						Handle	theItemHandle;
+						Str255	theText;
+						SInt16	i;
+						SInt16	itemType;
+						Rect	r;
+						Boolean	numOK=true;
+						SInt32	number;
+						
+						/* ã‚¨ãƒ‡ã‚£ãƒƒãƒˆãƒ†ã‚­ã‚¹ãƒˆãŒé¸æŠã•ã‚Œã¦ã„ãªã„æ™‚ã¯ä½•ã‚‚ã—ãªã„ */
+						if (itemNo <= 0) break;
+						
+						/* æœ¬å½“ã«ã‚¨ãƒ‡ã‚£ãƒƒãƒˆãƒ†ã‚­ã‚¹ãƒˆã‹ã©ã†ã‹ã‚’åˆ¤å®šã™ã‚‹ */
+						GetDialogItem(theDialog,itemNo,&itemType,&theItemHandle,&r);
+						if (itemType != kEditTextDialogItem) break;
+						
+						/* æ–‡å­—ãŒå…¥åŠ›ã•ã‚Œã¦ã„ã‚‹ã‹ã©ã†ã‹ã‚’åˆ¤å®šã™ã‚‹ */
+						GetDialogItemText(theItemHandle,theText);
+						if (theText[0]==0) break;
+						
+						/* æ–‡å­—ãŒæ•°å­—ã ã‘ã‹ã©ã†ã‹ã‚’åˆ¤å®šã™ã‚‹ */
+						for (i=1; i<=theText[0]; i++)
+						{
+							if (theText[i] < '0' || theText[i] > '9') {numOK=false; break;}
+						}
+						if (!numOK) break;
+						
+						/* æ•°å­—ã‚’å¾—ã‚‹ */
+						StringToNum(theText,&number);
+						
+						/* çŸ¢å°ã‚­ãƒ¼ã®æ–¹å‘ã«ã‚ˆã‚Šã€å€¤ã‚’å¤‰æ›´ */
+						number+=(key == kUpArrowKey ? 1 : -1)*((theEvent->modifiers & shiftKey) ? 10 : 1);
+						if (number < 0) number=0;
+						
+						NumToString(number,theText);
+						SetDialogItemText(theItemHandle,theText);
+						SelectDialogItemText(theDialog,itemNo,0,theText[0]);
+						
+						*theItemHit=itemNo;
+						eventHandled=true;
+					}
+					break;
+			}
+			break;
+		
+		case mouseDown:
+			part=FindWindow(theEvent->where,&theWindow);
+			if (part==inDrag && theWindow==GetDialogWindow(theDialog))
+			{
+				Rect	myScreenRect;
+				
+				GetRegionBounds(GetGrayRgn(),&myScreenRect);
+				DragWindow(theWindow,theEvent->where,&myScreenRect);
+				eventHandled=true;
+			}
+			break;
+		
+		case nullEvent:
+			break;
+		
+		case osEvt:
+			if ((unsigned long)(theEvent->message & osEvtMessageMask) >> 24 == suspendResumeMessage)
+			{
+				if (theEvent->message & resumeFlag) /* resume */
+				{
+					ActivateDialogControl(theDialog);
+					ActivateFloatersAndFirstDocumentWindow();
+				}
+				else
+				{
+					DeactivateFloatersAndFirstDocumentWindow();
+					DeactivateDialogControl(theDialog);
+				}
+				MyInvalWindowPortBounds(GetDialogWindow(theDialog));
+			}
+			break;
+		
+	}
+	
+	return eventHandled;
+}
+
+#if !TARGET_API_MAC_CARBON
+/* ã‚«ã‚¹ã‚¿ãƒ ã‚»ãƒ¼ãƒ–ãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã®ã‚¢ã‚¯ãƒ†ã‚£ãƒ™ãƒ¼ãƒˆãƒ«ãƒ¼ãƒãƒ³ */
+pascal void MyActivate(DialogPtr theDialog,short item,Boolean activating,void *userData)
+{
+	#pragma unused(activating,userData)
+	
+	Rect	box;
+	RgnHandle	rgn;
+	
+	if (GetWRefCon(GetDialogWindow(theDialog))!=sfMainDialogRefCon)
+		return;
+	
+	switch (item)
+	{
+		case sfItemFileListUser:
+			break;
+		
+		case sfItemFileNameTextEdit:
+			GetDialogItemRect(theDialog,item,&box);
+			rgn=NewRgn();
+			RectRgn(rgn,&box);
+			UpdateDialog(theDialog,rgn);
+			DisposeRgn(rgn);
+			break;
+	}
+}
+#endif
+
+/* ãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã®ã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ«ã‚’Deactivate */
+void DeactivateDialogControl(DialogPtr theDialog)
+{
+	ControlHandle	theControl;
+	short			i;
+	short			itemType;
+	Handle			itemHandle;
+	Rect			itemRect;
+	short			itemNum;
+	UInt16			h;
+	
+	itemNum=CountDITL(theDialog);
+	for (i=1; i<=itemNum; i++)
+	{
+		GetDialogItem(theDialog,i,&itemType,&itemHandle,&itemRect);
+		switch (itemType)
+		{
+			case kButtonDialogItem:
+			case kCheckBoxDialogItem:
+			case kRadioButtonDialogItem:
+			case kResourceControlDialogItem:
+				theControl=(ControlHandle)itemHandle;
+				h=GetControlHilite(theControl);
+				if (h != 255)
+				{
+					SetDialogItem(theDialog,i,itemType+kItemDisableBit,itemHandle,&itemRect);
+					HiliteControl(theControl,255);
+				}
+				break;
+		}
+	}
+}
+
+/* ãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã®ã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ«ã‚’Activate */
+void ActivateDialogControl(DialogPtr theDialog)
+{
+	ControlHandle	theControl;
+	short			i;
+	short			itemType;
+	Handle			itemHandle;
+	Rect			itemRect;
+	short			itemNum;
+	UInt16			h;
+	
+	itemNum=CountDITL(theDialog);
+	for (i=1; i<=itemNum; i++)
+	{
+		GetDialogItem(theDialog,i,&itemType,&itemHandle,&itemRect);
+		switch (itemType)
+		{
+			case kButtonDialogItem+kItemDisableBit:
+			case kCheckBoxDialogItem+kItemDisableBit:
+			case kRadioButtonDialogItem+kItemDisableBit:
+			case kResourceControlDialogItem+kItemDisableBit:
+				theControl=(ControlHandle)itemHandle;
+				h=GetControlHilite(theControl);
+				if (h == 255)
+				{
+					SetDialogItem(theDialog,i,itemType-kItemDisableBit,itemHandle,&itemRect);
+					HiliteControl(theControl,0);
+				}
+				break;
+		}
+	}
+}
+
+/* ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ«ã‚’Deactivate */
+void DeactivateWindowControl(WindowPtr theWindow)
+{
+	ControlHandle	theControl;
+	OSErr			err;
+	
+	if (theWindow==nil) return;
+	
+	err=MyGetRootControl(theWindow,&theControl);
+	if (err!=noErr) return;
+	
+	#if TARGET_API_MAC_CARBON
+	{
+		UInt16	index,count;
+		ControlHandle	outControl;
+		
+		err=CountSubControls(theControl,&count);
+		for (index = 1; index <= count; index++)
+		{
+			err=GetIndexedSubControl(theControl,index,&outControl);
+			DeactivateControl(outControl);
+		}
+	}
+	#else
+	while (theControl != nil)
+	{
+		if (isAppearanceAvailable)
+			DeactivateControl(theControl);
+		else
+			HiliteControl(theControl,255);
+		
+		theControl=(*theControl)->nextControl;
+	}
+	#endif
+}
+
+/* ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ«ã‚’Activate */
+void ActivateWindowControl(WindowPtr theWindow)
+{
+	ControlHandle	theControl;
+	OSErr			err;
+	
+	if (theWindow==nil) return;
+	
+	err=MyGetRootControl(theWindow,&theControl);
+	if (err!=noErr) return;
+	
+	#if TARGET_API_MAC_CARBON
+	{
+		UInt16	index,count;
+		ControlHandle	outControl;
+		
+		err=CountSubControls(theControl,&count);
+		for (index = 1; index <= count; index++)
+		{
+			err=GetIndexedSubControl(theControl,index,&outControl);
+			ActivateControl(outControl);
+		}
+	}
+	#else
+	while (theControl != nil)
+	{
+		if (isAppearanceAvailable)
+			ActivateControl(theControl);
+		else
+			HiliteControl(theControl,0);
+		
+		theControl=(*theControl)->nextControl;
+	}
+	#endif
+}
+
+/* ãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã‹ã‚‰ã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ«ã‚’å–ã‚Šå‡ºã™ */
+Handle GetDialogItemHandle(DialogPtr theDialog,short itemNo)
+{
+	short	itemType;
+	Rect	box;
+	Handle	h;
+	
+	GetDialogItem(theDialog,itemNo,&itemType,&h,&box);
+	return h;
+}
+
+/* ãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã®ã‚¢ã‚¤ãƒ†ãƒ ã®ä½ç½®ã‚’å¾—ã‚‹ */
+void GetDialogItemRect(DialogPtr theDialog,short itemNo,Rect *r)
+{
+	short	itemType;
+	Handle	h;
+	
+	GetDialogItem(theDialog,itemNo,&itemType,&h,r);
+}
+
+/* ãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã®ã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ«ã‹ã‚‰å€¤ã‚’å–ã‚Šå‡ºã™ */
+short GetDialogControlValue(DialogPtr theDialog,short itemNo)
+{
+	return GetControlValue((ControlHandle)GetDialogItemHandle(theDialog,itemNo));
+}
+
+/* ãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã®ã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ«ã«å€¤ã‚’è¨­å®šã™ã‚‹ */
+void SetDialogControlValue(DialogPtr theDialog,short itemNo,short value)
+{
+	SetControlValue((ControlHandle)GetDialogItemHandle(theDialog,itemNo),value);
+}
+
+/* ãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã®ã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ«ã®æœ€å¤§å€¤ã‚’è¨­å®šã™ã‚‹ */
+void SetDialogControlMaximum(DialogPtr theDialog,short itemNo,short value)
+{
+	SetControlMaximum((ControlHandle)GetDialogItemHandle(theDialog,itemNo),value);
+}
+
+/* ãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã®ã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ«ã®ãƒã‚¤ãƒ©ã‚¤ãƒˆã‚’è¨­å®šã™ã‚‹ */
+void SetDialogControlHilite(DialogPtr theDialog,short itemNo,short value)
+{
+	HiliteControl((ControlHandle)GetDialogItemHandle(theDialog,itemNo),value);
+}
+
+/* ãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã®ã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ«ã®ã‚¿ã‚¤ãƒˆãƒ«ã‚’è¨­å®šã™ã‚‹ */
+void SetDialogControlTitle(DialogPtr theDialog,short itemNo,Str255 title)
+{
+	SetControlTitle((ControlHandle)GetDialogItemHandle(theDialog,itemNo),title);
+}
+
+/* ãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã®ã‚¢ã‚¤ãƒ†ãƒ ã‹ã‚‰ãƒ†ã‚­ã‚¹ãƒˆã‚’å–ã‚Šå‡ºã™ */
+void GetDialogItemText2(DialogPtr theDialog,short itemNo,Str255 string)
+{
+	GetDialogItemText(GetDialogItemHandle(theDialog,itemNo),string);
+}
+
+/* ãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã®ã‚¢ã‚¤ãƒ†ãƒ ã«ãƒ†ã‚­ã‚¹ãƒˆã‚’è¨­å®šã™ã‚‹ */
+void SetDialogItemText2(DialogPtr theDialog,short itemNo,Str255 string)
+{
+	SetDialogItemText(GetDialogItemHandle(theDialog,itemNo),string);
+}
+
+/* ãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã®ã‚¨ãƒ‡ã‚£ãƒƒãƒˆãƒ†ã‚­ã‚¹ãƒˆã‚’ã‚¹ã‚¿ãƒ†ã‚£ãƒƒã‚¯ãƒ†ã‚­ã‚¹ãƒˆã«å¤‰æ›´ã™ã‚‹ */
+void SetDialogItemToStaticText(DialogPtr theDialog,short itemNo)
+{
+	Handle	h;
+	Rect	box;
+	short	itemType;
+	
+	GetDialogItem(theDialog,itemNo,&itemType,&h,&box);
+	if (itemType == editText)
+	SetDialogItem(theDialog,itemNo,statText,h,&box);
+}
+
+/* Cæ–‡å­—åˆ—ã‹ã‚‰Pascalæ–‡å­—åˆ—ã¸å¤‰æ› */
+void MyCToPStr(const char *src,Str255 dst)
+{
+	short	count;
+	char	*dstP=(char *)&dst[1];
+	
+	for (count=0; count <= 255 && *src != 0; count++)
+		*dstP++=*src++;
+	
+	if (count > 255) dst[0]=255;
+	else dst[0]=count;
+}
+
+/* CopyDeepMaskå®‰å…¨ãƒãƒ¼ã‚¸ãƒ§ãƒ³ */
+void SafeCopyDeepMask(const BitMap *srcBits,const BitMap *maskBits,const BitMap *dstBits,
+						const Rect *srcRect,const Rect *maskRect,const Rect *dstRect,
+						short mode,RgnHandle maskRgn)
+{
+	short	offset;
+	
+	if ((offset = dstRect->left & 3) != 0)
+	{
+		Rect		tSrcRect=*srcRect,tMaskRect=*maskRect,tDstRect=*dstRect;
+		RgnHandle	tempRgn;
+		
+		tSrcRect.left-=offset;
+		tMaskRect.left-=offset;
+		tDstRect.left-=offset;
+		
+		if (maskRgn == nil)
+		{
+			tempRgn=NewRgn();
+			RectRgn(tempRgn,dstRect);
+		}
+		else tempRgn=maskRgn;
+		
+		CopyDeepMask(srcBits,maskBits,dstBits,&tSrcRect,&tMaskRect,&tDstRect,mode,tempRgn);
+		
+		if (maskRgn == nil)
+			DisposeRgn(tempRgn);
+	}
+	else
+		CopyDeepMask(srcBits,maskBits,dstBits,srcRect,maskRect,dstRect,mode,maskRgn);
+}
+
+#define	kExtraGrowSize	1024	/* 1k bytes */
+
+static OSErr	mError;
+static Size		mPictureSize;
+static CQDProcs	mProcs,*mSavedProcs;
+static Size		mHandleSize;
+static Handle	mPictureHnd;
+static PicHandle	mPicture;
+static RgnHandle	mClipRgn;
+
+/* ãƒ†ãƒ³ãƒãƒ©ãƒªãƒ¡ãƒ¢ãƒªä½¿ç”¨ã®OpenCPicture */
+OSErr TempOpenCPicture(OpenCPicParams *params)
+{
+	Picture	dummyPict;
+	OSErr	err;
+	GWorldPtr	cPort;
+	GDHandle	cDevice;
+	
+	/* ãƒ¡ãƒ¢ãƒªç¢ºä¿ */
+	mPictureHnd=TempNewHandle(sizeof(Picture) + kExtraGrowSize,&err);
+	if (err!=noErr)
+		return err;
+	
+	/* å¤‰æ•°åˆæœŸåŒ– */
+	mError=noErr;
+	mPictureSize=0L;
+	mHandleSize=sizeof(Picture) + kExtraGrowSize;
+	dummyPict.picSize=0;
+	dummyPict.picFrame=params->srcRect;
+	
+	/* ãƒ˜ãƒƒãƒ€éƒ¨åˆ†ã®æ›¸ãè¾¼ã¿ */
+	BlockMoveData(&dummyPict,*mPictureHnd,sizeof(Picture));
+	mPictureSize=sizeof(Picture);
+	
+	/* PutPictureã®ç½®ãæ›ãˆ */
+	GetGWorld(&cPort,&cDevice);
+	mSavedProcs=GetPortGrafProcs(cPort);
+	SetStdCProcs(&mProcs);
+	mProcs.putPicProc=NewQDPutPicUPP(PutPicToTempMem);
+	SetPortCGrafProcs(cPort,&mProcs);
+	
+	/* ã‚¯ãƒªãƒƒãƒ—ãƒªãƒ¼ã‚¸ãƒ§ãƒ³ã®è¨˜éŒ² */
+	mClipRgn=NewRgn();
+	GetClip(mClipRgn);
+	
+	mPicture=OpenCPicture(params);
+	mError=QDError();
+	if (mError!=noErr)
+	{
+		TempDisposeHandle(mPictureHnd,&err);
+		ClosePicture(); /* ã„ã‚‰ã‚“ã®ã‹ã‚‚ */
+		
+		SetPortCGrafProcs(cPort,mSavedProcs);
+		DisposeQDPutPicUPP(mProcs.putPicProc);
+	}
+	return mError;
+}
+
+OSErr CheckPictureByte(void)
+{
+	if (mError == noErr && (mPictureSize & 1))
+	{
+		char	c;
+		
+		if (mPictureSize == mHandleSize)
+		{
+			SetHandleSize(mPictureHnd,mPictureSize+1);
+			mError=MemError();
+			if (mError!=noErr) return mError;
+		}
+		
+		c=0;
+		BlockMoveData(&c,*mPictureHnd+mPictureSize,sizeof(char));
+		mPictureSize++;
+	}
+	
+	return mError;
+}
+
+OSErr TempClosePicture(PicHandle *resultPict)
+{
+	OSErr	err;
+	GWorldPtr	cPort;
+	GDHandle	cDevice;
+	
+	/* 1ãƒã‚¤ãƒˆè£œæ­£ */
+	mError=CheckPictureByte();
+	
+	/* ãƒ”ã‚¯ãƒãƒ£è¨˜éŒ²çµ‚äº† */
+	ClosePicture();
+	
+	/* PutPictureã‚’å…ƒã«æˆ»ã™ */
+	GetGWorld(&cPort,&cDevice);
+	SetPortCGrafProcs(cPort,mSavedProcs);
+	DisposeQDPutPicUPP(mProcs.putPicProc);
+	DisposeHandle((Handle)mPicture);
+	
+	/* ã‚¯ãƒªãƒƒãƒ—ãƒªãƒ¼ã‚¸ãƒ§ãƒ³ã‚’å…ƒã«æˆ»ã™ */
+	SetClip(mClipRgn);
+	DisposeRgn(mClipRgn);
+	
+	if (mError!=noErr)
+	{
+		TempDisposeHandle(mPictureHnd,&err);
+		*resultPict = nil;
+	}
+	else if (mPictureSize != mHandleSize)
+	{
+		SetHandleSize(mPictureHnd,mPictureSize);
+		*resultPict = (PicHandle)mPictureHnd;
+	}
+	
+	return mError;
+}
+
+pascal void PutPicToTempMem(const void *p,SInt16 bytes)
+{
+	const SInt32    needSize = mPictureSize + bytes;
+	if ( mError )  return;      // errorãŒèµ·ã“ã£ãŸã‚‰å¾Œã¯ skip
+	
+	if (mHandleSize < needSize) {
+		// Growå›æ•°ã‚’æ¸›ã‚‰ã—ã¦é«˜é€ŸåŒ–ã™ã‚‹ãŸã‚å¤§ãã‚ã§æŒ‘æˆ¦
+		SetHandleSize(mPictureHnd,needSize + kExtraGrowSize);
+		mError = MemError();
+		if ( mError ) {
+			// ã´ã£ãŸã‚Šã®å¤§ãã•ã§å†æŒ‘æˆ¦
+			SetHandleSize(mPictureHnd,needSize);
+			mError = MemError();
+			if ( mError )  return;
+		}
+
+		mHandleSize = GetHandleSize(mPictureHnd);
+	}
+
+	BlockMoveData(p,*mPictureHnd + mPictureSize,bytes);
+	mPictureSize += bytes;
+}
+
+/* ã‚°ãƒ¬ãƒ¼ã‚¹ã‚±ãƒ¼ãƒ«ã®ã‚«ãƒ©ãƒ¼ãƒ†ãƒ¼ãƒ–ãƒ«ã‚’å¾—ã‚‹ */
+/* order = trueã®æ™‚ã€é™é † */
+CTabHandle GetGrayscaleCTable(short depth,Boolean order)
+{
+	CTabHandle	ctab;
+	ColorSpec	*cspec;
+	short		num_palette=1<<depth;
+	
+	ctab=(CTabHandle)NewHandle(sizeof(ColorTable)+sizeof(ColorSpec)*(num_palette-1));
+	if (ctab != nil)
+	{
+		short	i;
+		UInt16	c;
+		
+		/* ã‚«ãƒ©ãƒ¼ãƒ†ãƒ¼ãƒ–ãƒ«ã«å€¤ã‚’ä»£å…¥ */
+		HLock((Handle)ctab);
+		(*ctab)->ctSeed=UniqueID('clut');
+		(*ctab)->ctFlags=0;
+		(*ctab)->ctSize=num_palette-1;
+		
+		cspec = &(*ctab)->ctTable[0];
+		for (i=0; i<num_palette; i++)
+		{
+			c=0xFFFFUL*i/(num_palette-1);
+			if (order) c^=0xFFFF;
+			
+			cspec[i].value=i;
+			cspec[i].rgb.red=c;
+			cspec[i].rgb.green=c;
+			cspec[i].rgb.blue=c;
+		}
+		HUnlock((Handle)ctab);
+	}
+	return ctab;
+}
+
+/* PixMapã§ä½¿ã‚ã‚Œã¦ã„ã‚‹è‰²ã‚’èª¿ã¹ã‚‹ï¼ˆ256è‰²é™å®šï¼‰ */
+OSErr GetPixMapColors(PixMapHandle pmh,CTabHandle *ctab,short *colorNum)
+{
+	short	x,y,i;
+	UInt8	*colors,*dataAddr,*temp;
+	short	rowBytes;
+	Rect	bounds;
+	CTabHandle	ctable,ori_ctable;
+	ColorSpec	*cspec,*ori_cspec;
+	short	num;
+	short	num_palette;
+	
+	/* 256è‰²ä»¥å¤–ã®å ´åˆã¯ã‚¨ãƒ©ãƒ¼ */
+	if ((*pmh)->pixelSize != 8) return paramErr;
+	
+	/* è‰²ãƒªã‚¹ãƒˆã®åˆæœŸåŒ– */
+	num_palette = 256;
+	colors = (UInt8 *)NewPtrClear(num_palette);
+	if (colors == nil)
+		return memFullErr;
+	
+	LockPixels(pmh);
+	
+	/* ã‚¢ãƒ‰ãƒ¬ã‚¹ãªã©ã®åˆæœŸåŒ– */
+	temp = dataAddr = (UInt8 *)(*pmh)->baseAddr;
+	rowBytes = (*pmh)->rowBytes & 0x3fff;
+	bounds = (*pmh)->bounds;
+	
+	/* ä½¿ã‚ã‚Œã¦ã„ã‚‹è‰²ã‚’èª¿ã¹ã‚‹ */
+	for (y = bounds.top; y < bounds.bottom; y++)
+	{
+		for (x = bounds.left; x < bounds.right; x++)
+		{
+			colors[*dataAddr++] = 1;
+		}
+		temp += rowBytes;
+		dataAddr = temp;
+	}
+	
+	UnlockPixels(pmh);
+	
+	/* ä½¿ã‚ã‚Œã¦ã„ã‚‹è‰²ã§ã‚«ãƒ©ãƒ¼ãƒ†ãƒ¼ãƒ–ãƒ«ã‚’ä½œæˆ */
+	num = 0;
+	ctable = (CTabHandle)NewHandle(sizeof(ColorTable)+sizeof(ColorSpec)*(num_palette-1));
+	if (ctable == nil)
+	{
+		DisposePtr((Ptr)colors);
+		return memFullErr;
+	}
+	
+	ori_ctable = (*pmh)->pmTable;
+	HLock((Handle)ctable);
+	HLock((Handle)ori_ctable);
+	cspec = &(*ctable)->ctTable[0];
+	ori_cspec = &(*ori_ctable)->ctTable[0];
+	(*ctable)->ctSeed = UniqueID('clut');
+	(*ctable)->ctFlags = 0;
+	for (i=0; i<num_palette; i++)
+	{
+		if (colors[i])
+		{
+			cspec[num].value=num;
+			cspec[num].rgb = ori_cspec[i].rgb;
+			
+			num++;
+		}
+	}
+	
+	(*ctable)->ctSize = num - 1;
+	HUnlock((Handle)ctable);
+	HUnlock((Handle)ori_ctable);
+	DisposePtr((Ptr)colors);
+	
+	SetHandleSize((Handle)ctable,sizeof(ColorTable)+sizeof(ColorSpec)*(num-1));
+	
+	*ctab = ctable;
+	*colorNum = num;
+	
+	return noErr;
+}
+
+/* Pictureã®è‰²æ•°ã‚’èª¿ã¹ã‚‹ */
+OSErr GetPictureUniqueColors(PicHandle picture,long *uniqueColors)
+{
+	PictInfo	pictInfo;
+	OSErr		err;
+	
+	err=GetPictInfo(picture,&pictInfo,0,0,0,0);
+	if (err==noErr)
+		*uniqueColors = pictInfo.uniqueColors;
+	return err;
+}
+
+static short gMaxDepth;
+
+/* PICTã§ä½¿ã‚ã‚Œã¦ã„ã‚‹BitMap(PixMap)ã®æœ€å¤§æ·±åº¦ã‚’èª¿ã¹ã‚‹ */
+OSErr GetPictureMaxDepth(PicHandle picture,short *depth)
+{
+	GrafPtr	curPort;
+	QDProcs		theQDProcs;
+	CQDProcs	theCQDProcs;
+	PicHandle	dummyPICT;
+	QDProcsPtr	tempProcs;
+	
+	SetPortWindowPort(gPreviewWindow);
+	GetPort(&curPort);
+	
+	gMaxDepth = 0;
+	
+	/* bitsProcã‚’ç½®ãæ›ãˆã¦CopyBitsã‚’æ¨ªå–ã‚Šã™ã‚‹ */
+	tempProcs=(QDProcsPtr)GetPortGrafProcs(curPort);
+	
+	if (IsPortColor(curPort))
+	{
+		SetStdCProcs(&theCQDProcs);
+		theCQDProcs.bitsProc=NewQDBitsUPP(MyGetDepthProc);
+		SetPortGrafProcs(curPort,&theCQDProcs);
+	}
+	else
+	{
+		SetStdProcs(&theQDProcs);
+		theQDProcs.bitsProc=NewQDBitsUPP(MyGetDepthProc);
+		SetPortGrafProcs(curPort,(CQDProcs *)&theQDProcs);
+	}
+	
+	dummyPICT=OpenPicture(&(*picture)->picFrame);
+	DrawPicture(picture,&(*picture)->picFrame);
+	ClosePicture();
+	KillPicture(dummyPICT);
+	
+	/* bitsProcã‚’å…ƒã«æˆ»ã™ */
+	SetPortGrafProcs(curPort,(CQDProcs *)tempProcs);
+	SetPort(curPort);
+	
+	*depth = gMaxDepth;
+	return noErr;
+}
+
+/* æ¸¡ã•ã‚ŒãŸBitMap(PixMap)ã®æ·±åº¦ã‚’èª¿ã¹ã‚‹ */
+static pascal void MyGetDepthProc(const BitMap *bitPtr,const Rect *srcRect,const Rect *dstRect,
+	short mode,RgnHandle maskRgn)
+{
+	#pragma unused(srcRect,dstRect,mode,maskRgn)
+	PixMapPtr aPixMap;
+	short tempRB;
+	
+	tempRB = (*bitPtr).rowBytes;
+	if (tempRB < 0) {
+		if ((tempRB<<1) < 0)
+			aPixMap = (PixMapPtr) bitPtr;
+		else
+			aPixMap = (PixMapPtr) bitPtr;
+		if ((*aPixMap).pixelSize > gMaxDepth)	/* deepest pixmap so far? */
+			gMaxDepth = (*aPixMap).pixelSize;
+	}
+	else {
+		/* It's just a BitMap */
+		if (1 > gMaxDepth)
+			gMaxDepth = 1;
+	}
+}
+
+/* ãƒ—ãƒ­ã‚»ã‚¹ã®æ¤œç´¢ */
+Boolean FindProcessFromCreatorAndType(OSType creator,OSType type,ProcessSerialNumber *psn)
+{
+	ProcessInfoRec	procInfo;
+	Boolean			found=false;
+	
+	psn->highLongOfPSN=0;
+	psn->lowLongOfPSN=kNoProcess;
+	
+	procInfo.processInfoLength=sizeof(ProcessInfoRec);
+	procInfo.processName=nil;
+	procInfo.processAppSpec=nil;
+	procInfo.processLocation=nil;
+	
+	while (GetNextProcess(psn)==noErr)
+	{
+		if (GetProcessInformation(psn,&procInfo)==noErr)
+		{
+			if (procInfo.processType==type && procInfo.processSignature==creator)
+			{
+				found=true;
+				break;
+			}
+		}
+	}
+	return found;
+}
+
+/* ãƒ•ã‚¡ã‚¤ãƒ«ã®ä¿®æ­£æ—¥ã‚’å¾—ã‚‹ */
+OSErr FSpGetModDate(FSSpec *spec,unsigned long *modDate)
+{
+	CInfoPBRec	cInfo;
+	OSErr	err;
+	
+	cInfo.hFileInfo.ioFDirIndex=0;
+	/* ã“ã‚Œã‚’ï¼ã«ã™ã‚‹ã“ã¨ã«ã‚ˆã£ã¦ã€ioVRefNumã§ç¤ºã•ã‚Œã‚‹ãƒœãƒªãƒ¥ãƒ¼ãƒ ãƒªãƒ•ã‚¡ãƒ¬ãƒ³ã‚¹ã€
+	   ioDirIDã§ç¤ºã•ã‚Œã‚‹ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‹ã‚‰ãƒ•ã‚¡ã‚¤ãƒ«ã‚’ç‰¹å®šã™ã‚‹ */
+	cInfo.hFileInfo.ioVRefNum=spec->vRefNum;
+	cInfo.hFileInfo.ioDirID=spec->parID;
+	cInfo.hFileInfo.ioNamePtr=(StringPtr)spec->name;
+	
+	err=PBGetCatInfoSync(&cInfo);
+	
+	if (err!=noErr) return err;
+	else
+	{
+		*modDate=cInfo.hFileInfo.ioFlMdDat;
+		return noErr;
+	}
+}
+
+/* æ‹¡å¼µå­é–¢ä¿‚ */
+/* ãƒ•ã‚¡ã‚¤ãƒ«åã®æ‹¡å¼µå­ä»¥å¤–ã®éƒ¨åˆ†ã‚’å¾—ã‚‹ */
+short GetBodyLength(Str255 filename)
+{
+	short	i;
+	Boolean	n=false;
+	UInt8	c;
+	
+	for (i=filename[0]; i>0; i--)
+	{
+		c = filename[i];
+		if (c=='.' && n) break;
+		if (c<'0' || c>'9') n=true;
+	}
+	if (i>0)
+		return i-1;
+	else
+		return filename[0];
+}
+
+/* ãƒ•ã‚¡ã‚¤ãƒ«åã®æ‹¡å¼µå­ä»¥å¤–ã®éƒ¨åˆ†ã‚’å¾—ã‚‹ */
+short GetBodyLength2(Str255 filename)
+{
+	short	i;
+	UInt8	c;
+	
+	for (i=filename[0]; i>0; i--)
+	{
+		c = filename[i];
+		if (c<'0' || c>'9' || c=='.') break;
+	}
+	if (i>0)
+		if (c=='.')
+			return i-1;
+		else
+			return i;
+	else
+		return filename[0];
+}
+
+/* ãƒ•ã‚¡ã‚¤ãƒ«åã®æ‹¡å¼µå­ã‚’å¤‰æ›´ã™ã‚‹ */
+short ChangeSuffix(Str255 filename,Str255 suffix)
+{
+	short	bodyLength;
+	
+	filename[0]=GetBodyLength(filename);
+	bodyLength=GetBodyLength2(filename);
+	TruncPString(filename,filename,min(bodyLength,31-suffix[0]));
+	
+	PStrCat(suffix,filename);
+	
+	return bodyLength;
+}
+
+/* æ‹¡å¼µå­ã‚’å¾—ã‚‹ */
+void GetSuffix(Str255 filename,Str255 suffix)
+{
+	short	bodyLength;
+	
+	bodyLength=GetBodyLength(filename);
+	suffix[0] = filename[0]-bodyLength;
+	BlockMoveData(&filename[bodyLength+1],&suffix[1],suffix[0]);
+}
+
+/* æ‹¡å¼µå­ã‹ã‚‰ãƒ•ã‚¡ã‚¤ãƒ«ã‚¿ã‚¤ãƒ—ã«å¤‰æ› */
+OSErr GetFileTypeFromSuffix(Str255 filename,OSType *fileType)
+{
+	Str255	suffix;
+	Str15	suffixList[] = {"\p.pict","\p.pct","\p.png","\p.icns","\p.jpeg","\p.jpg","\p.gif",
+							"\p.psd","\p.bmp","\p.rsrc","\p.ico"};
+	OSType	typeList[] = {kPICTFileType,kPICTFileType,kPNGFileType,kXIconFileType,kQTFileTypeJPEG,
+							kQTFileTypeJPEG,kGIFFileType,kQTFileTypePhotoShop,kQTFileTypeBMP,
+							kResourceFileType,kWinIconFileType};
+	const short	num = 11;
+	short	i;
+	
+	GetSuffix(filename,suffix);
+	
+	for (i=0; i<num; i++)
+	{
+		if (EqualString(suffix,suffixList[i],false,true))
+			break;
+	}
+	
+	if (i < num) *fileType = typeList[i];
+	
+	return noErr;
+}
+
+/* æŒ‡å®šã®ã‚¢ãƒ—ãƒªã‚±ãƒ¼ã‚·ãƒ§ãƒ³ã§ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ã */
+void AEOpenFileWithApplication(FSSpec *theFile,FSSpec *theApplication)
+{
+	#if TARGET_RT_MAC_MACHO
+	{
+		/* Launch Serviceã‚’ä½¿ã† */
+		FSRef	appRef;
+		FSRef	itemRef;
+		OSErr	err;
+		LSLaunchFSRefSpec	launchSpec;
+		
+		err = FSpMakeFSRef(theApplication,&appRef);
+		if (err != noErr) return;
+		
+		err = FSpMakeFSRef(theFile,&itemRef);
+		if (err != noErr) return;
+		
+		launchSpec.appRef = &appRef;
+		launchSpec.numDocs = 1;
+		launchSpec.itemRefs = &itemRef;
+		launchSpec.passThruParams = NULL;
+		launchSpec.launchFlags = kLSLaunchDefaults;
+		launchSpec.asyncRefCon = NULL;
+		
+		err = LSOpenFromRefSpec(&launchSpec,NULL);
+	}
+	#else
+	{
+		ProcessSerialNumber	psn;
+		LaunchParamBlockRec	launchParams;
+		AEDesc				launchParamDesc={typeNull,NULL};
+		OSErr				err;
+		AppleEvent			aeEvent={typeNull,NULL};
+		
+		/* ãªã«ã‹ã®ProcessSerialNumberãŒå¿…è¦ãªã®ã§ã¨ã‚Šã‚ãˆãšè‡ªåˆ†è‡ªèº«ã®ã‚‚ã®ã‚’ä½¿ã† */
+		GetCurrentProcess(&psn);
+	
+		err=MakeOpenDocumentEvent(&psn,theFile,&aeEvent);
+		if (err==noErr)
+		{
+			/* ã§ããŸAppleã‚¤ãƒ™ãƒ³ãƒˆã‚’typeAppParametersã‚¿ã‚¤ãƒ—ã®ãƒ‡ã‚¹ã‚¯ãƒªãƒ—ã‚¿ã«å¤‰æ› */
+			err=AECoerceDesc(&aeEvent,typeAppParameters,&launchParamDesc);
+			if (err==noErr)
+			{
+				/* launchParamsã«ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ã‚’è¨­å®š */
+				launchParams.launchBlockID		= extendedBlock;
+				launchParams.launchEPBLength	= extendedBlockLen;
+				launchParams.launchFileFlags	= 0;
+				launchParams.launchControlFlags	= launchContinue+launchNoFileFlags;
+				launchParams.launchAppSpec		= theApplication;
+				
+				#if TARGET_API_MAC_CARBON
+				{
+					Size	dataSize;
+					
+					dataSize=AEGetDescDataSize(&launchParamDesc);
+					launchParams.launchAppParameters=(AppParametersPtr)NewPtr(dataSize);
+					err=AEGetDescData(&launchParamDesc,launchParams.launchAppParameters,dataSize);
+				}
+				#else
+				HLock(launchParamDesc.dataHandle);
+				launchParams.launchAppParameters= (AppParametersPtr)*(launchParamDesc.dataHandle);
+				#endif
+				
+				err = LaunchApplication(&launchParams);
+				
+				#if TARGET_API_MAC_CARBON
+				DisposePtr((Ptr)launchParams.launchAppParameters);
+				#else
+				HUnlock((Handle)launchParamDesc.dataHandle);
+				#endif
+				err=AEDisposeDesc(&launchParamDesc);
+			}
+		}
+	}
+	#endif
+}
+
+/* 'odoc'ã‚¤ãƒ™ãƒ³ãƒˆã‚’ä½œã‚‹ */
+OSErr MakeOpenDocumentEvent(ProcessSerialNumber *targetPSN,FSSpec *theIconFile,AppleEvent *odocEvent)
+{
+	OSErr		err;
+	AppleEvent	aeEvent={typeNull,NULL};
+	AEDesc		target={typeNull,NULL};
+	AEDescList	fileList={typeNull,NULL};
+	AliasHandle	fileAlias=nil;
+	
+	/* ã‚¿ãƒ¼ã‚²ãƒƒãƒˆã‚¢ãƒ—ãƒªã‚±ãƒ¼ã‚·ãƒ§ãƒ³ã®ãƒ‡ã‚¹ã‚¯ãƒªãƒ—ã‚¿ã‚’ä½œæˆ */
+	err=AECreateDesc(typeProcessSerialNumber,targetPSN,sizeof(ProcessSerialNumber),&target);
+	
+	/* Appleã‚¤ãƒ™ãƒ³ãƒˆã‚’ä½œæˆ */
+	err=AECreateAppleEvent(kCoreEventClass,kAEOpenDocuments,&target,kAutoGenerateReturnID,
+							kAnyTransactionID,&aeEvent);
+	
+	/* é–‹ããƒ•ã‚¡ã‚¤ãƒ«ã®ãƒªã‚¹ãƒˆã‚’ä½œæˆ */
+	err=AECreateList(nil,0,false,&fileList);
+	
+	/* ãƒªã‚¹ãƒˆã«ãƒ•ã‚¡ã‚¤ãƒ«ã‚’è¿½åŠ  */
+	err=NewAlias(nil,theIconFile,&fileAlias);
+	if (err==noErr)
+	{
+		HLock((Handle)fileAlias);
+#if __AL_USE_OPAQUE_RECORD__
+		Size aliasSize = GetAliasSize( fileAlias );
+#else
+		unsigned short aliasSize = (*fileAlias)->aliasSize;
+#endif
+		err=AEPutPtr(&fileList,1,typeAlias,(Ptr)*fileAlias,aliasSize);
+		HUnlock((Handle)fileAlias);
+		DisposeHandle((Handle)fileAlias);
+	}
+	
+	/* ä½œæˆã—ãŸãƒ•ã‚¡ã‚¤ãƒ«ãƒªã‚¹ãƒˆã‚’AppleEventã®keyDirectObjectãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ã«è¨­å®š */
+	err=AEPutParamDesc(&aeEvent,keyDirectObject,&fileList);
+	
+	/* ã§ããŸã‚¤ãƒ™ãƒ³ãƒˆã‚’è¿”ã™ */
+	*odocEvent=aeEvent;
+	
+	/* ä½œæˆã—ãŸãƒ‡ã‚¹ã‚¯ãƒªãƒ—ã‚¿ã‚’ç ´æ£„ */
+	err=AEDisposeDesc(&target);
+	err=AEDisposeDesc(&fileList);
+	
+	return err;
+}
+
+/* 'fupd'ã‚¤ãƒ™ãƒ³ãƒˆã‚’ä½œã‚‹ */
+OSErr MakeUpdateEvent(const FSSpec *theFile,AppleEvent *result)
+{
+	OSErr		err;
+	AppleEvent	aeEvent={typeNull,NULL};
+	AEDesc		target={typeNull,NULL};
+	AEDesc		fileDesc={typeNull,NULL};
+	AliasHandle	fileAlias=NULL;
+	ProcessSerialNumber	psn;
+	
+	/* Finderã‚’æ¢ã™ */
+	if (!FindProcessFromCreatorAndType(kFinderCreator,kFinderType,&psn)) return -1;
+	
+	/* ã‚¿ãƒ¼ã‚²ãƒƒãƒˆã‚¢ãƒ—ãƒªã‚±ãƒ¼ã‚·ãƒ§ãƒ³ã®ãƒ‡ã‚¹ã‚¯ãƒªãƒ—ã‚¿ã‚’ä½œæˆ */
+	err=AECreateDesc(typeProcessSerialNumber,&psn,sizeof(ProcessSerialNumber),&target);
+	if (err!=noErr) return err;
+	
+	/* Appleã‚¤ãƒ™ãƒ³ãƒˆã‚’ä½œæˆ */
+	err=AECreateAppleEvent(kAEFinderSuite,kAESync,&target,kAutoGenerateReturnID,
+							kAnyTransactionID,&aeEvent);
+	if (err!=noErr) return err;
+	
+	/* æ›´æ–°ã™ã‚‹ãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ‡ã‚¹ã‚¯ãƒªãƒ—ã‚¿ã‚’ä½œæˆ */
+	err=NewAlias(NULL,theFile,&fileAlias);
+	if (err!=noErr) return err;
+	
+	HLock((Handle)fileAlias);
+#if __AL_USE_OPAQUE_RECORD__
+	Size aliasSize = GetAliasSize( fileAlias );
+#else
+	unsigned short aliasSize = (*fileAlias)->aliasSize;
+#endif
+	err=AECreateDesc(typeAlias,(Ptr)*fileAlias,aliasSize,&fileDesc);
+	HUnlock((Handle)fileAlias);
+	DisposeHandle((Handle)fileAlias);
+	
+	/* æ›´æ–°ã™ã‚‹ãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ‡ã‚¹ã‚¯ãƒªãƒ—ã‚¿ã‚’keyDirectObjectã«æŒ‡å®š */
+	err=AEPutParamDesc(&aeEvent,keyDirectObject,&fileDesc);
+	
+	/* ã§ããŸã‚¤ãƒ™ãƒ³ãƒˆã‚’è¿”ã™ */
+	*result = aeEvent;
+	
+	/* ä½œæˆã—ãŸãƒ‡ã‚¹ã‚¯ãƒªãƒ—ã‚¿ã‚’ç ´æ£„ */
+	AEDisposeDesc(&target);
+	AEDisposeDesc(&fileDesc);
+	
+	return err;
+}
+
+/* System Folderã®ã‚ã‚‹ãƒœãƒªãƒ¥ãƒ¼ãƒ ãƒªãƒ•ã‚¡ãƒ¬ãƒ³ã‚¹ã‚’å¾—ã‚‹ */
+/* thanks > Mr. Hideaki Iimori */
+SInt16  GetFindFolderVRefNum(void)
+{
+	SInt16      vRefNum = kOnSystemDisk;
+	SInt32      response;
+	OSStatus    err = Gestalt(gestaltFindFolderAttr,&response);
+	if (err == noErr) {
+		if ((response & (1L << gestaltFolderMgrSupportsDomains)) != 0) {
+			vRefNum = kUserDomain;
+		}
+		else if ((response & (1L << gestaltFolderMgrSupportsExtendedCalls)) != 0) {
+			vRefNum = kOnAppropriateDisk;
+		}
+	}
+	
+	return vRefNum;
+}
+
+/* Drag & Dropé–¢é€£ */
+/* ãƒ‰ãƒ©ãƒƒã‚°ã•ã‚ŒãŸä½ç½®ã‚’å¾—ã‚‹ */
+pascal OSErr GetDropDirectory (DragReference dragRef, FSSpecPtr fssOut)
+{
+	OSErr err = noErr;
+	
+	AEDesc dropLocAlias = { typeNull, nil };
+	
+	if (!(err = GetDropLocation (dragRef, &dropLocAlias)))
+	{
+		if (dropLocAlias.descriptorType != typeAlias)
+			err = paramErr;
+		else
+		{
+			AEDesc dropLocFSS = { typeNull, nil };
+			if (!(err = AECoerceDesc(&dropLocAlias, typeFSS, &dropLocFSS)))
+			{
+				#if TARGET_API_MAC_CARBON
+				err = AEGetDescData(&dropLocFSS,&fssOut,sizeof(FSSpec));
+				#else
+				BlockMoveData(*(dropLocFSS.dataHandle),fssOut,sizeof(FSSpec));
+				
+				#endif
+				err = AEDisposeDesc (&dropLocFSS);
+			}
+		}
+		
+		if (dropLocAlias.dataHandle)
+		{
+			OSErr err2 = AEDisposeDesc (&dropLocAlias);
+			if (!err) err = err2;
+		}
+	}
+	
+	return err;
+}
+
+/* ã‚»ãƒ«ã®é¸æŠã‚’è§£é™¤ã™ã‚‹ */
+void CancelSelect(ListHandle theList)
+{
+	Cell	theCell={0,0};
+	
+	while (LGetSelect(true,&theCell,theList))
+		LSetSelect(false,theCell,theList);
+}
+
+/* Unicodeé–¢é€£ */
+/* FSSpecã‹ã‚‰ãƒ•ã‚¡ã‚¤ãƒ«åã‚’å¾—ã‚‹ï¼ˆUnicodeå¯¾å¿œï¼‰ */
+void FSpGetFileName(const FSSpec *theFile,Str255 filename)
+{
+	#if !TARGET_API_MAC_CARBON
+		PStrCpy(theFile->name,filename);
+	#else
+		FSRef			fileRef;
+		OSErr			err;
+		HFSUniStr255	name;
+		CFStringRef		strRef;
+		
+		/* ã¾ãšã€FSRefã«å¤‰æ› */
+		err = FSpMakeFSRef(theFile,&fileRef);
+		if (err != noErr) return ;
+		
+		/* FSGetCatalogInfoã§Unicodeã®ãƒ•ã‚¡ã‚¤ãƒ«åã‚’å¾—ã‚‹ */
+		err = FSGetCatalogInfo(&fileRef,kFSCatInfoNone,NULL,&name,NULL,NULL);
+		
+		/* Unicodeæ–‡å­—åˆ—ã‚’CFStringã«å¤‰æ› */
+		strRef = CFStringCreateWithCharacters(kCFAllocatorDefault,
+			name.unicode,name.length);
+		
+		/* CFStringã‚’Pascalæ–‡å­—åˆ—ã«å¤‰æ› */
+		#if 0
+		{
+			short length = CFStringGetLength(strRef);
+			if (length > 255) length = 255;
+			filename[0] = CFStringGetBytes(strRef,CFRangeMake(0,length),
+				kTextEncodingMacJapanese,'^',false,&filename[1],255,NULL);
+		}
+		#else
+		CFStringGetPascalString(strRef,filename,255,kTextEncodingMacJapanese);
+		#endif
+		
+		CFRelease(strRef);
+	#endif
+}
+
+/* from MoreFilesExtras.c */
+#ifdef __MOREFILESX__
+pascal	void	TruncPString(StringPtr destination,
+							 ConstStr255Param source,
+							 short maxLength)
+{
+	short	charType;
+	
+	if ( source != NULL && destination != NULL )	/* don't do anything stupid */
+	{
+		if ( source[0] > maxLength )
+		{
+			/* Make sure the string isn't truncated in the middle of */
+			/* a multi-byte character. */
+			while (maxLength != 0)
+			{
+				/* Note: CharacterByteType's textOffset parameter is zero-based from the textPtr parameter */
+				charType = CharacterByteType((Ptr)&source[1], maxLength - 1, smSystemScript);
+				if ( (charType == smSingleByte) || (charType == smLastByte) )
+					break;	/* source[maxLength] is now a valid last character */ 
+				--maxLength;
+			}
+		}
+		else
+		{
+			maxLength = source[0];
+		}
+		/* Set the destination string length */
+		destination[0] = maxLength;
+		/* and copy maxLength characters (if needed) */
+		if ( source != destination )
+		{
+			while ( maxLength != 0 )
+			{
+				destination[maxLength] = source[maxLength];
+				--maxLength;
+			}
+		}
+	}
+}
+#endif

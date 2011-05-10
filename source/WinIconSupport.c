@@ -1,6 +1,6 @@
 /* ------------------------------------------------------------ */
 /*  WinIconSupport.c                                            */
-/*     WindowsƒAƒCƒRƒ“‚ÌƒTƒ|[ƒg                                */
+/*     Windowsã‚¢ã‚¤ã‚³ãƒ³ã®ã‚µãƒãƒ¼ãƒˆ                                */
 /*                                                              */
 /*                 2001.9.25 - 2001.9.25  naoki iimura        	*/
 /* ------------------------------------------------------------ */
@@ -16,17 +16,17 @@
 #include	"PreCarbonSupport.h"
 #include	"WinIconSupport.h"
 
-/* WinƒAƒCƒRƒ“ŠÖ˜A‚Ìƒ‹[ƒ`ƒ“ */
+/* Winã‚¢ã‚¤ã‚³ãƒ³é–¢é€£ã®ãƒ«ãƒ¼ãƒãƒ³ */
 static OSErr	WinIconToIconData(Ptr winIcon,WinIconDataTypeRec *dataType,Handle *iconData,Handle *maskData);
 static OSErr	BMPToIconData(Ptr winIcon,BMPHeaderRec *bmpHeader,Handle *iconData);
 static OSErr	ConvertIconData(Ptr winIcon,Handle *iconData,short iconDepth,short macIconDepth,Rect *iconSize,CTabHandle ctab);
 static OSErr	GetWinIconCTable(Ptr cTablePtr,short depth,CTabHandle *ctab);
 
-/* ƒf[ƒ^Ši”[‚Ì‡”Ô‚ğ‹t‡‚É‚·‚é */
+/* ãƒ‡ãƒ¼ã‚¿æ ¼ç´ã®é †ç•ªã‚’é€†é †ã«ã™ã‚‹ */
 #define	WinToMacShort(data)	((data<<8)+(0xff &(data>>8)))
 #define	WinToMacLong(data)	((data<<24)+((data & 0xff00)<<8)+((data & 0xff0000)>>8)+(0xffL &(data>>24)))
 
-/* ‚Æ‚è‚ ‚¦‚¸u`.icov‚ ‚é‚¢‚Íƒtƒ@ƒCƒ‹ƒ^ƒCƒv'ICO '‚Ìƒtƒ@ƒCƒ‹‚ğŠJ‚¢‚½‚ç‚±‚±‚ğŒÄ‚Ô */
+/* ã¨ã‚Šã‚ãˆãšã€Œã€œ.icoã€ã‚ã‚‹ã„ã¯ãƒ•ã‚¡ã‚¤ãƒ«ã‚¿ã‚¤ãƒ—'ICO 'ã®ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ã„ãŸã‚‰ã“ã“ã‚’å‘¼ã¶ */
 OSErr WinIconToIconSuite(FSSpec *theIconFile,IconSuiteRef *theIconSuite)
 {
 	IconSuiteRef	iconSuite;
@@ -41,7 +41,7 @@ OSErr WinIconToIconSuite(FSSpec *theIconFile,IconSuiteRef *theIconSuite)
 	ResType			iconType=0,maskType=0;
 	BMPHeaderRec	*bmpHeader;
 	
-	/* ‚Ü‚¸ƒtƒ@ƒCƒ‹‚ğŠJ‚­ */
+	/* ã¾ãšãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ã */
 	err=FSpOpenDF(theIconFile,fsRdPerm,&refNum);
 	if (err!=noErr) return err;
 	
@@ -70,10 +70,10 @@ OSErr WinIconToIconSuite(FSSpec *theIconFile,IconSuiteRef *theIconSuite)
 	
 	err=NewIconSuite(&iconSuite);
 	
-	/* ƒwƒbƒ_‚ğ“Ç‚İ‚İAƒAƒCƒRƒ“‚Ì”‚ğ”‚¦‚é */
+	/* ãƒ˜ãƒƒãƒ€ã‚’èª­ã¿è¾¼ã¿ã€ã‚¢ã‚¤ã‚³ãƒ³ã®æ•°ã‚’æ•°ãˆã‚‹ */
 	iconHeader=*(WinIconHeaderRec *)winIcon;
 	
-	/* BMPŒ`®‚©‚à’m‚ê‚È‚¢‚Ì‚Å‚»‚ê‚ğƒ`ƒFƒbƒN‚·‚é */
+	/* BMPå½¢å¼ã‹ã‚‚çŸ¥ã‚Œãªã„ã®ã§ãã‚Œã‚’ãƒã‚§ãƒƒã‚¯ã™ã‚‹ */
 	if (iconHeader.reserved1 == 'BM')
 	{
 		/* BMP */
@@ -160,7 +160,7 @@ OSErr WinIconToIconSuite(FSSpec *theIconFile,IconSuiteRef *theIconSuite)
 						}
 						break;
 				}
-				if (dataType.colorFlag==0x0200) /* ”’•‚Ì‚Íƒ}ƒXƒN‚à’Ç‰Á */
+				if (dataType.colorFlag==0x0200) /* ç™½é»’ã®æ™‚ã¯ãƒã‚¹ã‚¯ã‚‚è¿½åŠ  */
 				{
 					HLock(maskData);
 					HandAndHand(maskData,iconData);
@@ -189,7 +189,7 @@ OSErr WinIconToIconSuite(FSSpec *theIconFile,IconSuiteRef *theIconSuite)
 						DisposeHandle(iconData);
 					}
 					
-					/* ƒ}ƒXƒN‚ª‚È‚¯‚ê‚Îˆê‰’Ç‰Á */
+					/* ãƒã‚¹ã‚¯ãŒãªã‘ã‚Œã°ä¸€å¿œè¿½åŠ  */
 					temp=nil;
 					err=GetIconFromSuite(&temp,iconSuite,maskType);
 					if (temp==nil)
@@ -201,7 +201,7 @@ OSErr WinIconToIconSuite(FSSpec *theIconFile,IconSuiteRef *theIconSuite)
 						err=AddIconToSuite(temp,iconSuite,maskType);
 					}
 					
-					if (dataType.colorFlag==0x1000) /* 16F‚ÌƒAƒCƒRƒ“‚Ìê‡‚Í256F‚à“ü‚ê‚Ä‚¨‚­ */
+					if (dataType.colorFlag==0x1000) /* 16è‰²ã®ã‚¢ã‚¤ã‚³ãƒ³ã®å ´åˆã¯256è‰²ã‚‚å…¥ã‚Œã¦ãŠã */
 					{
 						switch (dataType.iconWidth)
 						{
@@ -238,7 +238,7 @@ OSErr WinIconToIconSuite(FSSpec *theIconFile,IconSuiteRef *theIconSuite)
 	return noErr;
 }
 
-/* ƒAƒCƒRƒ“ƒf[ƒ^‚ÌÀÛ‚Ì“Ç‚İ‚İ */
+/* ã‚¢ã‚¤ã‚³ãƒ³ãƒ‡ãƒ¼ã‚¿ã®å®Ÿéš›ã®èª­ã¿è¾¼ã¿ */
 OSErr WinIconToIconData(Ptr winIcon,WinIconDataTypeRec *dataType,Handle *iconData,Handle *maskData)
 {
 	WinIconDataHeaderRec	iconDataHeader;
@@ -253,13 +253,13 @@ OSErr WinIconToIconData(Ptr winIcon,WinIconDataTypeRec *dataType,Handle *iconDat
 	
 	iconDataHeader=*(WinIconDataHeaderRec *)winIcon;
 	
-	/* ƒJƒ‰[ƒe[ƒuƒ‹‚ğ“¾‚é */
+	/* ã‚«ãƒ©ãƒ¼ãƒ†ãƒ¼ãƒ–ãƒ«ã‚’å¾—ã‚‹ */
 	iconDepth=WinToMacShort(iconDataHeader.iconDepth);
 	
 	err=GetWinIconCTable(winIcon+sizeof(iconDataHeader),iconDepth,&ctab);
 	if (err!=noErr) return err;
 	
-	/* ƒAƒCƒRƒ“‚Ì‘å‚«‚³ */
+	/* ã‚¢ã‚¤ã‚³ãƒ³ã®å¤§ãã• */
 	SetRect(&iconSize,0,0,dataType->iconWidth,dataType->iconHeight);
 	
 	iconRowBytes=iconSize.right*iconDepth/8;
@@ -280,7 +280,7 @@ OSErr WinIconToIconData(Ptr winIcon,WinIconDataTypeRec *dataType,Handle *iconDat
 	
 	if (maskData==nil) return noErr;
 	
-	/* ƒ}ƒXƒNƒf[ƒ^ */
+	/* ãƒã‚¹ã‚¯ãƒ‡ãƒ¼ã‚¿ */
 	maskRowBytes=iconSize.right/8;
 	*maskData=NewHandle(iconSize.bottom*maskRowBytes);
 	HLock(*maskData);
@@ -294,7 +294,7 @@ OSErr WinIconToIconData(Ptr winIcon,WinIconDataTypeRec *dataType,Handle *iconDat
 	return noErr;
 }
 
-/* BMP‚©‚çƒAƒCƒRƒ“‚É‚·‚é */
+/* BMPã‹ã‚‰ã‚¢ã‚¤ã‚³ãƒ³ã«ã™ã‚‹ */
 OSErr BMPToIconData(Ptr winIcon,BMPHeaderRec *bmpHeader,Handle *iconData)
 {
 	short		iconDepth,macIconDepth=8;
@@ -317,7 +317,7 @@ OSErr BMPToIconData(Ptr winIcon,BMPHeaderRec *bmpHeader,Handle *iconData)
 	return err;
 }
 
-/* ƒAƒCƒRƒ“ƒf[ƒ^‚Ì•ÏŠ· */
+/* ã‚¢ã‚¤ã‚³ãƒ³ãƒ‡ãƒ¼ã‚¿ã®å¤‰æ› */
 OSErr ConvertIconData(Ptr winIcon,Handle *iconData,short iconDepth,short macIconDepth,Rect *iconSize,CTabHandle ctab)
 {
 	OSErr			err=noErr;
@@ -346,7 +346,7 @@ OSErr ConvertIconData(Ptr winIcon,Handle *iconData,short iconDepth,short macIcon
 		macIconDepth=4;
 	#endif
 	
-	/* “¾‚ç‚ê‚½ƒJƒ‰[ƒe[ƒuƒ‹‚ğŒ³‚ÉƒIƒtƒ|[ƒg‚ğì¬‚µAƒf[ƒ^‚ğ“ü‚ê‚é */
+	/* å¾—ã‚‰ã‚ŒãŸã‚«ãƒ©ãƒ¼ãƒ†ãƒ¼ãƒ–ãƒ«ã‚’å…ƒã«ã‚ªãƒ•ãƒãƒ¼ãƒˆã‚’ä½œæˆã—ã€ãƒ‡ãƒ¼ã‚¿ã‚’å…¥ã‚Œã‚‹ */
 	err=NewGWorld(&winIconGWorld,iconDepth,iconSize,ctab,nil,useTempMem);
 	if (err!=noErr)
 		return err;
@@ -366,7 +366,7 @@ OSErr ConvertIconData(Ptr winIcon,Handle *iconData,short iconDepth,short macIcon
 		dst+=rowBytes;
 	}
 	
-	/* Mac—p‚ÌƒAƒCƒRƒ“‚É•ÏŠ·‚·‚éGWorld‚ğì¬ */
+	/* Macç”¨ã®ã‚¢ã‚¤ã‚³ãƒ³ã«å¤‰æ›ã™ã‚‹GWorldã‚’ä½œæˆ */
 	err=NewGWorld(&iconGWorld,macIconDepth,iconSize,nil,nil,useTempMem);//8
 	if (err!=noErr)
 	{
@@ -387,7 +387,7 @@ OSErr ConvertIconData(Ptr winIcon,Handle *iconData,short iconDepth,short macIcon
 	DisposeGWorld(winIconGWorld);
 	DisposeHandle((Handle)ctab);
 	
-	/* ƒAƒCƒRƒ“‚Ìƒf[ƒ^‚Æ‚µ‚Ä‚¨‚³‚ß‚é */
+	/* ã‚¢ã‚¤ã‚³ãƒ³ã®ãƒ‡ãƒ¼ã‚¿ã¨ã—ã¦ãŠã•ã‚ã‚‹ */
 	iconRowBytes=iconSize->right*macIconDepth/8;
 	
 	*iconData=NewHandle(iconRowBytes*iconSize->bottom);
@@ -416,7 +416,7 @@ OSErr ConvertIconData(Ptr winIcon,Handle *iconData,short iconDepth,short macIcon
 	return noErr;
 }
 
-/* ƒJƒ‰[ƒe[ƒuƒ‹ƒf[ƒ^‚ğ“¾‚é */
+/* ã‚«ãƒ©ãƒ¼ãƒ†ãƒ¼ãƒ–ãƒ«ãƒ‡ãƒ¼ã‚¿ã‚’å¾—ã‚‹ */
 OSErr GetWinIconCTable(Ptr cTablePtr,short depth,CTabHandle *ctab)
 {
 	ColorSpecPtr	cSpec;
@@ -445,7 +445,7 @@ OSErr GetWinIconCTable(Ptr cTablePtr,short depth,CTabHandle *ctab)
 	return noErr;
 }
 
-/* ƒAƒCƒRƒ“‚ğWindowsƒAƒCƒRƒ“‚Æ‚µ‚Ä‘‚«o‚µ */
+/* ã‚¢ã‚¤ã‚³ãƒ³ã‚’Windowsã‚¢ã‚¤ã‚³ãƒ³ã¨ã—ã¦æ›¸ãå‡ºã— */
 OSErr MakeWinIconFromSuite(FSSpec *theWinIcon,IconSuiteRef iconSuite)
 {
 	OSErr	err;
@@ -475,7 +475,7 @@ OSErr MakeWinIconFromSuite(FSSpec *theWinIcon,IconSuiteRef iconSuite)
 	Ptr		cpalette,cptr;
 	long	filePos;
 	
-	/* •Û‘¶‚·‚éƒAƒCƒRƒ“‚Ì”‚ğ’²‚×‚é */
+	/* ä¿å­˜ã™ã‚‹ã‚¢ã‚¤ã‚³ãƒ³ã®æ•°ã‚’èª¿ã¹ã‚‹ */
 	for (i=0; i<4; i++)
 	{
 		err=GetIconFromSuite(&h,iconSuite,iconTypeList[i]);
@@ -488,26 +488,26 @@ OSErr MakeWinIconFromSuite(FSSpec *theWinIcon,IconSuiteRef iconSuite)
 			dataAvailable[i]=false;
 	}
 	
-	if (iconNum == 0) /* •Û‘¶‚·‚éƒAƒCƒRƒ“‚ª‚È‚¢ */
+	if (iconNum == 0) /* ä¿å­˜ã™ã‚‹ã‚¢ã‚¤ã‚³ãƒ³ãŒãªã„ */
 	{
 		SysBeep(0);
 		return -1;
 	}
 	
-	/* ƒtƒ@ƒCƒ‹‚ğì¬ */
+	/* ãƒ•ã‚¡ã‚¤ãƒ«ã‚’ä½œæˆ */
 	err=FSpCreate(theWinIcon,kIconPartyCreator,kWinIconFileType,smSystemScript);
 	err=FSpOpenDF(theWinIcon,fsWrPerm,&refNum);
 	
-	/* ƒwƒbƒ_‚Éƒf[ƒ^‚ğ“ü‚ê‚Ä‚¢‚­ */
+	/* ãƒ˜ãƒƒãƒ€ã«ãƒ‡ãƒ¼ã‚¿ã‚’å…¥ã‚Œã¦ã„ã */
 	iconHeader.reserved1=0x0000;
 	iconHeader.reserved2=0x0100;
 	iconHeader.iconDataNum=WinToMacShort(iconNum);
 	
-	/* ƒwƒbƒ_‚ğ‘‚«o‚· */
+	/* ãƒ˜ãƒƒãƒ€ã‚’æ›¸ãå‡ºã™ */
 	count=sizeof(iconHeader);
 	err=FSWrite(refNum,&count,&iconHeader);
 	
-	/* ƒ_ƒ~[‚Ìƒf[ƒ^ƒ^ƒCƒv‚ğ‘‚«o‚· */
+	/* ãƒ€ãƒŸãƒ¼ã®ãƒ‡ãƒ¼ã‚¿ã‚¿ã‚¤ãƒ—ã‚’æ›¸ãå‡ºã™ */
 	for (k=0; k<iconNum; k++)
 	{
 		count=sizeof(WinIconDataTypeRec);
@@ -517,14 +517,14 @@ OSErr MakeWinIconFromSuite(FSSpec *theWinIcon,IconSuiteRef iconSuite)
 	headerOffset=sizeof(WinIconHeaderRec);
 	offset=sizeof(WinIconHeaderRec)+iconNum*sizeof(WinIconDataTypeRec);
 	
-	/* ƒAƒCƒRƒ“‚ğ‡‚É‘‚«o‚· */
+	/* ã‚¢ã‚¤ã‚³ãƒ³ã‚’é †ã«æ›¸ãå‡ºã™ */
 	for (k=0; k<4; k++)
 	{
 		if (!dataAvailable[k]) continue;
 		
 		iconRowBytes=iconSizeList[k]*iconDepthList[k]/8;
 		
-		/* ƒf[ƒ^ƒ^ƒCƒv */
+		/* ãƒ‡ãƒ¼ã‚¿ã‚¿ã‚¤ãƒ— */
 		iconDataType.iconWidth=(char)iconSizeList[k];
 		iconDataType.iconHeight=(char)iconSizeList[k];
 		iconDataType.colorFlag=(iconDepthList[k]==8 ? 0x0000 : 0x1000);
@@ -538,7 +538,7 @@ OSErr MakeWinIconFromSuite(FSSpec *theWinIcon,IconSuiteRef iconSuite)
 		count=sizeof(WinIconDataTypeRec);
 		err=FSWrite(refNum,&count,&iconDataType);
 		
-		/* ƒf[ƒ^ƒwƒbƒ_ */
+		/* ãƒ‡ãƒ¼ã‚¿ãƒ˜ãƒƒãƒ€ */
 		iconDataHeader.headerLength=0x28000000;
 		iconDataHeader.iconSize=WinToMacLong((long)iconSizeList[k]);
 		iconDataHeader.iconSize2=WinToMacLong((long)iconSizeList[k]*2);
@@ -556,7 +556,7 @@ OSErr MakeWinIconFromSuite(FSSpec *theWinIcon,IconSuiteRef iconSuite)
 		count=sizeof(iconDataHeader);
 		err=FSWrite(refNum,&count,&iconDataHeader);
 		
-		/* ƒJƒ‰[ƒpƒŒƒbƒg */
+		/* ã‚«ãƒ©ãƒ¼ãƒ‘ãƒ¬ãƒƒãƒˆ */
 		UseResFile(0);
 		ctable=GetCTable(iconDepthList[k]);
 		count=4*((*ctable)->ctSize+1);
@@ -573,7 +573,7 @@ OSErr MakeWinIconFromSuite(FSSpec *theWinIcon,IconSuiteRef iconSuite)
 		DisposePtr(cpalette);
 		UseResFile(gApplRefNum);
 		
-		/* ƒf[ƒ^ */
+		/* ãƒ‡ãƒ¼ã‚¿ */
 		err=GetIconFromSuite(&data,iconSuite,iconTypeList[k]);
 		HandToHand(&data);
 		HLock(data);

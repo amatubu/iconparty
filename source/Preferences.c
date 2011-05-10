@@ -1,6 +1,6 @@
 /* ------------------------------------------------------------ */
 /*  Preferences.c                                               */
-/*     ‰Šúİ’èƒtƒ@ƒCƒ‹‚Ìˆ—                                   */
+/*     åˆæœŸè¨­å®šãƒ•ã‚¡ã‚¤ãƒ«ã®å‡¦ç†                                   */
 /*                                                              */
 /*                 1997.1.28 - 2001.2.3  naoki iimura        	*/
 /* ------------------------------------------------------------ */
@@ -56,7 +56,7 @@ static pascal Boolean MyConfigureGridFilter(DialogPtr theDialog,EventRecord *the
 static short	prevTab=kFilePrefsTab;
 
 
-/* ‰Šúİ’è‚ğŠJ‚­ */
+/* åˆæœŸè¨­å®šã‚’é–‹ã */
 void OpenPrefFile(void)
 {
 	Str255	prefFileName;
@@ -65,7 +65,7 @@ void OpenPrefFile(void)
 	short	vRefNum;
 	long	dirID;
 	
-	/* u‰Šúİ’èvƒtƒHƒ‹ƒ_‚ÌƒfƒBƒŒƒNƒgƒŠID‚ğ“¾‚é */
+	/* ã€ŒåˆæœŸè¨­å®šã€ãƒ•ã‚©ãƒ«ãƒ€ã®ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªIDã‚’å¾—ã‚‹ */
 	err=FindFolder(GetFindFolderVRefNum(),kPreferencesFolderType,kCreateFolder,&vRefNum,&dirID);
 	if (err!=noErr)
 	{
@@ -75,7 +75,7 @@ void OpenPrefFile(void)
 	
 	GetIndString(prefFileName,sPrefFileString,1);
 	err=FSMakeFSSpec(vRefNum,dirID,prefFileName,&prefFileSpec);
-	if (err==fnfErr) /* ‰Šúİ’èƒtƒ@ƒCƒ‹‚ª‚È‚¯‚ê‚Îì¬‚·‚é */
+	if (err==fnfErr) /* åˆæœŸè¨­å®šãƒ•ã‚¡ã‚¤ãƒ«ãŒãªã‘ã‚Œã°ä½œæˆã™ã‚‹ */
 	{
 		FSpCreateResFile(&prefFileSpec,kIconPartyCreator,kPreferencesFileType,smSystemScript);
 	}
@@ -83,46 +83,46 @@ void OpenPrefFile(void)
 	gPrefFileRefNum=FSpOpenResFile(&prefFileSpec,fsRdWrPerm);
 }
 
-/* ‰Šúİ’è‚Ì“Ç‚İ‚İ */
+/* åˆæœŸè¨­å®šã®èª­ã¿è¾¼ã¿ */
 void LoadPrefFile(void)
 {
 	OSErr	err;
 	AliasHandle	theAlias;
 	
-	/* ƒOƒŠƒbƒhƒ‚[ƒh */
+	/* ã‚°ãƒªãƒƒãƒ‰ãƒ¢ãƒ¼ãƒ‰ */
 	gToolPrefs.gridMode=2*16+1; /* none */
 		/* bit 0~3 : 1=none,2=gray,3=dot,4=white */
 		/* bit 4~7 : 0=none,1=icon32, 2=icon16 */
 	gToolPrefs.gridColor=rgbBlackColor;
 	gToolPrefs.gridColor2=rgbBlackColor;	/* 32*32 or 16*16 grid */
 	
-	/* ƒ‹[ƒ‰[ƒ‚[ƒh */
-	gToolPrefs.showRuler=false; /* ƒ‹[ƒ‰[‚È‚µ */
+	/* ãƒ«ãƒ¼ãƒ©ãƒ¼ãƒ¢ãƒ¼ãƒ‰ */
+	gToolPrefs.showRuler=false; /* ãƒ«ãƒ¼ãƒ©ãƒ¼ãªã— */
 	
-	/* ƒpƒŒƒbƒg‚Ìƒ`ƒFƒbƒN */
+	/* ãƒ‘ãƒ¬ãƒƒãƒˆã®ãƒã‚§ãƒƒã‚¯ */
 	gPaletteCheck=kPaletteCheckNone;
 	
-	/* PNGƒtƒ@ƒCƒ‹‚Ìİ’è */
-	gPNGFilePrefs.interlaced=true;		/* ƒCƒ“ƒ^ƒŒ[ƒX */
-	gPNGFilePrefs.transColor=0;			/* “§‰ßF‚È‚µ */
-	gPNGFilePrefs.useClip2gif=false;	/* clip2gif‚Íg—p‚µ‚È‚¢ */
-	gPNGFilePrefs.compLevel=6;			/* ˆ³kƒŒƒxƒ‹6 */
+	/* PNGãƒ•ã‚¡ã‚¤ãƒ«ã®è¨­å®š */
+	gPNGFilePrefs.interlaced=true;		/* ã‚¤ãƒ³ã‚¿ãƒ¬ãƒ¼ã‚¹ */
+	gPNGFilePrefs.transColor=0;			/* é€éè‰²ãªã— */
+	gPNGFilePrefs.useClip2gif=false;	/* clip2gifã¯ä½¿ç”¨ã—ãªã„ */
+	gPNGFilePrefs.compLevel=6;			/* åœ§ç¸®ãƒ¬ãƒ™ãƒ«6 */
 	
-	gPNGFilePrefs.optimizeImage=true;	/* F”‚É‚ ‚í‚¹‚ÄÅ“K‰» */
+	gPNGFilePrefs.optimizeImage=true;	/* è‰²æ•°ã«ã‚ã‚ã›ã¦æœ€é©åŒ– */
 	gPNGFilePrefs.useTransColor.inSaving=false;
 	gPNGFilePrefs.useTransColor.inLoading=false;
 	
-	/* ƒyƒCƒ“ƒgİ’è */
+	/* ãƒšã‚¤ãƒ³ãƒˆè¨­å®š */
 	gToolPrefs.eraseSameColor=true;
 	gToolPrefs.eraseSize11=true;
-	gToolPrefs.selectionMasking=true; /* v1.1•ÏX */
+	gToolPrefs.selectionMasking=true; /* v1.1å¤‰æ›´ */
 	gToolPrefs.dotDrawPrefs=gKeyThreshStore;
 	gToolPrefs.changeSpoitCursor=false;
 	gToolPrefs.changePencilCursor=false;
 	gToolPrefs.useColorCursor=false;
 	gToolPrefs.eraserByCmdKey=false;
 	
-	/* ƒNƒŠƒG[ƒ^ƒR[ƒh */
+	/* ã‚¯ãƒªã‚¨ãƒ¼ã‚¿ã‚³ãƒ¼ãƒ‰ */
 	gPICTCreator=kIconPartyCreator;	/* IconParty */
 	gGIFCreator=kIconPartyCreator;	/* IconParty */
 	if (isOSX)
@@ -131,26 +131,26 @@ void LoadPrefFile(void)
 		gIconCreator=kResEditCreator; /* ResEdit */
 	gPNGCreator=kIconPartyCreator;
 	
-	/* ‹N“®“®ìİ’è */
-	gStartup=1; /* V‹KƒEƒBƒ“ƒhƒE‚ğ•\¦ */
+	/* èµ·å‹•æ™‚å‹•ä½œè¨­å®š */
+	gStartup=1; /* æ–°è¦ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚’è¡¨ç¤º */
 	
-	/* ƒvƒŒƒrƒ…[ƒAƒCƒRƒ“‚ğ’Ç‰Á */
-	gPreviewIconFlag=0; /* ’Ç‰Á‚µ‚È‚¢ */
+	/* ãƒ—ãƒ¬ãƒ“ãƒ¥ãƒ¼ã‚¢ã‚¤ã‚³ãƒ³ã‚’è¿½åŠ  */
+	gPreviewIconFlag=0; /* è¿½åŠ ã—ãªã„ */
 	
-	/* ƒ^ƒuƒŒƒbƒgİ’è */
-	gTabletPrefs.usePressure=false; /* 1.1b2•ÏX */
+	/* ã‚¿ãƒ–ãƒ¬ãƒƒãƒˆè¨­å®š */
+	gTabletPrefs.usePressure=false; /* 1.1b2å¤‰æ›´ */
 	gTabletPrefs.overrideTransparency=true;
-	gTabletPrefs.useEraser=false; /* 1.1b2•ÏX */
+	gTabletPrefs.useEraser=false; /* 1.1b2å¤‰æ›´ */
 	gTabletPrefs.useEraserPressure=false;
 	
 	SetRect(&gPaintWinPrefs.iconSize,0,0,96,64);
-	gPaintWinPrefs.ratio=2;	/* ‚S”{ */
-	gPaintWinPrefs.askSize=false;	/* ƒTƒCƒY‚Í–ˆ‰ñ•·‚©‚È‚¢ */
+	gPaintWinPrefs.ratio=2;	/* ï¼”å€ */
+	gPaintWinPrefs.askSize=false;	/* ã‚µã‚¤ã‚ºã¯æ¯å›èã‹ãªã„ */
 	gPaintWinPrefs.referClip=false; /* don't refer clipboard */
-	gPaintWinPrefs.background=0; /* ”’ */
+	gPaintWinPrefs.background=0; /* ç™½ */
 	gPaintWinPrefs.colorMode = kNormal8BitColorMode;
 	
-	/* ƒAƒCƒRƒ“ƒŠƒXƒg‚Ì”wŒi */
+	/* ã‚¢ã‚¤ã‚³ãƒ³ãƒªã‚¹ãƒˆã®èƒŒæ™¯ */
 	gListBackground=iBackWhite;
 	
 	#if TARGET_API_MAC_CARBON
@@ -159,18 +159,18 @@ void LoadPrefFile(void)
 	useNavigationServices=false;
 	#endif
 	
-	/* ‚»‚Ì‘¼‚Ìİ’è */
+	/* ãã®ä»–ã®è¨­å®š */
 	gOtherPrefs.checkWhenColorChanged=false;
 	gOtherPrefs.activateDroppedWindow=false;
 	gOtherPrefs.maskAutoConvert=false;
 	gOtherPrefs.continuousIDs=false;
-	gOtherPrefs.addForeground=true; /* v1.1•ÏX */
+	gOtherPrefs.addForeground=true; /* v1.1å¤‰æ›´ */
 	gOtherPrefs.copyIconWithPicture=true;
 	gOtherPrefs.useHyperCardPalette=false;
 	
-	gOtherPrefs.importAsFamilyIcon=false; /* ƒfƒtƒHƒ‹ƒg‚Å‚ÍA‚Î‚ç‚Î‚ç‚Éæ‚è‚Ş */
+	gOtherPrefs.importAsFamilyIcon=false; /* ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆã§ã¯ã€ã°ã‚‰ã°ã‚‰ã«å–ã‚Šè¾¼ã‚€ */
 	
-	/* g—p‰ñ” */
+	/* ä½¿ç”¨å›æ•° */
 	gUsedCount.usedCount=0;
 	gUsedCount.usedTime=0;
 	gUsedCount.newNum=gUsedCount.openNum=gUsedCount.saveNum=0;
@@ -181,11 +181,11 @@ void LoadPrefFile(void)
 	gUsedCount.exportNum=0;
 	gUsedCount.showCountNum=0;
 	
-	/* •`‰æ“_ŠÖŒW */
+	/* æç”»ç‚¹é–¢ä¿‚ */
 	gDotCommand[0]=0;
 	gDotLibName[0]=0;
 	
-	/* ŠO•”ƒGƒfƒBƒ^ŠÖŒW */
+	/* å¤–éƒ¨ã‚¨ãƒ‡ã‚£ã‚¿é–¢ä¿‚ */
 	isExternalEditorAvailable=false;
 	gUseExternalEditor=(gSystemVersion >= 0x0850);
 	
@@ -199,22 +199,22 @@ void LoadPrefFile(void)
 	}
 	UseResFile(gPrefFileRefNum);
 	
-	/* ƒpƒŒƒbƒg‚Ìƒ`ƒFƒbƒN‚Ì“Ç‚İ‚İ */
+	/* ãƒ‘ãƒ¬ãƒƒãƒˆã®ãƒã‚§ãƒƒã‚¯ã®èª­ã¿è¾¼ã¿ */
 	err=LoadDataFromPrefs(&gPaletteCheck,sizeof(gPaletteCheck),'cAIC',128);
 	#if TARGET_API_MAC_CARBON
 	if (isOSX && gPaletteCheck == kPaletteCheckUsed)
 		gPaletteCheck = kPaletteCheckNone;
 	#endif
 	
-	/* ƒŠƒXƒg‚Ì”wŒi‚Ì“Ç‚İ‚İ */
+	/* ãƒªã‚¹ãƒˆã®èƒŒæ™¯ã®èª­ã¿è¾¼ã¿ */
 	err=LoadDataFromPrefs(&gListBackground,sizeof(gListBackground),'lBak',128);
 	if (isOSX && gListBackground == iBackDesktop) gListBackground=iBackWhite;
 	
-	/* PNGİ’è‚Ì“Ç‚İ‚İ */
+	/* PNGè¨­å®šã®èª­ã¿è¾¼ã¿ */
 	err=LoadDataFromPrefs(&gPNGFilePrefs,sizeof(gPNGFilePrefs),'gSet',128);
-	gPNGFilePrefs.useClip2gif=false; /* clip2gif‚Íg—p‚µ‚È‚¢ */
+	gPNGFilePrefs.useClip2gif=false; /* clip2gifã¯ä½¿ç”¨ã—ãªã„ */
 	
-	/* ƒyƒCƒ“ƒgİ’è‚Ì“Ç‚İ‚İ */
+	/* ãƒšã‚¤ãƒ³ãƒˆè¨­å®šã®èª­ã¿è¾¼ã¿ */
 	err=LoadDataFromPrefs(&gToolPrefs,sizeof(gToolPrefs),'pPrf',128);
 	
 	/* grid mode */
@@ -222,22 +222,22 @@ void LoadPrefFile(void)
 	if ((gToolPrefs.gridMode & 0x07) > 4) gToolPrefs.gridMode &= 0x31;
 	if ((gToolPrefs.gridMode & 0x30) > 2) gToolPrefs.gridMode &= 0x27;
 	
-	/* Šeƒtƒ@ƒCƒ‹‚ÌƒNƒŠƒG[ƒ^ƒR[ƒh‚Ì“Ç‚İ‚İ */
+	/* å„ãƒ•ã‚¡ã‚¤ãƒ«ã®ã‚¯ãƒªã‚¨ãƒ¼ã‚¿ã‚³ãƒ¼ãƒ‰ã®èª­ã¿è¾¼ã¿ */
 	err=LoadDataFromPrefs(&gPICTCreator,sizeof(OSType),'DCrt',128);
 	err=LoadDataFromPrefs(&gGIFCreator,sizeof(OSType),'DCrt',129);
 	err=LoadDataFromPrefs(&gIconCreator,sizeof(OSType),'DCrt',130);
 	err=LoadDataFromPrefs(&gPNGCreator,sizeof(OSType),'DCrt',131);
 	
-	/* ‹N“®“®ì‚Ì“Ç‚İ‚İ */
+	/* èµ·å‹•æ™‚å‹•ä½œã®èª­ã¿è¾¼ã¿ */
 	err=LoadDataFromPrefs(&gStartup,sizeof(short),'Stup',128);
 	
-	/* ƒvƒŒƒrƒ…[ƒAƒCƒRƒ“‚ğ’Ç‰Á‚·‚é‚© */
+	/* ãƒ—ãƒ¬ãƒ“ãƒ¥ãƒ¼ã‚¢ã‚¤ã‚³ãƒ³ã‚’è¿½åŠ ã™ã‚‹ã‹ */
 	err=LoadDataFromPrefs(&gPreviewIconFlag,sizeof(short),'fPrf',128);
 	
-	/* ƒ^ƒuƒŒƒbƒgİ’è‚Ì“Ç‚İ‚İ */
+	/* ã‚¿ãƒ–ãƒ¬ãƒƒãƒˆè¨­å®šã®èª­ã¿è¾¼ã¿ */
 	err=LoadDataFromPrefs(&gTabletPrefs,sizeof(gTabletPrefs),'tPrf',128);
 	
-	/* ƒfƒtƒHƒ‹ƒgƒTƒCƒYA”{—¦‚Ì“Ç‚İ‚İ */
+	/* ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆã‚µã‚¤ã‚ºã€å€ç‡ã®èª­ã¿è¾¼ã¿ */
 	err=LoadDataFromPrefs(&gPaintWinPrefs,sizeof(gPaintWinPrefs),'PWpf',128);
 	switch (gPaintWinPrefs.colorMode)
 	{
@@ -249,7 +249,7 @@ void LoadPrefFile(void)
 			gPaintWinPrefs.colorMode = kNormal8BitColorMode;
 	}
 	
-	/* ŒİŠ·«‚ğ•Û‚Â‚½‚ß */
+	/* äº’æ›æ€§ã‚’ä¿ã¤ãŸã‚ */
 	err=LoadDataFromPrefs(&gToolPrefs.gridMode,sizeof(gToolPrefs.gridMode),'gMod',128);
 	if (err==noErr)
 	{
@@ -273,25 +273,25 @@ void LoadPrefFile(void)
 	err=LoadDataFromPrefs(&useNavigationServices,sizeof(useNavigationServices),'uNav',128);
 	#endif
 	
-	/* ‚»‚Ì‘¼‚Ìİ’è */
+	/* ãã®ä»–ã®è¨­å®š */
 	err=LoadDataFromPrefs(&gOtherPrefs,sizeof(gOtherPrefs),'oPrf',128);
 	if (gOtherPrefs.useHyperCardPalette)
 		gPatternNo=12;
 	if (!isIconServicesAvailable)
 		gOtherPrefs.importAsFamilyIcon=false;
 	
-	/* g—p‰ñ”‚Ì“Ç */
+	/* ä½¿ç”¨å›æ•°ã®èª­è¾¼ */
 	err=LoadDataFromPrefs(&gUsedCount,sizeof(gUsedCount),'uCnt',128);
 	gUsedCount.usedCount++;
 	
-	/* ƒyƒCƒ“ƒgŠÖŒW */
+	/* ãƒšã‚¤ãƒ³ãƒˆé–¢ä¿‚ */
 	LoadPaintPrefs();
 	
-	/* •`‰æ“_‹L˜^ƒRƒ}ƒ“ƒh */
+	/* æç”»ç‚¹è¨˜éŒ²ã‚³ãƒãƒ³ãƒ‰ */
 	err=LoadDataFromPrefs(gDotCommand,sizeof(gDotCommand),'STR ',128);
 	err=LoadDataFromPrefs(gDotLibName,sizeof(gDotLibName),'STR ',129);
 	
-	/* ŠO•”ƒGƒfƒBƒ^ */
+	/* å¤–éƒ¨ã‚¨ãƒ‡ã‚£ã‚¿ */
 	theAlias=(AliasHandle)Get1Resource(rAliasType,128);
 	if (theAlias!=nil)
 	{
@@ -316,7 +316,7 @@ void LoadPrefFile(void)
 	}
 	err=LoadDataFromPrefs(&gUseExternalEditor,sizeof(gUseExternalEditor),'uExE',128);
 	
-	/* ‚¨‹C‚É“ü‚èƒpƒŒƒbƒg */
+	/* ãŠæ°—ã«å…¥ã‚Šãƒ‘ãƒ¬ãƒƒãƒˆ */
 	gFavoriteColors=(CTabHandle)Get1Resource('clut',128);
 	
 	UseResFile(gApplRefNum);
@@ -332,19 +332,19 @@ void LoadPrefFile(void)
 		DetachResource((Handle)gFavoriteColors);
 }
 
-/* İ’è‚Ì•Û‘¶ */
+/* è¨­å®šã®ä¿å­˜ */
 void SavePrefFile(void)
 {
 	short	err;
 	
 	err=SavePrefFileMain();
-	if (err!=noErr) /* ƒGƒ‰[‚ª‚ ‚ê‚Î‚»‚Ì|‚ğ•\¦ */
+	if (err!=noErr) /* ã‚¨ãƒ©ãƒ¼ãŒã‚ã‚Œã°ãã®æ—¨ã‚’è¡¨ç¤º */
 	{
 		ErrorAlertFromResource(PREFERR_RESID,PREFERR3);
 	}
 }
 
-/* İ’è‚Ì•Û‘¶iƒƒCƒ“j */
+/* è¨­å®šã®ä¿å­˜ï¼ˆãƒ¡ã‚¤ãƒ³ï¼‰ */
 short SavePrefFileMain(void)
 {
 	OSErr	err;
@@ -358,34 +358,34 @@ short SavePrefFileMain(void)
 	
 	UseResFile(gPrefFileRefNum);
 	
-	/* ƒŠƒXƒg‚ÌƒoƒbƒNƒOƒ‰ƒEƒ“ƒh */
+	/* ãƒªã‚¹ãƒˆã®ãƒãƒƒã‚¯ã‚°ãƒ©ã‚¦ãƒ³ãƒ‰ */
 	err=AddDataToPrefs(&gListBackground,sizeof(gListBackground),'lBak',128,"\pbackground of icon list");
 	
-	/* Apple Icon Color‚Ì•\¦ */
+	/* Apple Icon Colorã®è¡¨ç¤º */
 	err=AddDataToPrefs(&gPaletteCheck,sizeof(gPaletteCheck),'cAIC',128,"\pcolor palette check");
 	
-	/* PNGƒtƒ@ƒCƒ‹İ’è */
+	/* PNGãƒ•ã‚¡ã‚¤ãƒ«è¨­å®š */
 	err=AddDataToPrefs(&gPNGFilePrefs,sizeof(gPNGFilePrefs),'gSet',128,"\ppng file prefs");
 	
-	/* ƒyƒCƒ“ƒg‰Šúİ’è */
+	/* ãƒšã‚¤ãƒ³ãƒˆåˆæœŸè¨­å®š */
 	err=AddDataToPrefs(&gToolPrefs,sizeof(gToolPrefs),'pPrf',128,"\ptool prefs");
 	
-	/* ‘—Ş‚ÌƒNƒŠƒG[ƒ^ */
+	/* æ›¸é¡ã®ã‚¯ãƒªã‚¨ãƒ¼ã‚¿ */
 	err=AddDataToPrefs(&gPICTCreator,sizeof(OSType),'DCrt',128,"\ppict creator");
 	err=AddDataToPrefs(&gGIFCreator,sizeof(OSType),'DCrt',129,"\pgif creator");
 	err=AddDataToPrefs(&gIconCreator,sizeof(OSType),'DCrt',130,"\picon creator");
 	err=AddDataToPrefs(&gPNGCreator,sizeof(OSType),'DCrt',131,"\ppng creator");
 	
-	/* ‹N“®“®ìİ’è */
+	/* èµ·å‹•æ™‚å‹•ä½œè¨­å®š */
 	err=AddDataToPrefs(&gStartup,sizeof(short),'Stup',128,"\pstartup setting");
 	
-	/* ƒvƒŒƒrƒ…[ƒAƒCƒRƒ“‚ğ’Ç‰Á‚·‚é‚© */
+	/* ãƒ—ãƒ¬ãƒ“ãƒ¥ãƒ¼ã‚¢ã‚¤ã‚³ãƒ³ã‚’è¿½åŠ ã™ã‚‹ã‹ */
 	err=AddDataToPrefs(&gPreviewIconFlag,sizeof(short),'fPrf',128,"\padd preview icon");
 	
-	/* ƒ^ƒuƒŒƒbƒgİ’è */
+	/* ã‚¿ãƒ–ãƒ¬ãƒƒãƒˆè¨­å®š */
 	err=AddDataToPrefs(&gTabletPrefs,sizeof(gTabletPrefs),'tPrf',128,"\ptablet prefs");
 	
-	/* ƒfƒtƒHƒ‹ƒgƒTƒCƒY‚Æ”{—¦ */
+	/* ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆã‚µã‚¤ã‚ºã¨å€ç‡ */
 	err=AddDataToPrefs(&gPaintWinPrefs,sizeof(gPaintWinPrefs),'PWpf',128,"\ppaint window prefs");
 	
 	#if !TARGET_API_MAC_CARBON
@@ -406,15 +406,15 @@ short SavePrefFileMain(void)
 	
 	err=AddDataToPrefs(&gUsedCount,sizeof(gUsedCount),'uCnt',128,"\pcount of use");
 	
-	/* ƒyƒCƒ“ƒgŠÖŒW */
+	/* ãƒšã‚¤ãƒ³ãƒˆé–¢ä¿‚ */
 	SavePaintPrefs();
 	
-	/* •`‰æ“_‹L˜^ƒRƒ}ƒ“ƒh */
+	/* æç”»ç‚¹è¨˜éŒ²ã‚³ãƒãƒ³ãƒ‰ */
 	err=AddDataToPrefs(gDotCommand,gDotCommand[0]+1,'STR ',128,"\pdot mode command");
 	if (gDotLibRefNum > 0)
 		err=AddDataToPrefs(gDotLibName,gDotLibName[0]+1,'STR ',129,"\pdot lib name");
 	
-	/* ŠO•”ƒGƒfƒBƒ^ */
+	/* å¤–éƒ¨ã‚¨ãƒ‡ã‚£ã‚¿ */
 	if (isExternalEditorAvailable)
 	{
 		AliasHandle	theAlias;
@@ -434,7 +434,7 @@ short SavePrefFileMain(void)
 		RemoveDataFromPrefs(rAliasType,128);
 	err=AddDataToPrefs(&gUseExternalEditor,sizeof(gUseExternalEditor),'uExE',128,"\puse external editor");
 	
-	/* ‚¨‹C‚É“ü‚èƒpƒŒƒbƒg */
+	/* ãŠæ°—ã«å…¥ã‚Šãƒ‘ãƒ¬ãƒƒãƒˆ */
 	err=AddDataToPrefs(*gFavoriteColors,GetHandleSize((Handle)gFavoriteColors),'clut',128,"\pfavorite colors");
 	
 	UseResFile(gApplRefNum);
@@ -447,7 +447,7 @@ short SavePrefFileMain(void)
 	return err;
 }
 
-/* ƒf[ƒ^‚ğ‰Šúİ’è‚É’Ç‰Á‚·‚é */
+/* ãƒ‡ãƒ¼ã‚¿ã‚’åˆæœŸè¨­å®šã«è¿½åŠ ã™ã‚‹ */
 OSErr AddDataToPrefs(void *dataPtr,long dataSize,ResType type,short id,Str255 resName)
 {
 	Handle	resHandle;
@@ -474,7 +474,7 @@ OSErr AddDataToPrefs(void *dataPtr,long dataSize,ResType type,short id,Str255 re
 	return noErr;
 }
 
-/* ƒf[ƒ^‚ğ‰Šúİ’è‚©‚ç“Ç‚İ‚Ş */
+/* ãƒ‡ãƒ¼ã‚¿ã‚’åˆæœŸè¨­å®šã‹ã‚‰èª­ã¿è¾¼ã‚€ */
 OSErr LoadDataFromPrefs(void *dataPtr,long dataSize,ResType type,short id)
 {
 	Handle	resHandle;
@@ -489,7 +489,7 @@ OSErr LoadDataFromPrefs(void *dataPtr,long dataSize,ResType type,short id)
 	return noErr;
 }
 
-/* ƒŠƒ\[ƒX‚ğíœ‚·‚é */
+/* ãƒªã‚½ãƒ¼ã‚¹ã‚’å‰Šé™¤ã™ã‚‹ */
 OSErr RemoveDataFromPrefs(ResType type,short id)
 {
 	Handle	resHandle;
@@ -503,19 +503,19 @@ OSErr RemoveDataFromPrefs(ResType type,short id)
 	return noErr;
 }
 
-/* ‰Šúİ’èƒtƒ@ƒCƒ‹‚ğ•Â‚¶‚é */
+/* åˆæœŸè¨­å®šãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‰ã˜ã‚‹ */
 void ClosePrefFile(void)
 {
 	if (gPrefFileRefNum<=0) return;
 	
-	/* •Â‚¶‚é‘O‚ÉƒEƒBƒ“ƒhƒE‚ÌˆÊ’u‚ğ‹L˜^ */
+	/* é–‰ã˜ã‚‹å‰ã«ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ä½ç½®ã‚’è¨˜éŒ² */
 	SaveWindowPos();
 	
 	CloseResFile(gPrefFileRefNum);
 	FlushVol(0,0);
 }
 
-/* ‰Šúİ’èƒ_ƒCƒAƒƒO‚Ì•\¦ */
+/* åˆæœŸè¨­å®šãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã®è¡¨ç¤º */
 void OpenPrefsDialog(void)
 {
 	DialogPtr	dp;
@@ -566,7 +566,7 @@ void OpenPrefsDialog(void)
 	SetPortDialogPort(dp);
 	MySetCursor(0);
 	
-	/* ƒ^ƒu‚Ì’²®iƒ^ƒuƒŒƒbƒg‚Ì‚ ‚é^‚È‚µj */
+	/* ã‚¿ãƒ–ã®èª¿æ•´ï¼ˆã‚¿ãƒ–ãƒ¬ãƒƒãƒˆã®ã‚ã‚‹ï¼ãªã—ï¼‰ */
 	tabNum=prevTab;
 	tabHandle=GetDialogItemHandle(dp,3);
 	if (!isTabletAvailable)
@@ -582,7 +582,7 @@ void OpenPrefsDialog(void)
 	else
 		SetControlValue((ControlHandle)tabHandle,tabNum);
 	
-	/* ƒAƒCƒeƒ€‚Ì’Ç‰Á */
+	/* ã‚¢ã‚¤ãƒ†ãƒ ã®è¿½åŠ  */
 	for (i=0; i<6; i++)
 	{
 		startItem[i]=CountDITL(dp);
@@ -595,12 +595,12 @@ void OpenPrefsDialog(void)
 				HideDialogItem(dp,startItem[i]+j+1);
 	}
 	
-	/* ƒtƒ@ƒCƒ‹İ’è‰Šú‰» */
-	/* ‹N“®‚Ìˆ— */
+	/* ãƒ•ã‚¡ã‚¤ãƒ«è¨­å®šåˆæœŸåŒ– */
+	/* èµ·å‹•æ™‚ã®å‡¦ç† */
 	prevStartup=gStartup;
 	SetDialogControlValue(dp,startItem[0]+diStartupPrefs,prevStartup+1);
 	
-	/* ƒNƒŠƒG[ƒ^ */
+	/* ã‚¯ãƒªã‚¨ãƒ¼ã‚¿ */
 	info[0]=gPICTCreator;
 	info[1]=gGIFCreator;
 	info[2]=gPNGCreator;
@@ -619,34 +619,34 @@ void OpenPrefsDialog(void)
 	if (!NavServicesAvailable())
 		SetDialogControlHilite(dp,startItem[0]+diUseNavServices,itemInactive);
 	
-	/* ƒvƒŒƒrƒ…[ƒAƒCƒRƒ“’Ç‰Á */
+	/* ãƒ—ãƒ¬ãƒ“ãƒ¥ãƒ¼ã‚¢ã‚¤ã‚³ãƒ³è¿½åŠ  */
 	prevPI=gPreviewIconFlag;
 	SetDialogControlValue(dp,startItem[0]+diPreviewIconFlag,prevPI);
 	
-	/* ƒyƒCƒ“ƒgİ’è */
-	/* ƒAƒCƒRƒ“‚Ì‘å‚«‚³ */
+	/* ãƒšã‚¤ãƒ³ãƒˆè¨­å®š */
+	/* ã‚¢ã‚¤ã‚³ãƒ³ã®å¤§ãã• */
 	NumToString(gPaintWinPrefs.iconSize.right,str);
 	SetDialogItemText2(dp,startItem[1]+diImageWidth,str);
 	NumToString(gPaintWinPrefs.iconSize.bottom,str);
 	SetDialogItemText2(dp,startItem[1]+diImageHeight,str);
 	
-	/* ƒJƒ‰[ƒ‚[ƒh */
+	/* ã‚«ãƒ©ãƒ¼ãƒ¢ãƒ¼ãƒ‰ */
 	if (gPaintWinPrefs.colorMode == kNormal8BitColorMode)
 		SetDialogControlValue(dp,startItem[1]+diImageColorMode,1);
 	else
 		SetDialogControlValue(dp,startItem[1]+diImageColorMode,2);
 	
-	/* ”{—¦ */
+	/* å€ç‡ */
 	SetDialogControlValue(dp,startItem[1]+diImageRatio,gPaintWinPrefs.ratio+1);
 	
-	/* ƒTƒCƒY‚ğ–ˆ‰ñ•·‚­‚©‚Ç‚¤‚© */
+	/* ã‚µã‚¤ã‚ºã‚’æ¯å›èãã‹ã©ã†ã‹ */
 	prevAsk=gPaintWinPrefs.askSize;
 	SetDialogControlValue(dp,startItem[1]+diAskSize,prevAsk);
 	
-	/* ”wŒi */
+	/* èƒŒæ™¯ */
 	SetDialogControlValue(dp,startItem[1]+diBackground,gPaintWinPrefs.background+1);
 	
-	/* ŠO•”ƒGƒfƒBƒ^ */
+	/* å¤–éƒ¨ã‚¨ãƒ‡ã‚£ã‚¿ */
 	tempExternalEditor=gExternalEditor;
 	tempExternalEditorAvailable=isExternalEditorAvailable;
 	tempUseExternalEditor=gUseExternalEditor;
@@ -659,7 +659,7 @@ void OpenPrefsDialog(void)
 	}
 	SetDialogControlValue(dp,startItem[1]+diUseExternalEditor,tempUseExternalEditor);
 	
-	/* ƒc[ƒ‹İ’è‰Šú‰» */
+	/* ãƒ„ãƒ¼ãƒ«è¨­å®šåˆæœŸåŒ– */
 	prevPaintPrefs=gToolPrefs;
 	
 	SetDialogControlValue(dp,startItem[2]+diEraseSameColor,prevPaintPrefs.eraseSameColor);
@@ -687,7 +687,7 @@ void OpenPrefsDialog(void)
 	
 	SetDialogControlValue(dp,startItem[2]+diChangeSpoitCursor,prevPaintPrefs.changeSpoitCursor);
 	
-	/* PNGİ’è‰Šú‰» */
+	/* PNGè¨­å®šåˆæœŸåŒ– */
 	prevPNGPrefs=gPNGFilePrefs;
 	
 	switch (prevPNGPrefs.transColor)
@@ -727,7 +727,7 @@ void OpenPrefsDialog(void)
 	
 	SetDialogControlValue(dp,startItem[3]+diPNGCompLevel,prevPNGPrefs.compLevel+1);
 	
-	/* ƒ^ƒuƒŒƒbƒgİ’è‰Šú‰» */
+	/* ã‚¿ãƒ–ãƒ¬ãƒƒãƒˆè¨­å®šåˆæœŸåŒ– */
 	prevTabletPrefs=gTabletPrefs;
 	
 	SetDialogControlValue(dp,startItem[4]+diTabletUsePressure,prevTabletPrefs.usePressure);
@@ -739,7 +739,7 @@ void OpenPrefsDialog(void)
 	if (!prevTabletPrefs.useEraser)
 		SetDialogControlHilite(dp,startItem[4]+diTabletUseEraserPressure,255);
 	
-	/* ‚»‚Ì‘¼‚Ìİ’è‰Šú‰» */
+	/* ãã®ä»–ã®è¨­å®šåˆæœŸåŒ– */
 	prevOtherPrefs=gOtherPrefs;
 	
 	SetDialogControlValue(dp,startItem[5]+diCheckWhenColorChanged,prevOtherPrefs.checkWhenColorChanged);
@@ -754,7 +754,7 @@ void OpenPrefsDialog(void)
 	if (!isIconServicesAvailable)
 		SetDialogControlHilite(dp,startItem[5]+diImportAsFamilyIcon,255);
 	
-	/* ƒ_ƒCƒAƒƒO•\¦ */
+	/* ãƒ€ã‚¤ã‚¢ãƒ­ã‚°è¡¨ç¤º */
 	SetDialogDefaultItem(dp,ok);
 	SetDialogCancelItem(dp,cancel);
 	ShowWindow(GetDialogWindow(dp));
@@ -774,7 +774,7 @@ void OpenPrefsDialog(void)
 				break;
 			
 			case 3:
-				/* ƒ^ƒu */
+				/* ã‚¿ãƒ– */
 				temp=GetControlValue((ControlHandle)tabHandle);
 				if (!isTabletAvailable && temp==5) temp=6;
 				if (temp!=tabNum)
@@ -798,7 +798,7 @@ void OpenPrefsDialog(void)
 				switch (tabNum)
 				{
 					case kFilePrefsTab:
-						/* ƒtƒ@ƒCƒ‹İ’è */
+						/* ãƒ•ã‚¡ã‚¤ãƒ«è¨­å®š */
 						switch (item2)
 						{
 							case diStartupPrefs:
@@ -809,7 +809,7 @@ void OpenPrefsDialog(void)
 							case diSetGIFCreator:
 							case diSetIconCreator:
 							case diSetPNGCreator:
-								/* ƒNƒŠƒG[ƒ^İ’èƒ{ƒ^ƒ“ */
+								/* ã‚¯ãƒªã‚¨ãƒ¼ã‚¿è¨­å®šãƒœã‚¿ãƒ³ */
 								if (GetCreatorFromFile(&creator)==noErr)
 								{
 									CreatorToAppl(creator,applName);
@@ -834,14 +834,14 @@ void OpenPrefsDialog(void)
 							
 							#if !TARGET_API_MAC_CARBON
 							case diUseNavServices:
-								/* Navigation Services‚ğg—p‚·‚é‚©‚Ç‚¤‚© */
+								/* Navigation Servicesã‚’ä½¿ç”¨ã™ã‚‹ã‹ã©ã†ã‹ */
 								prevUN=(UInt8)!prevUN;
 								SetDialogControlValue(dp,item,prevUN);
 								break;
 							#endif
 							
 							case diPreviewIconFlag:
-								/* ƒvƒŒƒrƒ…[ƒAƒCƒRƒ“‚ğ’Ç‰Á‚·‚é‚©‚Ç‚¤‚© */
+								/* ãƒ—ãƒ¬ãƒ“ãƒ¥ãƒ¼ã‚¢ã‚¤ã‚³ãƒ³ã‚’è¿½åŠ ã™ã‚‹ã‹ã©ã†ã‹ */
 								prevPI=(UInt8)!prevPI;
 								SetDialogControlValue(dp,item,prevPI);
 								break;
@@ -849,17 +849,17 @@ void OpenPrefsDialog(void)
 						break;
 					
 					case kPaintPrefsTab:
-						/* ƒyƒCƒ“ƒgİ’è */
+						/* ãƒšã‚¤ãƒ³ãƒˆè¨­å®š */
 						switch (item2)
 						{
 							case diAskSize:
-								/* ‹N“®‚ÉƒTƒCƒY‚ğ•·‚­‚©‚Ç‚¤‚© */
+								/* èµ·å‹•æ™‚ã«ã‚µã‚¤ã‚ºã‚’èãã‹ã©ã†ã‹ */
 								prevAsk=(UInt8)!prevAsk;
 								SetDialogControlValue(dp,item,prevAsk);
 								break;
 							
 							case diExternalEditor:
-								/* ŠO•”ƒGƒfƒBƒ^ */
+								/* å¤–éƒ¨ã‚¨ãƒ‡ã‚£ã‚¿ */
 								if (SetExternalApplication(&tempSpec)==noErr)
 								{
 									tempExternalEditorAvailable=true;
@@ -873,7 +873,7 @@ void OpenPrefsDialog(void)
 								break;
 							
 							case diUseExternalEditor:
-								/* ŠO•”ƒGƒfƒBƒ^‚ğƒfƒtƒHƒ‹ƒg‚Åg—p‚·‚é‚© */
+								/* å¤–éƒ¨ã‚¨ãƒ‡ã‚£ã‚¿ã‚’ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆã§ä½¿ç”¨ã™ã‚‹ã‹ */
 								tempUseExternalEditor=!tempUseExternalEditor;
 								SetDialogControlValue(dp,item,tempUseExternalEditor);
 								break;
@@ -881,11 +881,11 @@ void OpenPrefsDialog(void)
 						break;
 					
 					case kToolPrefsTab:
-						/* ƒc[ƒ‹İ’è */
+						/* ãƒ„ãƒ¼ãƒ«è¨­å®š */
 						switch (item2)
 						{
 							case diEraseSameColor:
-								/* “¯‚¶F‚Ìê‡Á‚· */
+								/* åŒã˜è‰²ã®å ´åˆæ¶ˆã™ */
 								prevPaintPrefs.eraseSameColor=(UInt8)!prevPaintPrefs.eraseSameColor;
 								SetDialogControlValue(dp,item,prevPaintPrefs.eraseSameColor);
 								SetDialogControlHilite(dp,startItem[2]+diErase11,(prevPaintPrefs.eraseSameColor ? 
@@ -893,25 +893,25 @@ void OpenPrefsDialog(void)
 								break;
 							
 							case diErase11:
-								/* 1*1‚Ìê‡‚Ì‚İ */
+								/* 1*1ã®å ´åˆã®ã¿ */
 								prevPaintPrefs.eraseSize11=(UInt8)!prevPaintPrefs.eraseSize11;
 								SetDialogControlValue(dp,item,prevPaintPrefs.eraseSize11);
 								break;
 							
 							case diSelectionMaskingOn:
-								/* ‘I‘ğ—Ìˆæ‚Åƒ}ƒXƒLƒ“ƒO */
+								/* é¸æŠé ˜åŸŸã§ãƒã‚¹ã‚­ãƒ³ã‚° */
 								prevPaintPrefs.selectionMasking=(UInt8)!prevPaintPrefs.selectionMasking;
 								SetDialogControlValue(dp,item,prevPaintPrefs.selectionMasking);
 								break;
 							
 							case diChangeSpoitCursor:
-								/* ƒXƒ|ƒCƒgƒc[ƒ‹‚ÌƒJ[ƒ\ƒ‹‚ğ•ÏX */
+								/* ã‚¹ãƒã‚¤ãƒˆãƒ„ãƒ¼ãƒ«ã®ã‚«ãƒ¼ã‚½ãƒ«ã‚’å¤‰æ›´ */
 								prevPaintPrefs.changeSpoitCursor=(UInt8)!prevPaintPrefs.changeSpoitCursor;
 								SetDialogControlValue(dp,item,prevPaintPrefs.changeSpoitCursor);
 								break;
 							
 							case diChangePencilCursor:
-								/* ‰”•Mƒc[ƒ‹‚ÌƒJ[ƒ\ƒ‹‚ğ‘¾‚³‚É‚æ‚Á‚Ä•ÏX */
+								/* é‰›ç­†ãƒ„ãƒ¼ãƒ«ã®ã‚«ãƒ¼ã‚½ãƒ«ã‚’å¤ªã•ã«ã‚ˆã£ã¦å¤‰æ›´ */
 								prevPaintPrefs.changePencilCursor=(UInt8)!prevPaintPrefs.changePencilCursor;
 								SetDialogControlValue(dp,item,prevPaintPrefs.changePencilCursor);
 								SetDialogControlHilite(dp,startItem[2]+diUseColorCursor,(prevPaintPrefs.changePencilCursor ? 
@@ -919,13 +919,13 @@ void OpenPrefsDialog(void)
 								break;
 							
 							case diUseColorCursor:
-								/* F•t‚«ƒJ[ƒ\ƒ‹‚ğg—p‚·‚é‚© */
+								/* è‰²ä»˜ãã‚«ãƒ¼ã‚½ãƒ«ã‚’ä½¿ç”¨ã™ã‚‹ã‹ */
 								prevPaintPrefs.useColorCursor=(UInt8)!prevPaintPrefs.useColorCursor;
 								SetDialogControlValue(dp,item,prevPaintPrefs.useColorCursor);
 								break;
 							
 							case diEraserByCmdKey:
-								/* ƒRƒ}ƒ“ƒhƒL[{ƒNƒŠƒbƒNAƒhƒ‰ƒbƒO‚ÅÁ‚µƒSƒ€ƒc[ƒ‹ */
+								/* ã‚³ãƒãƒ³ãƒ‰ã‚­ãƒ¼ï¼‹ã‚¯ãƒªãƒƒã‚¯ã€ãƒ‰ãƒ©ãƒƒã‚°ã§æ¶ˆã—ã‚´ãƒ ãƒ„ãƒ¼ãƒ« */
 								prevPaintPrefs.eraserByCmdKey=(UInt8)!prevPaintPrefs.eraserByCmdKey;
 								SetDialogControlValue(dp,item,prevPaintPrefs.eraserByCmdKey);
 								break;
@@ -933,11 +933,11 @@ void OpenPrefsDialog(void)
 						break;
 					
 					case kPNGPrefsTab:
-						/* PNGİ’è */
+						/* PNGè¨­å®š */
 						switch (item2)
 						{
 							case diPNGTransColor:
-								/* “§–¾F */
+								/* é€æ˜è‰² */
 								item2=GetDialogControlValue(dp,item);
 								switch (item2)
 								{
@@ -966,32 +966,32 @@ void OpenPrefsDialog(void)
 								break;
 							
 							case diPNGInteraced:
-								/* ƒCƒ“ƒ^ƒŒ[ƒX */
+								/* ã‚¤ãƒ³ã‚¿ãƒ¬ãƒ¼ã‚¹ */
 								prevPNGPrefs.interlaced=(UInt8)!prevPNGPrefs.interlaced;
 								SetDialogControlValue(dp,item,prevPNGPrefs.interlaced);
 								break;
 							
 							case diPNGUseTransSaving:
-								/* •Û‘¶‚É“§–¾•”•ª‚ğ“§‰ßw’è */
+								/* ä¿å­˜æ™‚ã«é€æ˜éƒ¨åˆ†ã‚’é€éæŒ‡å®š */
 								prevPNGPrefs.useTransColor.inSaving=!prevPNGPrefs.useTransColor.inSaving;
 								SetDialogControlValue(dp,item,prevPNGPrefs.useTransColor.inSaving);
 								break;
 							
 							case diPNGUseTransLoading:
-								/* “Ç‚İ‚İ‚É“§‰ß•”•ª‚ğ“§–¾‰» */
+								/* èª­ã¿è¾¼ã¿æ™‚ã«é€ééƒ¨åˆ†ã‚’é€æ˜åŒ– */
 								prevPNGPrefs.useTransColor.inLoading=!prevPNGPrefs.useTransColor.inLoading;
 								SetDialogControlValue(dp,item,prevPNGPrefs.useTransColor.inLoading);
 								break;
 							
 							case diPNGOptimizeImage:
-								/* g—p‚³‚ê‚Ä‚¢‚éF”‚É‚ ‚í‚¹‚ÄÅ“K‰» */
+								/* ä½¿ç”¨ã•ã‚Œã¦ã„ã‚‹è‰²æ•°ã«ã‚ã‚ã›ã¦æœ€é©åŒ– */
 								prevPNGPrefs.optimizeImage=!prevPNGPrefs.optimizeImage;
 								SetDialogControlValue(dp,item,prevPNGPrefs.optimizeImage);
 								break;
 							
 							#if 0
 							case diGIFUseclip2gif:
-								/* clip2gif‚ğg—p */
+								/* clip2gifã‚’ä½¿ç”¨ */
 								prevPNGPrefs.useClip2gif=(UInt8)!prevPNGPrefs.useClip2gif;
 								SetDialogControlValue(dp,startItem[3]+diGIFUseclip2gif,prevPNGPrefs.useClip2gif);
 								break;
@@ -1000,11 +1000,11 @@ void OpenPrefsDialog(void)
 						break;
 					
 					case kTabletPrefsTab:
-						/* ƒ^ƒuƒŒƒbƒgİ’è */
+						/* ã‚¿ãƒ–ãƒ¬ãƒƒãƒˆè¨­å®š */
 						switch (item2)
 						{
 							case diTabletUsePressure:
-								/* •Mˆ³‚ğg—p */
+								/* ç­†åœ§ã‚’ä½¿ç”¨ */
 								tempBool=(UInt8)!prevTabletPrefs.usePressure;
 								SetDialogControlValue(dp,item,tempBool);
 								SetDialogControlHilite(dp,startItem[4]+diTabletOverrideTransparency,tempBool ? 0 : 255);
@@ -1018,7 +1018,7 @@ void OpenPrefsDialog(void)
 								break;
 							
 							case diTabletUseEraser:
-								/* Á‚µƒSƒ€‚ğg—p */
+								/* æ¶ˆã—ã‚´ãƒ ã‚’ä½¿ç”¨ */
 								tempBool=(UInt8)!prevTabletPrefs.useEraser;
 								SetDialogControlValue(dp,item,tempBool);
 								SetDialogControlHilite(dp,startItem[4]+diTabletUseEraserPressure,tempBool ? 0 : 255);
@@ -1026,7 +1026,7 @@ void OpenPrefsDialog(void)
 								break;
 							
 							case diTabletUseEraserPressure:
-								/* Á‚µƒSƒ€‚Ì•Mˆ³‚ğg—p */
+								/* æ¶ˆã—ã‚´ãƒ ã®ç­†åœ§ã‚’ä½¿ç”¨ */
 								tempBool=(UInt8)!prevTabletPrefs.useEraserPressure;
 								SetDialogControlValue(dp,item,tempBool);
 								prevTabletPrefs.useEraserPressure=tempBool;
@@ -1035,60 +1035,60 @@ void OpenPrefsDialog(void)
 						break;
 					
 					case kOtherPrefsTab:
-						/* ‚»‚Ì‘¼‚Ìİ’è */
+						/* ãã®ä»–ã®è¨­å®š */
 						switch (item2)
 						{
 							case diCheckWhenColorChanged:
-								/* F”•ÏXŒã‚Éˆó‚ğ‚Â‚¯‚é */
+								/* è‰²æ•°å¤‰æ›´å¾Œã«å°ã‚’ã¤ã‘ã‚‹ */
 								tempBool=(UInt8)!prevOtherPrefs.checkWhenColorChanged;
 								SetDialogControlValue(dp,item,tempBool);
 								prevOtherPrefs.checkWhenColorChanged=tempBool;
 								break;
 							
 							case diActivateDroppedWindow:
-								/* ƒhƒƒbƒv‚³‚ê‚½ƒEƒBƒ“ƒhƒE‚ğƒAƒNƒeƒBƒu‚É */
+								/* ãƒ‰ãƒ­ãƒƒãƒ—ã•ã‚ŒãŸã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚’ã‚¢ã‚¯ãƒ†ã‚£ãƒ–ã« */
 								tempBool=(UInt8)!prevOtherPrefs.activateDroppedWindow;
 								SetDialogControlValue(dp,item,tempBool);
 								prevOtherPrefs.activateDroppedWindow=tempBool;
 								break;
 							
 							case diMaskAutoConvert:
-								/* ƒ}ƒXƒN‚ğ©“®•ÏŠ· */
+								/* ãƒã‚¹ã‚¯ã‚’è‡ªå‹•å¤‰æ› */
 								tempBool=(UInt8)!prevOtherPrefs.maskAutoConvert;
 								SetDialogControlValue(dp,item,tempBool);
 								prevOtherPrefs.maskAutoConvert=tempBool;
 								break;
 							
 							case diContinuousID:
-								/* ˜A‘±ID */
+								/* é€£ç¶šID */
 								tempBool=(UInt8)!prevOtherPrefs.continuousIDs;
 								SetDialogControlValue(dp,item,tempBool);
 								prevOtherPrefs.continuousIDs=tempBool;
 								break;
 							
 							case diAddForeground:
-								/* ‘OŒi‚ğ’Ç‰Á */
+								/* å‰æ™¯ã‚’è¿½åŠ  */
 								tempBool=(UInt8)!prevOtherPrefs.addForeground;
 								SetDialogControlValue(dp,item,tempBool);
 								prevOtherPrefs.addForeground=tempBool;
 								break;
 							
 							case diCopyIconWithPicture:
-								/* ƒAƒCƒRƒ“‚àƒRƒs[ */
+								/* ã‚¢ã‚¤ã‚³ãƒ³ã‚‚ã‚³ãƒ”ãƒ¼ */
 								tempBool=(UInt8)!prevOtherPrefs.copyIconWithPicture;
 								SetDialogControlValue(dp,item,tempBool);
 								prevOtherPrefs.copyIconWithPicture=tempBool;
 								break;
 							
 							case diUseHyperCardPalette:
-								/* HyperCard‚ÌƒpƒŒƒbƒg‚ğg—p */
+								/* HyperCardã®ãƒ‘ãƒ¬ãƒƒãƒˆã‚’ä½¿ç”¨ */
 								tempBool=(UInt8)!prevOtherPrefs.useHyperCardPalette;
 								SetDialogControlValue(dp,item,tempBool);
 								prevOtherPrefs.useHyperCardPalette=tempBool;
 								break;
 							
 							case diImportAsFamilyIcon:
-								/* 'icns'‚Æ‚µ‚ÄƒAƒCƒRƒ“‚ğæ‚è‚İ */
+								/* 'icns'ã¨ã—ã¦ã‚¢ã‚¤ã‚³ãƒ³ã‚’å–ã‚Šè¾¼ã¿ */
 								tempBool=(UInt8)!prevOtherPrefs.importAsFamilyIcon;
 								SetDialogControlValue(dp,item,tempBool);
 								prevOtherPrefs.importAsFamilyIcon=tempBool;
@@ -1103,11 +1103,11 @@ void OpenPrefsDialog(void)
 	switch (item)
 	{
 		case ok:
-			/* ƒtƒ@ƒCƒ‹İ’è‚Ì•Û‘¶ */
-			/* ‹N“®İ’è‚Ì•Û‘¶ */
+			/* ãƒ•ã‚¡ã‚¤ãƒ«è¨­å®šã®ä¿å­˜ */
+			/* èµ·å‹•æ™‚è¨­å®šã®ä¿å­˜ */
 			gStartup=prevStartup;
 			
-			/* ƒNƒŠƒG[ƒ^ */
+			/* ã‚¯ãƒªã‚¨ãƒ¼ã‚¿ */
 			gPICTCreator=info[0];
 			gGIFCreator=info[1];
 			gPNGCreator=info[2];
@@ -1116,11 +1116,11 @@ void OpenPrefsDialog(void)
 			/* Navigation Services */
 			useNavigationServices=prevUN;
 			
-			/* ƒvƒŒƒrƒ…[ƒAƒCƒRƒ“ */
+			/* ãƒ—ãƒ¬ãƒ“ãƒ¥ãƒ¼ã‚¢ã‚¤ã‚³ãƒ³ */
 			gPreviewIconFlag=prevPI;
 			
-			/* ƒyƒCƒ“ƒgİ’è */
-			/* ƒAƒCƒRƒ“ƒTƒCƒYA”{—¦•Û‘¶ */
+			/* ãƒšã‚¤ãƒ³ãƒˆè¨­å®š */
+			/* ã‚¢ã‚¤ã‚³ãƒ³ã‚µã‚¤ã‚ºã€å€ç‡ä¿å­˜ */
 			GetDialogItemText2(dp,startItem[1]+diImageWidth,str);
 			StringToNum(str,&l);
 			gPaintWinPrefs.iconSize.right=(short)l;
@@ -1141,12 +1141,12 @@ void OpenPrefsDialog(void)
 			gPaintWinPrefs.background=GetDialogControlValue(dp,startItem[1]+diBackground)-1;
 			UpdateNewMenu();
 			
-			/* ŠO•”ƒGƒfƒBƒ^ */
+			/* å¤–éƒ¨ã‚¨ãƒ‡ã‚£ã‚¿ */
 			gExternalEditor=tempExternalEditor;
 			isExternalEditorAvailable=tempExternalEditorAvailable;
 			gUseExternalEditor=tempUseExternalEditor;
 			
-			/* ƒc[ƒ‹İ’è‚Ì•Û‘¶ */
+			/* ãƒ„ãƒ¼ãƒ«è¨­å®šã®ä¿å­˜ */
 			gToolPrefs=prevPaintPrefs;
 			
 			value=GetDialogControlValue(dp,startItem[2]+diKeyThreshControl);
@@ -1156,14 +1156,14 @@ void OpenPrefsDialog(void)
 			
 			ChangeSysSettings();
 			
-			/* PNGİ’è‚Ì•Û‘¶ */
+			/* PNGè¨­å®šã®ä¿å­˜ */
 			gPNGFilePrefs=prevPNGPrefs;
 			gPNGFilePrefs.compLevel=GetDialogControlValue(dp,startItem[3]+diPNGCompLevel)-1;
 			
-			/* ƒ^ƒuƒŒƒbƒgİ’è‚Ì•Û‘¶ */
+			/* ã‚¿ãƒ–ãƒ¬ãƒƒãƒˆè¨­å®šã®ä¿å­˜ */
 			gTabletPrefs=prevTabletPrefs;
 			
-			/* ‚»‚Ì‘¼‚Ìİ’è‚Ì•Û‘¶ */
+			/* ãã®ä»–ã®è¨­å®šã®ä¿å­˜ */
 			if (gOtherPrefs.useHyperCardPalette != prevOtherPrefs.useHyperCardPalette)
 				ResizePatternPalette();
 			gOtherPrefs=prevOtherPrefs;
@@ -1185,7 +1185,7 @@ void OpenPrefsDialog(void)
 	SetPort(port);
 }
 
-/* ƒAƒvƒŠƒP[ƒVƒ‡ƒ“‘I‘ğƒ_ƒCƒAƒƒO‚ğ•\¦‚µA‘I‚Î‚ê‚½ƒAƒvƒŠƒP[ƒVƒ‡ƒ“‚ğ“¾‚é */
+/* ã‚¢ãƒ—ãƒªã‚±ãƒ¼ã‚·ãƒ§ãƒ³é¸æŠãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã‚’è¡¨ç¤ºã—ã€é¸ã°ã‚ŒãŸã‚¢ãƒ—ãƒªã‚±ãƒ¼ã‚·ãƒ§ãƒ³ã‚’å¾—ã‚‹ */
 OSErr SetExternalApplication(FSSpec *theFile)
 {
 	FSSpec	spec;
@@ -1200,7 +1200,7 @@ OSErr SetExternalApplication(FSSpec *theFile)
 	
 	DeactivateFloatersAndFirstDocumentWindow();
 	
-	/* ƒ_ƒCƒAƒƒO‚ÌƒAƒCƒeƒ€‚ğDeacivate‚·‚é */
+	/* ãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã®ã‚¢ã‚¤ãƒ†ãƒ ã‚’Deacivateã™ã‚‹ */
 	DeactivateDialogControl(theDialog);
 	DrawDialog(theDialog);
 	
@@ -1231,14 +1231,14 @@ OSErr SetExternalApplication(FSSpec *theFile)
 	
 	ActivateFloatersAndFirstDocumentWindow();
 	
-	/* ƒ_ƒCƒAƒƒO‚ÌƒAƒCƒeƒ€‚ğActivate‚·‚é */
+	/* ãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã®ã‚¢ã‚¤ãƒ†ãƒ ã‚’Activateã™ã‚‹ */
 	ActivateDialogControl(theDialog);
 	DrawDialog(theDialog);
 	
 	return err;
 }
 
-/* ƒtƒ@ƒCƒ‹‘I‘ğƒ_ƒCƒAƒƒO‚ğ•\¦‚µA‘I‚Î‚ê‚½ƒtƒ@ƒCƒ‹‚ÌƒNƒŠƒG[ƒ^ƒR[ƒh‚ğ“¾‚é */
+/* ãƒ•ã‚¡ã‚¤ãƒ«é¸æŠãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã‚’è¡¨ç¤ºã—ã€é¸ã°ã‚ŒãŸãƒ•ã‚¡ã‚¤ãƒ«ã®ã‚¯ãƒªã‚¨ãƒ¼ã‚¿ã‚³ãƒ¼ãƒ‰ã‚’å¾—ã‚‹ */
 OSErr GetCreatorFromFile(OSType *creator)
 {
 	FSSpec	spec;
@@ -1251,7 +1251,7 @@ OSErr GetCreatorFromFile(OSType *creator)
 	
 	DeactivateFloatersAndFirstDocumentWindow();
 	
-	/* ƒ_ƒCƒAƒƒO‚ÌƒAƒCƒeƒ€‚ğDeacivate‚·‚é */
+	/* ãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã®ã‚¢ã‚¤ãƒ†ãƒ ã‚’Deacivateã™ã‚‹ */
 	DeactivateDialogControl(theDialog);
 	DrawDialog(theDialog);
 	
@@ -1275,7 +1275,7 @@ OSErr GetCreatorFromFile(OSType *creator)
 	#endif
 	if (err==noErr)
 	{
-		/* ‘I‘ğ‚³‚ê‚½ƒtƒ@ƒCƒ‹‚ÌƒNƒŠƒG[ƒ^ƒR[ƒh‚ğ‹‚ß•\¦‚·‚é */
+		/* é¸æŠã•ã‚ŒãŸãƒ•ã‚¡ã‚¤ãƒ«ã®ã‚¯ãƒªã‚¨ãƒ¼ã‚¿ã‚³ãƒ¼ãƒ‰ã‚’æ±‚ã‚è¡¨ç¤ºã™ã‚‹ */
 		err=FSpGetFInfo(&spec,&info);
 		if (err==noErr)
 			*creator=info.fdCreator;
@@ -1284,14 +1284,14 @@ OSErr GetCreatorFromFile(OSType *creator)
 	
 	ActivateFloatersAndFirstDocumentWindow();
 	
-	/* ƒ_ƒCƒAƒƒO‚ÌƒAƒCƒeƒ€‚ğActivate‚·‚é */
+	/* ãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã®ã‚¢ã‚¤ãƒ†ãƒ ã‚’Activateã™ã‚‹ */
 	ActivateDialogControl(theDialog);
 	DrawDialog(theDialog);
 	
 	return err;
 }
 
-/* ŠeƒyƒCƒ“ƒgƒEƒBƒ“ƒhƒE‚Ìİ’è‚ğXV‚·‚é */
+/* å„ãƒšã‚¤ãƒ³ãƒˆã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®è¨­å®šã‚’æ›´æ–°ã™ã‚‹ */
 void UpdateBGSetting(void)
 {
 	WindowPtr	theWindow=MyFrontNonFloatingWindow();
@@ -1312,7 +1312,7 @@ void UpdateBGSetting(void)
 }
 
 #if !TARGET_API_MAC_CARBON
-/* ƒtƒ@ƒCƒ‹‘I‘ğƒ_ƒCƒAƒƒO‚ÌƒtƒBƒ‹ƒ^ */
+/* ãƒ•ã‚¡ã‚¤ãƒ«é¸æŠãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã®ãƒ•ã‚£ãƒ«ã‚¿ */
 pascal Boolean MyGetFileModalFilter(DialogPtr theDialog,EventRecord *theEvent,short *itemHit,void *yourDataPtr)
 {
 	#pragma unused(itemHit,yourDataPtr)
@@ -1362,7 +1362,7 @@ enum {
 
 static RGBColor	gGridColor[2];
 
-/* ƒOƒŠƒbƒhİ’è */
+/* ã‚°ãƒªãƒƒãƒ‰è¨­å®š */
 void ConfigureGrid(void)
 {
 	DialogPtr	dp;
@@ -1391,7 +1391,7 @@ void ConfigureGrid(void)
 	SetPortDialogPort(dp);
 	MySetCursor(0);
 	
-	/* ƒ|ƒbƒvƒAƒbƒv‚È‚Ç‚Ì’²® */
+	/* ãƒãƒƒãƒ—ã‚¢ãƒƒãƒ—ãªã©ã®èª¿æ•´ */
 	gridType = gToolPrefs.gridMode & 0x0f;
 	iconGrid = (gToolPrefs.gridMode>>4) & 0x0f;
 	
@@ -1417,7 +1417,7 @@ void ConfigureGrid(void)
 	gGridColor[0] = gToolPrefs.gridColor;
 	gGridColor[1] = gToolPrefs.gridColor2;
 	
-	/* ƒ_ƒCƒAƒƒO•\¦ */
+	/* ãƒ€ã‚¤ã‚¢ãƒ­ã‚°è¡¨ç¤º */
 	SetDialogDefaultItem(dp,ok);
 	SetDialogCancelItem(dp,cancel);
 	ShowWindow(GetDialogWindow(dp));
@@ -1469,7 +1469,7 @@ void ConfigureGrid(void)
 		}
 	}
 	
-	/* İ’è‚ğ•Û‘¶‚·‚é */
+	/* è¨­å®šã‚’ä¿å­˜ã™ã‚‹ */
 	if (item == ok)
 	{
 		gToolPrefs.gridMode = ((GetDialogControlValue(dp,kIconGridWidthItem)-1) << 4) + 
@@ -1482,7 +1482,7 @@ void ConfigureGrid(void)
 	DisposeModalFilterUPP(mfUPP);
 	ActivateFloatersAndFirstDocumentWindow();
 	
-	/* ‰æ–Ê‚Ì‘‚«Š·‚¦ */
+	/* ç”»é¢ã®æ›¸ãæ›ãˆ */
 	if (item == ok)
 	{
 		WindowPtr theWindow=MyFrontNonFloatingWindow();
