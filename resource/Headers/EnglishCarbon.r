@@ -1,0 +1,1 @@
+/* For English ver. */#ifndef ENGLISH_VER#define	ENGLISH_VER	1#endif#define TARGET_API_MAC_CARBON	1

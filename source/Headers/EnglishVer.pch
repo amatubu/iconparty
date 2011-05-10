@@ -1,0 +1,1 @@
+/* For English ver. */#ifndef ENGLISH_VER#define	ENGLISH_VER	1#endif#if powerc#include	"MacHeadersPPC"#else#include	"MacHeaders68K"#endif
