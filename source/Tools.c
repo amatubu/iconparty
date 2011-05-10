@@ -549,7 +549,7 @@ void GetDesktopColor(void)
 	}
 	FlushEvents(mDownMask+mUpMask+keyDownMask,0);
 	
-	EndFullScreen(oldState,nil);
+	EndFullScreen(oldState,(long)nil);
 	
 	SetPort(port);
 	HideMenuBar();

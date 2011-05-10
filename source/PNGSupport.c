@@ -313,7 +313,7 @@ extern void PNGEncode(const FSSpec *theFile,GWorldPtr theImage,RgnHandle saveRgn
 	
 	/* 途中で確保したメモリを解放 */
 	/* カラーテーブル */
-	if (color_type != NULL) DisposePtr((Ptr)color_palette);
+	if (color_palette != NULL) DisposePtr((Ptr)color_palette);
 	
 	/* 透過色 */
 	if (trans != NULL) DisposePtr((Ptr)trans);

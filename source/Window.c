@@ -128,52 +128,52 @@ void ToolWindowInit(void)
 	UseResFile(gApplRefNum);
 	
 	WriteStrToDebugFile("\pOpening tool palette... ");
-	gToolPalette=GetNewFloatingWindow(kToolPaletteResID,kWindowTypeToolPalette,nil);
+	gToolPalette=GetNewFloatingWindow(kToolPaletteResID,kWindowTypeToolPalette,(long)nil);
 	#ifdef DEBUG_MODE
 		if (gToolPalette!=nil) WriteStrToDebugFile("\pok\r");
 	#endif
 	WriteStrToDebugFile("\pOpening color palette 1... ");
-	ColorPalette1=GetNewFloatingWindow(kColorPalette1ResID,kWindowTypeColorPalette1,nil);
+	ColorPalette1=GetNewFloatingWindow(kColorPalette1ResID,kWindowTypeColorPalette1,(long)nil);
 	#ifdef DEBUG_MODE
 		if (ColorPalette1!=nil) WriteStrToDebugFile("\pok\r");
 	#endif
 	WriteStrToDebugFile("\pOpening color palette 2... ");
-	ColorPalette2=GetNewFloatingWindow(kColorPalette2ResID,kWindowTypeColorPalette2,nil);
+	ColorPalette2=GetNewFloatingWindow(kColorPalette2ResID,kWindowTypeColorPalette2,(long)nil);
 	#ifdef DEBUG_MODE
 		if (ColorPalette2!=nil) WriteStrToDebugFile("\pok\r");
 	#endif
 	WriteStrToDebugFile("\pOpening blend palette... ");
-	gBlendPalette=GetNewFloatingWindow(kBlendPaletteResID,kWindowTypeBlendPalette,nil);
+	gBlendPalette=GetNewFloatingWindow(kBlendPaletteResID,kWindowTypeBlendPalette,(long)nil);
 	#ifdef DEBUG_MODE
 		if (gBlendPalette!=nil) WriteStrToDebugFile("\pok\r");
 	#endif
 	WriteStrToDebugFile("\pOpening title window... ");
-	TitleWindow=GetNewFloatingWindow(kTitleWindowResID,kWindowTypeTitleWindow,nil);
+	TitleWindow=GetNewFloatingWindow(kTitleWindowResID,kWindowTypeTitleWindow,(long)nil);
 	#ifdef DEBUG_MODE
 		if (TitleWindow!=nil) WriteStrToDebugFile("\pok\r");
 	#endif
 	WriteStrToDebugFile("\pOpening information palette... ");
-	InfoWindow=GetNewFloatingWindow(kInfoWindowResID,kWindowTypeInfoWindow,nil);
+	InfoWindow=GetNewFloatingWindow(kInfoWindowResID,kWindowTypeInfoWindow,(long)nil);
 	#ifdef DEBUG_MODE
 		if (InfoWindow!=nil) WriteStrToDebugFile("\pok\r");
 	#endif
 	WriteStrToDebugFile("\pOpening pattern palette... ");
-	PatternPalette=GetNewFloatingWindow(kPatternPaletteWindowResID,kWindowTypePatternPalette,nil);
+	PatternPalette=GetNewFloatingWindow(kPatternPaletteWindowResID,kWindowTypePatternPalette,(long)nil);
 	#ifdef DEBUG_MODE
 		if (PatternPalette!=nil) WriteStrToDebugFile("\pok\r");
 	#endif
 	WriteStrToDebugFile("\pOpening dot mode palette... ");
-	DotModePalette=GetNewFloatingWindow(kDotModePaletteWindowResID,kWindowTypeDotModePalette,nil);
+	DotModePalette=GetNewFloatingWindow(kDotModePaletteWindowResID,kWindowTypeDotModePalette,(long)nil);
 	#ifdef DEBUG_MODE
 		if (DotModePalette!=nil) WriteStrToDebugFile("\pok\r");
 	#endif
 	WriteStrToDebugFile("\pOpening favorite palette... ");
-	FavoritePalette=GetNewFloatingWindow(kFavoritePaletteResID,kWindowTypeFavoritePalette,nil);
+	FavoritePalette=GetNewFloatingWindow(kFavoritePaletteResID,kWindowTypeFavoritePalette,(long)nil);
 	#ifdef DEBUG_MODE
 		if (FavoritePalette!=nil) WriteStrToDebugFile("\pok\r");
 	#endif
 	WriteStrToDebugFile("\pOpening preview window... ");
-	gPreviewWindow=GetNewFloatingWindow(kPreviewWindowResID,kWindowTypePreviewWindow,nil);
+	gPreviewWindow=GetNewFloatingWindow(kPreviewWindowResID,kWindowTypePreviewWindow,(long)nil);
 	#ifdef DEBUG_MODE
 		if (gPreviewWindow!=nil) WriteStrToDebugFile("\pok\r");
 	#endif

@@ -1312,7 +1312,7 @@ void AddNewIcon(WindowPtr iconWindow)
 	iWinRec->undoData.iconList=(IconListDataRec *)NewPtr(sizeof(IconListDataRec *));
 	iWinRec->undoData.iconNum=0;
 	
-	AddIPIconToList(iconWindow,&ipIcon,NULL,newIcon.resName,newIcon.resID,true);
+	AddIPIconToList(iconWindow,&ipIcon,(ResType)NULL,newIcon.resName,newIcon.resID,true);
 }
 
 /* ファイルからのアイコンの取り込み */
@@ -1554,7 +1554,7 @@ void AddFileIconToIconList(WindowPtr iconWindow,FSSpec *theFile,short id,Boolean
 		return;
 	}
 	
-	AddIPIconToList(iconWindow,&ipIcon,NULL,theFile->name,id,redrawFlag);
+	AddIPIconToList(iconWindow,&ipIcon,(ResType)NULL,theFile->name,id,redrawFlag);
 	
 	gUsedCount.importNum++;
 }
@@ -1580,7 +1580,7 @@ void AddIPIconToList(WindowPtr iconWindow,const IPIconRec *ipIcon,ResType iconTy
 	
 	/* アイコンを追加する */
 	if (iconType == kIconFamilyType ||
-		(iconType == NULL && ((isIconServicesAvailable && gOtherPrefs.importAsFamilyIcon) || 
+		(iconType == (ResType)NULL && ((isIconServicesAvailable && gOtherPrefs.importAsFamilyIcon) || 
 		(isThumbnailIconsAvailable && IsIPIconHasThumbnailIcon(ipIcon)))))
 	{
 		IconFamilyHandle	iconFamily;
@@ -2177,7 +2177,7 @@ void PasteIcon(WindowPtr iconWindow)
 	iWinRec->undoData.iconList=(IconListDataRec *)NewPtr(sizeof(IconListDataRec));
 	iWinRec->undoData.iconNum=0;
 	
-	AddIPIconToList(iconWindow,&ipIcon,NULL,newIcon.resName,0,true);
+	AddIPIconToList(iconWindow,&ipIcon,(ResType)NULL,newIcon.resName,0,true);
 }
 
 /* アイコンをすべて選択 */
@@ -2945,7 +2945,7 @@ pascal short MyIconListReceiveHandler(WindowPtr theWindow,void *handlerRefCon,
 					IconFamilyToIPIcon(iconFamily,&ipIcon);
 					DisposeHandle((Handle)iconFamily);
 					
-					AddIPIconToList(theWindow,&ipIcon,NULL,"\p",id++,(index == items));
+					AddIPIconToList(theWindow,&ipIcon,(ResType)NULL,"\p",id++,(index == items));
 					
 					continue;
 				}
