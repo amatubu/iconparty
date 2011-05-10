@@ -681,7 +681,9 @@ PicHandle IPIconToPicture(const IPIconRec *ipIcon,short iconKind)
 		err=ReleaseIconRef(iconRef);
 	}
 	#endif
+#if __BIG_ENDIAN__
 	(**picture).picFrame=iconRect;
+#endif
 	ClosePicture();
 	
 	SetGWorld(cPort,cDevice);
@@ -869,6 +871,7 @@ void DrawIPIconPreview(const IPIconRec *ipIcon)
 	OSErr		err;
 	IconSuiteRef	iconSuite=NULL;
 	IconRef		iconRef;
+    Rect        picRect;
 	
 	/* プレビューの大きさ */
 	GetWindowPortBounds(gPreviewWindow,&r);
@@ -929,7 +932,8 @@ void DrawIPIconPreview(const IPIconRec *ipIcon)
 		previewPict = GetPicture(142);
 	else
 		previewPict = GetPicture(141);
-	DrawPicture(previewPict,&(**previewPict).picFrame);
+    QDGetPictureBounds(previewPict, &picRect);
+	DrawPicture(previewPict,&picRect);
 	
 	if (ipIcon==NULL) return;
 	

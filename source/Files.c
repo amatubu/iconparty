@@ -265,6 +265,7 @@ static short ConfigurePictSize(PaintWinPrefsRec *pRec)
 	Str255		clipSize[2];
 	long		dataSize=0L;
 	PicHandle	clipPic;
+    Rect        picRect;
 	long		uniqueColors;
 	short		defaultColorModeIndex,
 				clipColorModeIndex;
@@ -309,8 +310,9 @@ static short ConfigurePictSize(PaintWinPrefsRec *pRec)
 			#endif
 			TempHUnlock((Handle)clipPic,&err);
 			
-			NumToString((**clipPic).picFrame.right-(**clipPic).picFrame.left,clipSize[0]);
-			NumToString((**clipPic).picFrame.bottom-(**clipPic).picFrame.top,clipSize[1]);
+            QDGetPictureBounds(clipPic, &picRect);
+			NumToString(picRect.right-picRect.left,clipSize[0]);
+			NumToString(picRect.bottom-picRect.top,clipSize[1]);
 			
 			err=GetPictureUniqueColors(clipPic,&uniqueColors);
 			if (err==noErr) clipColorModeIndex = (uniqueColors <= 256 ? 1 : 2);
@@ -2227,6 +2229,7 @@ Boolean IsBackAvailable(PicHandle picture,short *layerNum)
 	QDProcs		theQDProcs;		/* If we're using a GrafPort			*/
 	CQDProcs	theCQDProcs;	/* If we're using a CGrafPort			*/
 	PicHandle	dummyPICT;
+    Rect        picRect;
 	QDProcsPtr	tempProcs;
 	PictInfo	pictInfo;
 	OSErr		err;
@@ -2252,8 +2255,9 @@ Boolean IsBackAvailable(PicHandle picture,short *layerNum)
 		SetPortGrafProcs(curPort,(CQDProcs *)&theQDProcs);
 	}
 	
-	dummyPICT = OpenPicture(&(*picture)->picFrame);
-	DrawPicture(picture, &(*picture)->picFrame);
+    QDGetPictureBounds(picture, &picRect);
+	dummyPICT = OpenPicture(&picRect);
+	DrawPicture(picture, &picRect);
 	ClosePicture();
 	KillPicture(dummyPICT);
 	
@@ -2312,6 +2316,7 @@ void SpritPictAndLoad(PicHandle picture,PaintWinRec *eWinRec)
 	QDProcs		theQDProcs;
 	CQDProcs	theCQDProcs;
 	PicHandle	dummyPICT;
+    Rect        picRect;
 	QDProcsPtr	tempProcs;
 	
 	/* グローバルを初期化 */
@@ -2344,8 +2349,9 @@ void SpritPictAndLoad(PicHandle picture,PaintWinRec *eWinRec)
 		SetPortGrafProcs(curPort,(CQDProcs *)&theQDProcs);
 	}
 	
-	dummyPICT=OpenPicture(&(*picture)->picFrame);
-	DrawPicture(picture,&(*picture)->picFrame);
+    QDGetPictureBounds(picture, &picRect);
+	dummyPICT=OpenPicture(&picRect);
+	DrawPicture(picture,&picRect);
 	ClosePicture();
 	KillPicture(dummyPICT);
 	
@@ -2599,11 +2605,19 @@ void OpenClipboard(void)
 	dataSize=GetScrap((Handle)picture,'PICT',&offset);
 	#endif
 	
+#if 1
+    QDGetPictureBounds(picture, &picSize);
+    picSize.right -= picSize.left;
+    picSize.bottom -= picSize.top;
+    picSize.left = 0;
+    picSize.top = 0;
+#else
 	picSize.left=0;
 	picSize.top=0;
 	picSize.right=(**picture).picFrame.right-(**picture).picFrame.left;
 	picSize.bottom=(**picture).picFrame.bottom-(**picture).picFrame.top;
-			
+#endif
+    
 	/* 色数をチェック */
 	err=GetPictureMaxDepth(picture,&maxDepth);
 	if (err==noErr)

@@ -1469,6 +1469,7 @@ void UpdateDotModePalette(void)
 	WindowPtr	theWindow;
 	PaintWinRec	*eWinRec;
 	PicHandle	backPic;
+    Rect        picRect;
 	
 	theWindow=MyFrontNonFloatingWindow();
 	if (theWindow==nil || GetExtWindowKind(theWindow)!=kWindowTypePaintWindow)
@@ -1485,7 +1486,8 @@ void UpdateDotModePalette(void)
 	}
 	
 	backPic=GetPicture(148);
-	DrawPicture(backPic,&(**backPic).picFrame);
+    QDGetPictureBounds(backPic, &picRect);
+	DrawPicture(backPic,&picRect);
 	
 	if (CountCmdNum()<=0) /* データがない */
 	{

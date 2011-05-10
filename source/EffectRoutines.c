@@ -692,8 +692,8 @@ void DoWind(WindowPtr theWindow)
 /* 回転 */
 void DoRotate(WindowPtr theWindow)
 {
-	long	sine; /* 角度のサイン（32768倍してある） */
-	long	cosine; /* 角度のコサイン（同上） */
+	long	sine   =     0; /* 角度のサイン（32768倍してある） */
+	long	cosine = 32768; /* 角度のコサイン（同上） */
 	
 	Rect	selectRect;
 	short	left;

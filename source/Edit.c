@@ -317,7 +317,8 @@ OSErr PutPictureIntoEditWin(PicHandle picture,WindowPtr theWindow)
 	SetGWorld(cPort,cDevice);
 	
 	/* ピクチャのサイズを調べる（画面内に収まるかどうか） */
-	pictRect=(**picture).picFrame;
+//	pictRect=(**picture).picFrame;
+    QDGetPictureBounds(picture, &pictRect);
 	if (CheckPictSize(&eWinRec->iconSize,&pictRect))
 	{
 		GWorldFlags	flags;
@@ -352,7 +353,11 @@ OSErr PutPictureIntoEditWin(PicHandle picture,WindowPtr theWindow)
 	
 	/* ピクチャのリージョンを調べる */
 	if (GetPictureRgn(picture,eWinRec->selectionPos))
-		MapRgn(eWinRec->selectionPos,&(**picture).picFrame,&pictRect);
+    {
+        Rect tempRect;
+        QDGetPictureBounds(picture, &tempRect);
+		MapRgn(eWinRec->selectionPos,&tempRect,&pictRect);
+    }
 	else
 		RectRgn(eWinRec->selectionPos,&pictRect);
 	
@@ -380,6 +385,8 @@ OSErr PutPictureIntoEditWin(PicHandle picture,WindowPtr theWindow)
 	maskRgn=NewRgn();
 	if (GetPictureMask(picture,maskRgn))
 	{
+        Rect tempRect;
+        
 		SetGWorld(eWinRec->currentMask,0);
 		LockPixels(GetGWorldPixMap(eWinRec->currentMask));
 		#if CALL_NOT_IN_CARBON
@@ -391,7 +398,8 @@ OSErr PutPictureIntoEditWin(PicHandle picture,WindowPtr theWindow)
 			EraseRect(GetPortBounds(eWinRec->currentMask,&portRect));
 		}
 		#endif
-		MapRgn(maskRgn,&(**picture).picFrame,&pictRect);
+        QDGetPictureBounds(picture, &tempRect);
+		MapRgn(maskRgn,&tempRect,&pictRect);
 		PaintRgn(maskRgn);
 		UnlockPixels(GetGWorldPixMap(eWinRec->currentMask));
 	}
@@ -442,6 +450,7 @@ Boolean GetPictureRgn(PicHandle picture,RgnHandle rgn)
 	GrafPtr	curPort;
 	CQDProcs	theCQDProcs;	/* If we're using a CGrafPort			*/
 	PicHandle	dummyPICT;
+    Rect        picRect;
 	#if CALL_NOT_IN_CARBON
 	QDProcs		theQDProcs;		/* If we're using a GrafPort			*/
 	QDProcsPtr	tempProcs;
@@ -485,8 +494,9 @@ Boolean GetPictureRgn(PicHandle picture,RgnHandle rgn)
 	handler is called to parse the picture.  When finished, close the
 	picture, kill it and remove our grafProcs.							*/
 
-	dummyPICT = OpenPicture(&(*picture)->picFrame);
-	DrawPicture(picture, &(*picture)->picFrame);
+    QDGetPictureBounds(picture, &picRect);
+	dummyPICT = OpenPicture(&picRect);
+	DrawPicture(picture, &picRect);
 	ClosePicture();
 	KillPicture(dummyPICT);
 	
@@ -538,6 +548,7 @@ Boolean GetPictureMask(PicHandle picture,RgnHandle maskRgn)
 	GrafPtr		curPort;
 	CQDProcs	theCQDProcs;
 	PicHandle	dummyPICT;
+    Rect        picRect;
 	#if CALL_NOT_IN_CARBON
 	QDProcs		theQDProcs;
 	QDProcsPtr	tempProcs;
@@ -579,8 +590,9 @@ Boolean GetPictureMask(PicHandle picture,RgnHandle maskRgn)
 	}
 	#endif
 	
-	dummyPICT=OpenPicture(&(*picture)->picFrame);
-	DrawPicture(picture,&(*picture)->picFrame);
+    QDGetPictureBounds(picture, &picRect);
+	dummyPICT=OpenPicture(&picRect);
+	DrawPicture(picture,&picRect);
 	ClosePicture();
 	KillPicture(dummyPICT);
 	
@@ -687,8 +699,13 @@ PicHandle GetSelectionPic(WindowPtr theWindow,Boolean getBackground)
 	SetGWorld(eWinRec->editDataPtr,0);
 	
 	picParam.srcRect=selectedRect;
+#if 0
 	picParam.hRes=72L<<16;
 	picParam.vRes=72L<<16;
+#else
+    picParam.hRes=Long2Fix(72L);
+    picParam.vRes=Long2Fix(72L);
+#endif
 	picParam.version=-2;
 	
 	/* 記録開始 */
@@ -804,7 +821,9 @@ PicHandle GetSelectionPic(WindowPtr theWindow,Boolean getBackground)
 	#if USE_TEMP_MEM
 	err=TempClosePicture(&pic);
 	#else
+#if __BIG_ENDIAN__
 	(**pic).picFrame=selectedRect;
+#endif
 	
 	ClosePicture();
 	#endif

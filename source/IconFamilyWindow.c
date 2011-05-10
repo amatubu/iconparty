@@ -804,6 +804,7 @@ void UpdateFamilyWindow(WindowPtr theWindow)
 	IconFamilyWinRec	*fWinRec;
 	PicHandle	backPic;
 	short		i;
+    Rect        picRect;
 	
 	if (theWindow==nil) return;
 	
@@ -811,7 +812,8 @@ void UpdateFamilyWindow(WindowPtr theWindow)
 	
 	UseResFile(gApplRefNum);
 	backPic=GetPicture(kIconFamilyPictureResID);
-	DrawPicture(backPic,&(**backPic).picFrame);
+    QDGetPictureBounds(backPic, &picRect);
+	DrawPicture(backPic,&picRect);
 	
 	for (i=0; i<GetIconKindNum(fWinRec); i++)
 		DisplayFamilyIcon(fWinRec,i);
@@ -1684,7 +1686,7 @@ Handle PictureToIcon(PicHandle picture,short iconKind)
 	GDHandle	cDevice;
 	
 	SetRect(&iconRect,0,0,iconSize,iconSize);
-	pictRect=(*picture)->picFrame;
+	QDGetPictureBounds(picture,&pictRect);
 	
 	dataHandle=NewHandle(iconSize*iconRowBytes);
 	if (dataHandle == nil) return nil;
@@ -1882,7 +1884,9 @@ PicHandle IconToPicture(IconSuiteRef theIconSuite,short iconKind)
 	EraseRect(&iconRect);
 	CopyBits(GetPortBitMapForCopyBits(iconGWorld),GetPortBitMapForCopyBits(iconGWorld),
 		&iconRect,&iconRect,srcCopy,nil);
+#if __BIG_ENDIAN__
 	(**picture).picFrame=iconRect;
+#endif
 	ClosePicture();
 	
 	UnlockPixels(iconPix);
@@ -1989,7 +1993,8 @@ void EditFamilyIcon(WindowPtr fWindow,short forceFlag)
 		else
 			colorMode = kNormal8BitColorMode;
 		
-		picSize=(**picture).picFrame;
+//		picSize=(**picture).picFrame;
+        QDGetPictureBounds(picture,&picSize);
 		eWindow=MakePaintWindow(&picSize,
 			(gIconSize[fWinRec->selectedIcon] == 128 ? 2 : 3),colorMode);
 		if (eWindow == nil)

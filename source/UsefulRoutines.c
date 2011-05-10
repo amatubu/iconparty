@@ -1123,6 +1123,7 @@ OSErr GetPictureMaxDepth(PicHandle picture,short *depth)
 	CQDProcs	theCQDProcs;
 	PicHandle	dummyPICT;
 	QDProcsPtr	tempProcs;
+    Rect        picRect;
 	
 	SetPortWindowPort(gPreviewWindow);
 	GetPort(&curPort);
@@ -1145,8 +1146,9 @@ OSErr GetPictureMaxDepth(PicHandle picture,short *depth)
 		SetPortGrafProcs(curPort,(CQDProcs *)&theQDProcs);
 	}
 	
-	dummyPICT=OpenPicture(&(*picture)->picFrame);
-	DrawPicture(picture,&(*picture)->picFrame);
+    QDGetPictureBounds(picture, &picRect);
+	dummyPICT=OpenPicture(&picRect);
+	DrawPicture(picture,&picRect);
 	ClosePicture();
 	KillPicture(dummyPICT);
 	
