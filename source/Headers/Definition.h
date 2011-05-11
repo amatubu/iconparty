@@ -38,26 +38,26 @@
 #define		kDownArrowKey				(char)0x1F
 #define		kDeleteKey					(char)0x08
 
-enum { kFinderType='FNDR', kFinderCreator='MACS'};
-enum { kResEditType='APPL', kResEditCreator='RSED'};
-enum { kClip2gifType='APPL', kClip2gifCreator='c2gf'};
-enum { kIconPartyCreator='Ipty'};
-enum { kGraphicConverterCreator='GKON'};
+enum { kFinderType=OSSwapInt32('FNDR'), kFinderCreator=OSSwapInt32('MACS')};
+enum { kResEditType=OSSwapInt32('APPL'), kResEditCreator=OSSwapInt32('RSED')};
+enum { kClip2gifType=OSSwapInt32('APPL'), kClip2gifCreator=OSSwapInt32('c2gf')};
+enum { kIconPartyCreator=OSSwapInt32('Ipty')};
+enum { kGraphicConverterCreator=OSSwapInt32('GKON')};
 enum {
-	kPICTFileType='PICT',
-	kGIFFileType='GIFf',
-	kPNGFileType='PNGf',
-	kResourceFileType='rsrc',
-	kDotModeLibFileType='iPat',
-	kBlendPaletteFileType='iBld',
-	kTemporaryFileType='temp',
-	kWinIconFileType='ICO ',
-	kXIconFileType='icns',
-	kPreferencesFileType='pref',
-	kFolderType='fold',
+	kPICTFileType=OSSwapInt32('PICT'),
+	kGIFFileType=OSSwapInt32('GIFf'),
+	kPNGFileType=OSSwapInt32('PNGf'),
+	kResourceFileType=OSSwapInt32('rsrc'),
+	kDotModeLibFileType=OSSwapInt32('iPat'),
+	kBlendPaletteFileType=OSSwapInt32('iBld'),
+	kTemporaryFileType=OSSwapInt32('temp'),
+	kWinIconFileType=OSSwapInt32('ICO '),
+	kXIconFileType=OSSwapInt32('icns'),
+	kPreferencesFileType=OSSwapInt32('pref'),
+	kFolderType=OSSwapInt32('fold'),
 	
-	kDeleteIconInfoType='iDel',
-	kUpdateIconInfoType='iUpd',
+	kDeleteIconInfoType=OSSwapInt32('iDel'),
+	kUpdateIconInfoType=OSSwapInt32('iUpd'),
 };
 
 #define		kRatioWidth			30

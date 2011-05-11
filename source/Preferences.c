@@ -44,6 +44,11 @@ static pascal Boolean MyGetFileModalFilter(DialogPtr theDialog,EventRecord *theE
 #endif
 static pascal Boolean MyConfigureGridFilter(DialogPtr theDialog,EventRecord *theEvent,short *theItemHit);
 
+#if TARGET_API_MAC_CARBON
+static OSStatus MyFlipPreferences(OSType dataDomain, OSType dataType, short id, void *dataPtr, UInt32 dataSize, Boolean currentlyNative, void *refcon);
+static void MyRGBSwap(RGBColor *p);
+static void MyRectSwap(Rect *r);
+#endif
 
 #define	PREFERR_RESID	4004
 #define	PREFERR1	1
@@ -189,6 +194,20 @@ void LoadPrefFile(void)
 	isExternalEditorAvailable=false;
 	gUseExternalEditor=(gSystemVersion >= 0x0850);
 	
+    /* バイトスワップコールバックルーチンの登録 */
+    err=CoreEndianInstallFlipper(kCoreEndianResourceManagerDomain, 'DCrt', MyFlipPreferences, NULL);
+    err=CoreEndianInstallFlipper(kCoreEndianResourceManagerDomain, 'cAIC', MyFlipPreferences, NULL);
+    err=CoreEndianInstallFlipper(kCoreEndianResourceManagerDomain, 'lBak', MyFlipPreferences, NULL);
+    err=CoreEndianInstallFlipper(kCoreEndianResourceManagerDomain, 'gSet', MyFlipPreferences, NULL);
+    err=CoreEndianInstallFlipper(kCoreEndianResourceManagerDomain, 'pPrf', MyFlipPreferences, NULL);
+    err=CoreEndianInstallFlipper(kCoreEndianResourceManagerDomain, 'Stup', MyFlipPreferences, NULL);
+    err=CoreEndianInstallFlipper(kCoreEndianResourceManagerDomain, 'fPrf', MyFlipPreferences, NULL);
+    err=CoreEndianInstallFlipper(kCoreEndianResourceManagerDomain, 'PWpf', MyFlipPreferences, NULL);
+    err=CoreEndianInstallFlipper(kCoreEndianResourceManagerDomain, 'gMod', MyFlipPreferences, NULL);
+    err=CoreEndianInstallFlipper(kCoreEndianResourceManagerDomain, 'iSiz', MyFlipPreferences, NULL);
+    err=CoreEndianInstallFlipper(kCoreEndianResourceManagerDomain, 'eRat', MyFlipPreferences, NULL);
+    err=CoreEndianInstallFlipper(kCoreEndianResourceManagerDomain, 'uCnt', MyFlipPreferences, NULL);
+    
 	OpenPrefFile();
 	
 	if (gPrefFileRefNum<=0)
@@ -1524,3 +1543,128 @@ pascal Boolean MyConfigureGridFilter(DialogPtr theDialog,EventRecord *theEvent,s
 	
 	return MyModalDialogFilter(theDialog,theEvent,theItemHit);
 }
+
+#if TARGET_API_MAC_CARBON
+static OSStatus MyFlipPreferences(OSType dataDomain, OSType dataType, short id, void *dataPtr, UInt32 dataSize, Boolean currentlyNative, void *refcon)
+{
+    OSStatus status = noErr;
+    
+    switch (dataType) {
+        case 'DCrt': /* creator code prefs */
+        {
+            OSType *toFlip = (OSType *)dataPtr;
+            if ( dataSize < sizeof(OSType) )
+                return errCoreEndianDataDoesNotMatchFormat;
+            *toFlip = Endian32_Swap( *toFlip );
+        }
+            break;
+
+        case 'cAIC': /* palette marker prefs */
+        case 'lBak': /* list background prefs */
+        case 'Stup': /* startup prefs */
+        case 'fPrf': /* preview icon prefs */
+        case 'gMod': /* (grid mode prefs) */
+        case 'eRat': /* (paint window ratio prefs) */
+        {
+            short *toFlip = (short *)dataPtr;
+            if ( dataSize < sizeof(short) )
+                return errCoreEndianDataDoesNotMatchFormat;
+            *toFlip = Endian16_Swap( *toFlip );
+        }
+            break;
+            
+        case 'gSet': /* PNG prefs */
+        {
+            PNGPrefsRec *toFlip = (PNGPrefsRec *)dataPtr;
+            if ( dataSize < sizeof(PNGPrefsRec) )
+                return errCoreEndianDataDoesNotMatchFormat;
+            toFlip->transColor = Endian16_Swap( toFlip->transColor );
+            toFlip->compLevel = Endian16_Swap( toFlip->compLevel );
+        }
+            break;
+
+        case 'pPrf': /* paint prefs */
+        {
+            ToolPrefsRec *toFlip = (ToolPrefsRec *)dataPtr;
+            if ( dataSize < sizeof(ToolPrefsRec) )
+                return errCoreEndianDataDoesNotMatchFormat;
+            toFlip->dotDrawPrefs.keyThresh = Endian16_Swap( toFlip->dotDrawPrefs.keyThresh );
+            toFlip->dotDrawPrefs.keyRepThresh = Endian16_Swap( toFlip->dotDrawPrefs.keyRepThresh );
+            toFlip->gridMode = Endian16_Swap( toFlip->gridMode );
+            MyRGBSwap(&toFlip->gridColor);
+            MyRGBSwap(&toFlip->gridColor2);
+        }
+            break;
+
+        case 'PWpf': /* paint window prefs */
+        {
+            PaintWinPrefsRec *toFlip = (PaintWinPrefsRec *)dataPtr;
+            if ( dataSize < sizeof(PaintWinPrefsRec) )
+                return errCoreEndianDataDoesNotMatchFormat;
+            MyRectSwap(&toFlip->iconSize);
+            toFlip->ratio = Endian16_Swap( toFlip->ratio );
+            toFlip->background = Endian16_Swap( toFlip->background );
+            toFlip->colorMode = Endian16_Swap( toFlip->colorMode );
+        }
+            break;
+
+        case 'iSiz': /* (icon size prefs) */
+        {
+            Rect *toFlip = (Rect *)dataPtr;
+            if ( dataSize < sizeof(Rect) )
+                return errCoreEndianDataDoesNotMatchFormat;
+            MyRectSwap(toFlip);
+        }
+            break;
+
+        case 'uCnt': /* used count */
+        {
+            UsedCountRec *toFlip = (UsedCountRec *)dataPtr;
+            if ( dataSize < sizeof(UsedCountRec) )
+                return errCoreEndianDataDoesNotMatchFormat;
+            toFlip->usedCount = Endian32_Swap( toFlip->usedCount );
+            toFlip->usedTime = Endian32_Swap( toFlip->usedTime );
+            toFlip->newNum = Endian32_Swap( toFlip->newNum );
+            toFlip->openNum = Endian32_Swap( toFlip->openNum );
+            toFlip->saveNum = Endian32_Swap( toFlip->saveNum );
+            toFlip->fillNum = Endian32_Swap( toFlip->fillNum );
+            toFlip->lightenNum = Endian32_Swap( toFlip->lightenNum );
+            toFlip->darkenNum = Endian32_Swap( toFlip->darkenNum );
+            toFlip->antialiasNum = Endian32_Swap( toFlip->antialiasNum );
+            toFlip->dotPictureNum = Endian32_Swap( toFlip->dotPictureNum );
+            toFlip->windNum = Endian32_Swap( toFlip->windNum );
+            toFlip->edgeNum = Endian32_Swap( toFlip->edgeNum );
+            toFlip->colorChangeNum = Endian32_Swap( toFlip->colorChangeNum );
+            toFlip->rotateNum = Endian32_Swap( toFlip->rotateNum );
+            toFlip->flipNum = Endian32_Swap( toFlip->flipNum );
+            toFlip->replaceNum = Endian32_Swap( toFlip->replaceNum );
+            toFlip->undoNum = Endian32_Swap( toFlip->undoNum );
+            toFlip->importNum = Endian32_Swap( toFlip->importNum );
+            toFlip->exportNum = Endian32_Swap( toFlip->exportNum );
+            toFlip->showCountNum = Endian32_Swap( toFlip->showCountNum );
+        }
+            break;
+            
+        default:
+            break;
+    }
+    
+    return status;
+}
+
+static void MyRGBSwap( RGBColor *p )
+{
+    p->red = Endian16_Swap(p->red);
+    p->blue = Endian16_Swap(p->blue);
+    p->green = Endian16_Swap(p->green);
+}
+
+static void MyRectSwap( Rect *r )
+{
+    r->top = Endian16_Swap(r->top);
+    r->left = Endian16_Swap(r->left);
+    r->bottom = Endian16_Swap(r->bottom);
+    r->right = Endian16_Swap(r->right);
+}
+
+#endif
