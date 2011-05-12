@@ -1,3 +1,17 @@
+/* includes */
+#ifdef __APPLE_CC__
+#include "Types.r"
+#include "Balloons.r"
+#include "AEUserTermTypes.r"
+#include "AERegistry.r"
+#include "AEDataModel.r"
+#include "Appearance.r"
+#include "Dialogs.r"
+#include "ConditionalMacros.r"
+#else
+#include "Carbon.r"
+#endif
+
 data 'STR#' (128, "Undo", purgeable) {
 	$"0020 0A43 616E 2774 2055 6E64 6F0A 556E"            /* . ¬Can't Undo¬Un */
 	$"646F 2050 6169 6E74 0C55 6E64 6F20 4D61"            /* do Paint.Undo Ma */
@@ -1327,40 +1341,116 @@ data 'MENU' (180, "ÉAÉCÉRÉìÉeÉìÉvÉåÅ[Ég-pop") {
 	$"7273 0000 0000 00"                                  /* rs..... */
 };
 
-data 'DITL' (137, "Confirm Revert", purgeable) {
-	$"0004 0000 0000 0046 0106 005A 014B 0407"            /* .......F...Z.K.. */
-	$"4469 7363 6172 6400 0000 0000 0046 00B6"            /* Discard......F.∂ */
-	$"005A 00FB 0406 4361 6E63 656C 0000 0000"            /* .Z.˚..Cancel.... */
-	$"000B 0040 0041 014C 8835 446F 2079 6F75"            /* ...@.A.Là5Do you */
-	$"2072 6561 6C6C 7920 7761 6E74 2074 6F20"            /*  really want to  */
-	$"6469 7363 6172 6420 616C 6C20 6368 616E"            /* discard all chan */
-	$"6765 7320 746F 205E 3020 225E 3122 3F00"            /* ges to ^0 "^1"?. */
-	$"0000 0000 000D 0011 002D 0031 A002 0002"            /* .........-.1†... */
-	$"0000 0000 0000 0000 0000 0000 0104 0001"            /* ................ */
-	$"0081"                                               /* .Å */
+resource 'DITL' (137, "Confirm Revert", purgeable)
+{
+    {
+        { 0x46, 0x106, 0x5a, 0x14b },
+        Button {
+            enabled,
+            "Discard"
+        },
+        { 0x46, 0xb6, 0x5a, 0xfb },
+        Button {
+            enabled,
+            "Cancel"
+        },
+        { 0x0b, 0x40, 0x41, 0x14c },
+        StaticText {
+            disabled,
+            "Do you really want to discard all changes to ^0 \"^1\"?"
+        },
+        { 0x0d, 0x11, 0x2d, 0x31 },
+        Icon {
+            disabled,
+            2
+        },
+        { 0x00, 0x00, 0x00, 0x00 },
+        HelpItem {
+            enabled,
+            HMScanhdlg { 129 }
+        }
+    }
 };
 
-data 'DITL' (130, "Pointillize", purgeable) {
-	$"000E 0000 0000 0077 00F0 0089 0122 0402"            /* .......w..â.".. */
-	$"4F4B 0000 0000 0077 00A4 0089 00E4 0406"            /* OK.....w.§.â.‰.. */
-	$"4361 6E63 656C 0000 0000 001C 0021 002E"            /* Cancel.......!.. */
-	$"008B 0605 5768 6974 6500 0000 0000 002E"            /* .ã..White....... */
-	$"0021 0040 008B 0609 5065 6E20 436F 6C6F"            /* .!.@.ã.∆Pen Colo */
-	$"7200 0000 0000 0040 0021 0052 008B 060D"            /* r......@.!.R.ã.. */
-	$"4F72 6967 696E 616C 2050 6963 7400 0000"            /* Original Pict... */
-	$"0000 0051 002D 0063 0084 0507 4C69 6768"            /* ...Q.-.c.Ñ..Ligh */
-	$"7465 6E00 0000 0000 001C 00BA 002E 0105"            /* ten........∫.... */
-	$"0604 4D61 6E79 0000 0000 002D 00BA 0040"            /* ..Many.....-.∫.@ */
-	$"0105 0606 4E6F 726D 616C 0000 0000 003F"            /* ....Normal.....? */
-	$"00BA 0051 0105 0603 4665 7700 0000 0000"            /* .∫.Q....Few..... */
-	$"0050 00BA 0062 0105 0606 5370 6172 7365"            /* .P.∫.b....Sparse */
-	$"0000 0000 0014 0011 006A 0098 C002 0082"            /* .........j.ò¿..Ç */
-	$"0000 0000 000A 0017 001B 0066 880A 4261"            /* .....¬.....fà¬Ba */
-	$"636B 6772 6F75 6E64 0000 0000 0014 00A8"            /* ckground.......® */
-	$"006A 0121 C002 0082 0000 0000 000A 00AF"            /* .j.!¿..Ç.....¬.Ø */
-	$"001A 00FD 880A 446F 7420 416D 6F75 6E74"            /* ...˝à¬Dot Amount */
-	$"0000 0000 0000 0000 0000 0000 0104 0001"            /* ................ */
-	$"0082"                                               /* .Ç */
+resource 'DITL' (130, "Pointillize", purgeable)
+{
+    {
+        { 0x77, 0xf0, 0x89, 0x122 },
+        Button {
+            enabled,
+            "OK"
+        },
+        { 0x77, 0xa4, 0x89, 0xe4 },
+        Button {
+            enabled,
+            "Cancel"
+        },
+        { 0x1c, 0x21, 0x2e, 0x8b },
+        RadioButton {
+            enabled,
+            "White"
+        },
+        { 0x2e, 0x21, 0x40, 0x8b },
+        RadioButton {
+            enabled,
+            "Pen Color"
+        },
+        { 0x40, 0x21, 0x52, 0x8b },
+        RadioButton {
+            enabled,
+            "Original Pict"
+        },
+        { 0x51, 0x2d, 0x63, 0x84 },
+        CheckBox {
+            enabled,
+            "Lighten"
+        },
+        { 0x1c, 0xba, 0x2e, 0x105 },
+        RadioButton {
+            enabled,
+            "Many"
+        },
+        { 0x2d, 0xba, 0x40, 0x105 },
+        RadioButton {
+            enabled,
+            "Normal"
+        },
+        { 0x3f, 0xba, 0x51, 0x105 },
+        RadioButton {
+            enabled,
+            "Few"
+        },
+        { 0x50, 0xba, 0x62, 0x105 },
+        RadioButton {
+            enabled,
+            "Sparse"
+        },
+        { 0x14, 0x11, 0x6a, 0x98 },
+        Picture {
+            disabled,
+            130
+        },
+        { 0x0a, 0x17, 0x1b, 0x66 },
+        StaticText {
+            disabled,
+            "Background"
+        },
+        { 0x14, 0xa8, 0x6a, 0x121 },
+        Picture {
+            disabled,
+            130
+        },
+        { 0x0a, 0xaf, 0x1a, 0xfd },
+        StaticText {
+            disabled,
+            "Dot Amount"
+        },
+        { 0x00, 0x00, 0x00, 0x00 },
+        HelpItem {
+            enabled,
+            HMScanhdlg { 130 }
+        }
+    }
 };
 
 data 'DITL' (138, "Rotate", purgeable) {
