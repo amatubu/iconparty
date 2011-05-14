@@ -551,7 +551,7 @@ void OpenPrefsDialog(void)
 	short	prevStartup;
 	ResType	info[4];
 	Str255	applName;
-	OSType	creator;
+	OSType	creator = kIconPartyCreator;
 	Boolean	prevAsk;
 	Boolean	prevUN;
 	Boolean	prevPI;
