@@ -38,26 +38,26 @@
 #define		kDownArrowKey				(char)0x1F
 #define		kDeleteKey					(char)0x08
 
-enum { kFinderType=OSSwapInt32('FNDR'), kFinderCreator=OSSwapInt32('MACS')};
-enum { kResEditType=OSSwapInt32('APPL'), kResEditCreator=OSSwapInt32('RSED')};
-enum { kClip2gifType=OSSwapInt32('APPL'), kClip2gifCreator=OSSwapInt32('c2gf')};
-enum { kIconPartyCreator=OSSwapInt32('Ipty')};
-enum { kGraphicConverterCreator=OSSwapInt32('GKON')};
+enum { kFinderType=OSSwapHostToBigInt32('FNDR'), kFinderCreator=OSSwapHostToBigInt32('MACS')};
+enum { kResEditType=OSSwapHostToBigInt32('APPL'), kResEditCreator=OSSwapHostToBigInt32('RSED')};
+enum { kClip2gifType=OSSwapHostToBigInt32('APPL'), kClip2gifCreator=OSSwapHostToBigInt32('c2gf')};
+enum { kIconPartyCreator=OSSwapHostToBigInt32('Ipty')};
+enum { kGraphicConverterCreator=OSSwapHostToBigInt32('GKON')};
 enum {
-	kPICTFileType=OSSwapInt32('PICT'),
-	kGIFFileType=OSSwapInt32('GIFf'),
-	kPNGFileType=OSSwapInt32('PNGf'),
-	kResourceFileType=OSSwapInt32('rsrc'),
-	kDotModeLibFileType=OSSwapInt32('iPat'),
-	kBlendPaletteFileType=OSSwapInt32('iBld'),
-	kTemporaryFileType=OSSwapInt32('temp'),
-	kWinIconFileType=OSSwapInt32('ICO '),
-	kXIconFileType=OSSwapInt32('icns'),
-	kPreferencesFileType=OSSwapInt32('pref'),
-	kFolderType=OSSwapInt32('fold'),
+	kPICTFileType=OSSwapHostToBigInt32('PICT'),
+	kGIFFileType=OSSwapHostToBigInt32('GIFf'),
+	kPNGFileType=OSSwapHostToBigInt32('PNGf'),
+	kResourceFileType=OSSwapHostToBigInt32('rsrc'),
+	kDotModeLibFileType=OSSwapHostToBigInt32('iPat'),
+	kBlendPaletteFileType=OSSwapHostToBigInt32('iBld'),
+	kTemporaryFileType=OSSwapHostToBigInt32('temp'),
+	kWinIconFileType=OSSwapHostToBigInt32('ICO '),
+	kXIconFileType=OSSwapHostToBigInt32('icns'),
+	kPreferencesFileType=OSSwapHostToBigInt32('pref'),
+	kFolderType=OSSwapHostToBigInt32('fold'),
 	
-	kDeleteIconInfoType=OSSwapInt32('iDel'),
-	kUpdateIconInfoType=OSSwapInt32('iUpd'),
+	kDeleteIconInfoType=OSSwapHostToBigInt32('iDel'),
+	kUpdateIconInfoType=OSSwapHostToBigInt32('iUpd'),
 };
 
 #define		kRatioWidth			30
