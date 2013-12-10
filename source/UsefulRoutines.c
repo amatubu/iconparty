@@ -1602,6 +1602,15 @@ void FSpGetFileName(const FSSpec *theFile,Str255 filename)
 	#endif
 }
 
+/* RectをLittle Endianに変換 */
+void OSSwapHostToBigRect(Rect *rect)
+{
+    rect->top = OSSwapHostToBigInt16(rect->top);
+    rect->left = OSSwapHostToBigInt16(rect->left);
+    rect->bottom = OSSwapHostToBigInt16(rect->bottom);
+    rect->right = OSSwapHostToBigInt16(rect->right);
+}
+
 /* from MoreFilesExtras.c */
 #ifdef __MOREFILESX__
 pascal	void	TruncPString(StringPtr destination,

@@ -115,6 +115,9 @@ void	CancelSelect(ListHandle theList);
 /* unicode */
 void	FSpGetFileName(const FSSpec *theFile,Str255 filename);
 
+/* Rect */
+void OSSwapHostToBigRect(Rect *rect);
+
 /* from MoreFilesExtras.h */
 #ifdef __MOREFILESX__
 void 
