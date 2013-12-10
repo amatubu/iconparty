@@ -140,7 +140,7 @@ OSErr	IPIconToIconFamily(const IPIconRec *ipIcon,IconFamilyHandle *iconFamily)
 	if (ipIcon->iconSuite == NULL)
 	{
 		UseResFile(gApplRefNum);
-		*iconFamily=(IconFamilyHandle)Get1Resource('icns',2002);
+		*iconFamily=(IconFamilyHandle)Get1Resource(kXIconFileType,2002);
 		DetachResource((Handle)*iconFamily);
 		HUnlock((Handle)*iconFamily);
 		UseResFile(curRefNum);
@@ -151,7 +151,7 @@ OSErr	IPIconToIconFamily(const IPIconRec *ipIcon,IconFamilyHandle *iconFamily)
 		if (err==memFullErr)
 		{
 			UseResFile(gApplRefNum);
-			*iconFamily=(IconFamilyHandle)Get1Resource('icns',2002);
+			*iconFamily=(IconFamilyHandle)Get1Resource(kXIconFileType,2002);
 			DetachResource((Handle)*iconFamily);
 			HUnlock((Handle)*iconFamily);
 			err=noErr;
@@ -296,7 +296,7 @@ OSErr MakeFolderWithIPIcon(const FSSpec *theFolder,const IPIconRec *ipIcon)
 	{
 		FInfo	fndrInfo;
 		
-		FSpCreateResFile(&theIconFile,'MACS','icon',smSystemScript);
+		FSpCreateResFile(&theIconFile,kFinderCreator,'icon',smSystemScript);
 		err=FSpGetFInfo(&theIconFile,&fndrInfo);
 		fndrInfo.fdFlags |= kIsInvisible;
 		err=FSpSetFInfo(&theIconFile,&fndrInfo);
@@ -506,7 +506,7 @@ OSErr MakeXIconWithIPIcon(const FSSpec *theFile,const IPIconRec *ipIcon)
 	/* create a file */
 	err=FSpGetFInfo(theFile,&fndrInfo);
 	if (err==fnfErr)
-		err=FSpCreate(theFile,kIconPartyCreator,'icns',smSystemScript);
+		err=FSpCreate(theFile,kIconPartyCreator,kXIconFileType,smSystemScript);
 	if (err!=noErr) return err;
 	
 	/* open the file */
@@ -836,7 +836,7 @@ OSErr FileIconCheck(const FSSpec *theIconFile,short *alertMode)
 	
 	/* 'icns'リソースを探す */
 	UseResFile(refNum);
-	iconFamily=(IconFamilyHandle)Get1Resource('icns',kCustomIconResource);
+	iconFamily=(IconFamilyHandle)Get1Resource(kXIconFileType,kCustomIconResource);
 	if (iconFamily==nil) /* 'icns'リソースがない場合は問題なし */
 	{
 		CloseResFile(refNum);

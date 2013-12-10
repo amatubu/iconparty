@@ -1438,15 +1438,15 @@ void ExportIconToFolder(WindowPtr iconWindow)
 		err=MyGetIPIcon(iWinRec,&ipIcon,data,iconName,NULL);
 		switch (iconType)
 		{
-			case 'Icon':
+			case kFolderIconType:
 				err=MakeFolderWithIPIcon(&theFile,&ipIcon);
 				break;
 			
-			case 'wIco':
+			case kWinIconType:
 				err=MakeWinIconFromSuite(&theFile,ipIcon.iconSuite);
 				break;
 			
-			case 'icns':
+			case kXIconFileType:
 				err=MakeXIconWithIPIcon(&theFile,&ipIcon);
 				break;
 		}

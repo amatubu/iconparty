@@ -1878,11 +1878,11 @@ void UpdatePasteMenu(void)
 	menu=GetMenuHandle(mFile);
 	#if TARGET_API_MAC_CARBON
 	err=GetCurrentScrap(&scrap);
-	if (err==noErr) err=GetScrapFlavorSize(scrap,'PICT',&dataSize);
+	if (err==noErr) err=GetScrapFlavorSize(scrap,kPICTFileType,&dataSize);
 	else dataSize=0;
 	#else
 	
-	dataSize=GetScrap(0,'PICT',&offset);
+	dataSize=GetScrap(0,kPICTFileType,&offset);
 	#endif
 	
 	if (dataSize>0)
@@ -1904,11 +1904,11 @@ void UpdatePasteMenu(void)
 		case kWindowTypeIconListWindow:
 			#if TARGET_API_MAC_CARBON
 			if (err==noErr) err=GetScrapFlavorSize(scrap,kLarge1BitMask,&dataSize);
-			if (dataSize==0) err=GetScrapFlavorSize(scrap,'icns',&dataSize);
+			if (dataSize==0) err=GetScrapFlavorSize(scrap,kXIconFileType,&dataSize);
 			#else
 			dataSize=GetScrap(0,kLarge1BitMask,&offset);
 			if (dataSize<=0 && gSystemVersion>=0x0850)
-				dataSize=GetScrap(0,'icns',&offset);
+				dataSize=GetScrap(0,kXIconFileType,&offset);
 			#endif
 			break;
 		
@@ -2357,8 +2357,8 @@ void UpdateSaveMenu(void)
 				switch ((*GetPaintWinRec(theWindow)).iconType.fileType)
 				{
 					case kGIFFileType:
-					case 'Icon':
-					case 'wIco':
+					case kFolderIconType:
+					case kWinIconType:
 						/* GIF、アイコンつきフォルダ、Windowsアイコンについては、
 						  読み込むルーチンがないため復帰不可能 */
 						iconHasSaved=false;

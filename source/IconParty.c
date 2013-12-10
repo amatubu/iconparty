@@ -2057,7 +2057,7 @@ void UpdateEditWinData(void)
 	else
 	{
 		/* アイコンを開いたものであれば、必要に応じてカラーパレットの印を変更 */
-		if (eWinRec->iconType.fileType == 'icns')
+		if (eWinRec->iconType.fileType == kXIconFileType)
 		{
 			short	newPaletteCheck=gPaletteCheck;
 			
@@ -2089,7 +2089,7 @@ void TitlePopup(WindowPtr theWindow,Point popPos)
 	{
 		PaintWinRec	*eWinRec=GetPaintWinRec(theWindow);
 		
-		if (eWinRec->iconType.fileType == 'icns') return;
+		if (eWinRec->iconType.fileType == kXIconFileType) return;
 		
 		spec=eWinRec->saveFileSpec;
 		savedFlag=eWinRec->iconHasSaved;

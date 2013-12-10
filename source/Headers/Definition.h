@@ -59,6 +59,12 @@ enum {
 	kDeleteIconInfoType=OSSwapHostToBigInt32('iDel'),
 	kUpdateIconInfoType=OSSwapHostToBigInt32('iUpd'),
 };
+enum {
+    kWinIconType=OSSwapHostToBigInt32('wIco'),
+    kFolderIconType=OSSwapHostToBigInt32('Icon'),
+    kSplitWinIconType=OSSwapHostToBigInt32('wIcS'),
+    kSplitFolderIconType=OSSwapHostToBigInt32('IcoS'),
+};
 
 #define		kRatioWidth			30
 #define		kBackWidth			13

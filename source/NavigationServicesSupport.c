@@ -47,7 +47,7 @@ static OSStatus	SendOpenAE(AEDescList list);
 
 static Handle NewOpenHandle(OSType applicationSignature, short numTypes, OSType typeList[]);
 
-OSType	gFileTypeList[]={'PICT',kPNGFileType,'Icon','wIco','IcoS','wIcS'};
+OSType	gFileTypeList[]={kPICTFileType,kPNGFileType,kFolderIconType,kWinIconType,kSplitFolderIconType,kSplitWinIconType};
 enum {
 	kFileTypePICT=1,
 	kFileTypePNG,
@@ -186,7 +186,7 @@ static pascal Boolean myChooseAppFilterProc(AEDesc* theItem, void* info, NavCall
 	return display;
 }
 
-static OSType	lIconTypeList[] = {'Icon','wIco','icns'};
+static OSType	lIconTypeList[] = {kFolderIconType,kWinIconType,kXIconFileType};
 
 OSErr ExportIconWithNav(Str255 filename,FSSpec *theFile,NavReplyRecord *theReply,OSType *iconType)
 {
@@ -209,7 +209,7 @@ OSErr ExportIconWithNav(Str255 filename,FSSpec *theFile,NavReplyRecord *theReply
 	PStrCpy(filename,dialogOptions.savedFileName);
 	BlockMoveData(LMGetCurApName(),dialogOptions.clientName,LMGetCurApName()[0]+1);
 	
-	err=NavPutFile(nil,theReply,&dialogOptions,eventUPP,'Icon',kIconPartyCreator,&userData);
+	err=NavPutFile(nil,theReply,&dialogOptions,eventUPP,kFolderIconType,kIconPartyCreator,&userData);
 	DisposeNavEventUPP(eventUPP);
 	
 	if (theReply->validRecord)
@@ -341,12 +341,12 @@ OSErr SaveFileWithNav(FSSpec *theFile,OSType *fileType,NavReplyRecord *theReply,
 			saveData.selItem=i+1;
 			break;
 		}
-	if (*fileType == 'IcoS')
+	if (*fileType == kSplitFolderIconType)
 	{
 		saveData.selItem=kFileTypeIcon;
 		saveData.splitFlag=true;
 	}
-	else if (*fileType == 'wIcS')
+	else if (*fileType == kSplitWinIconType)
 	{
 		saveData.selItem=kFileTypeWinIcon;
 		saveData.splitFlag=true;
@@ -369,10 +369,10 @@ OSErr SaveFileWithNav(FSSpec *theFile,OSType *fileType,NavReplyRecord *theReply,
 		
 		*fileType=gFileTypeList[saveData.selItem-1];
 		if (saveData.splitFlag)
-			if (*fileType == 'Icon')
-				*fileType = 'IcoS';
-			else if (*fileType == 'wIco')
-				*fileType = 'wIcS';
+			if (*fileType == kFolderIconType)
+				*fileType = kSplitFolderIconType;
+			else if (*fileType == kWinIconType)
+				*fileType = kSplitWinIconType;
 			else
 				saveData.splitFlag = false;
 		
@@ -384,7 +384,7 @@ OSErr SaveFileWithNav(FSSpec *theFile,OSType *fileType,NavReplyRecord *theReply,
 			/* ファイル名から番号を取り除く */
 			if (theFile->name[0] >= saveData.numStr[0]+1)
 			{
-				if (*fileType == 'IcoS')
+				if (*fileType == kSplitFolderIconType)
 				{
 					if (theFile->name[theFile->name[0]-saveData.numStr[0]] == '.')
 					{

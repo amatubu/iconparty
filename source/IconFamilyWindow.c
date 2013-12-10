@@ -240,7 +240,7 @@ void OpenFolderIcon(FSSpec *theFolderSpec,Boolean isFolder)
 	/* create IconFamily window */
 	UseResFile(gApplRefNum);
 	GetIndString(name,147,1);
-	fWindow=MakeFamilyWindow(windPos,is32Exist,theFolderSpec,'Icon',&ipIcon,name);
+	fWindow=MakeFamilyWindow(windPos,is32Exist,theFolderSpec,kFolderIconType,&ipIcon,name);
 	if (fWindow==nil) return;
 	
 	fWinRec=GetIconFamilyRec(fWindow);
@@ -291,7 +291,7 @@ void OpenXIconFile(FSSpec *theFile)
 	
 	/* ファミリウィンドウを作成 */
 	UseResFile(gApplRefNum);
-	fWindow=MakeFamilyWindow(windPos,is32Exist,theFile,'icns',&ipIcon,theFile->name);
+	fWindow=MakeFamilyWindow(windPos,is32Exist,theFile,kXIconFileType,&ipIcon,theFile->name);
 	if (fWindow==nil)
 	{
 		DisposeIPIcon(&ipIcon);
@@ -371,10 +371,10 @@ void OpenWinIconFile(FSSpec *theFile)
 	
 	/* ファミリウィンドウを作成 */
 	UseResFile(gApplRefNum);
-	fWindow=MakeFamilyWindow(windPos,false,theFile,'wIco',&ipIcon,theFile->name);
+	fWindow=MakeFamilyWindow(windPos,false,theFile,kWinIconType,&ipIcon,theFile->name);
 //	if (fWindow==nil) return;
 	
-//	InitIconFamilyWinRec(fWindow,theFile,'wIco',&ipIcon,theFile->name);
+//	InitIconFamilyWinRec(fWindow,theFile,kWinIconType,&ipIcon,theFile->name);
 }
 
 /* アイコンファミリウィンドウを作成 */
@@ -470,8 +470,8 @@ WindowPtr MakeFamilyWindow(Point windPos,Boolean is32Exist,FSSpec *theFile,
 		/* 編集するアイコンの種類によって場合わけ */
 		switch (iconType)
 		{
-			case 'Icon': /* アイコン付きフォルダ */
-			case 'icns': /* X用アイコン */
+			case kFolderIconType: /* アイコン付きフォルダ */
+			case kXIconFileType: /* X用アイコン */
 			case 0L:
 				if (isIconServicesAvailable)
 				{
@@ -483,7 +483,7 @@ WindowPtr MakeFamilyWindow(Point windPos,Boolean is32Exist,FSSpec *theFile,
 				}
 				break;
 			
-			case 'wIco': /* Windows用アイコン */
+			case kWinIconType: /* Windows用アイコン */
 				break;
 			
 			case kLarge1BitMask:
@@ -642,14 +642,14 @@ void SetIconFamilyWinTitle(WindowPtr fWindow)
 	
 	switch (fWinRec->iconType)
 	{
-		case 'Icon': /* アイコン付きフォルダ */
+		case kFolderIconType: /* アイコン付きフォルダ */
 			GetIndString(title,sFamilyWinTitle,3);
 			PStrCat(fWinRec->theIconSpec.name,title);
 			SetWTitle(fWindow,title);
 			break;
 		
-		case 'icns': /* X用アイコン or IconFamily */
-		case 'wIco': /* Win用アイコン */
+		case kXIconFileType: /* X用アイコン or IconFamily */
+		case kWinIconType: /* Win用アイコン */
 		case 'ICN#': 
 			SetWTitle(fWindow,fWinRec->theIconSpec.name);
 			break;
@@ -1127,7 +1127,7 @@ void SaveFamilyIcon(WindowPtr fWindow,Boolean saveToFile,Boolean saveAsFlag)
 			if (err!=noErr) return;
 			
 			newSaveFlag = true;
-			fWinRec->isFolder = (fWinRec->iconType == 'Icon');
+			fWinRec->isFolder = (fWinRec->iconType == kFolderIconType);
 			
 			/* 親がいるときは独立させる */
 			if (saveAsFlag)
@@ -1141,15 +1141,15 @@ void SaveFamilyIcon(WindowPtr fWindow,Boolean saveToFile,Boolean saveAsFlag)
 		{
 			switch (fWinRec->iconType)
 			{
-				case 'Icon':
+				case kFolderIconType:
 					err=MakeFileWithIPIcon(&fWinRec->theIconSpec,&fWinRec->ipIcon);
 					break;
 				
-				case 'wIco':
+				case kWinIconType:
 					err=MakeWinIconFromSuite(&fWinRec->theIconSpec,fWinRec->ipIcon.iconSuite);
 					break;
 				
-				case 'icns':
+				case kXIconFileType:
 					err=MakeXIconWithIPIcon(&fWinRec->theIconSpec,&fWinRec->ipIcon);
 					break;
 			}
@@ -1399,14 +1399,14 @@ void CopySelectedIconPicture(IconFamilyWinRec *fWinRec)
 		HLock((Handle)picture);
 		err=MemError();
 		if (err!=noErr) break;
-		err=PutScrapFlavor(scrap,'PICT',0,GetHandleSize((Handle)picture),*picture);
+		err=PutScrapFlavor(scrap,kPICTFileType,0,GetHandleSize((Handle)picture),*picture);
 		if (err!=noErr) break;
 		HUnlock((Handle)picture);
 	} while (false);
 	#else
 	err=ZeroScrap();
 	
-	err=PutScrap(dataSize,'PICT',*picture);
+	err=PutScrap(dataSize,kPICTFileType,*picture);
 	#endif
 	
 	KillPicture(picture);
@@ -1550,11 +1550,11 @@ void PasteToSelectedIcon(WindowPtr fWindow)
 	#if TARGET_API_MAC_CARBON
 	err=GetCurrentScrap(&scrap);
 	if (err==noErr)
-		err=GetScrapFlavorSize(scrap,'PICT',&dataSize);
+		err=GetScrapFlavorSize(scrap,kPICTFileType,&dataSize);
 	else
 		dataSize=0;
 	#else
-	dataSize=GetScrap(nil,'PICT',&offset);
+	dataSize=GetScrap(nil,kPICTFileType,&offset);
 	#endif
 	if (dataSize == 0) return;
 	
@@ -1567,10 +1567,10 @@ void PasteToSelectedIcon(WindowPtr fWindow)
 	
 	/* クリップボードから読み込む */
 	#if TARGET_API_MAC_CARBON
-	err=GetScrapFlavorData(scrap,'PICT',&dataSize,*picture);
+	err=GetScrapFlavorData(scrap,kPICTFileType,&dataSize,*picture);
 	#else
 	TempHLock((Handle)picture,&err);
-	dataSize=GetScrap((Handle)picture,'PICT',&offset);
+	dataSize=GetScrap((Handle)picture,kPICTFileType,&offset);
 	TempHUnlock((Handle)picture,&err);
 	#endif
 	
@@ -2415,7 +2415,7 @@ Boolean IsMyIconFamilyTypeAvailable(DragReference theDrag)
 		GetDragItemReferenceNumber(theDrag,index,&theItem);
 		
 		/* 'PICT' flavorの存在をチェック */
-		result=GetFlavorFlags(theDrag,theItem,'PICT',&theFlags);
+		result=GetFlavorFlags(theDrag,theItem,kPICTFileType,&theFlags);
 		if (result==noErr)
 			continue;
 		
@@ -2452,7 +2452,7 @@ pascal short MyIconFamilyReceiveHandler(WindowPtr theWindow,void *handlerRefCon,
 	{
 		GetDragItemReferenceNumber(theDrag,index,&theItem);
 		
-		result=GetFlavorFlags(theDrag,theItem,'PICT',&theFlags);
+		result=GetFlavorFlags(theDrag,theItem,kPICTFileType,&theFlags);
 		if (result==noErr)
 		{
 			short	i,iconKind=-1;
@@ -2461,7 +2461,7 @@ pascal short MyIconFamilyReceiveHandler(WindowPtr theWindow,void *handlerRefCon,
 			
 			GlobalToLocal(&localMouse);
 			
-			GetFlavorDataSize(theDrag,theItem,'PICT',&dataSize);
+			GetFlavorDataSize(theDrag,theItem,kPICTFileType,&dataSize);
 			dragPic=(PicHandle)NewHandle(dataSize);
 			if (dragPic==nil)
 			{
@@ -2470,7 +2470,7 @@ pascal short MyIconFamilyReceiveHandler(WindowPtr theWindow,void *handlerRefCon,
 			}
 			
 			HLock((Handle)dragPic);
-			GetFlavorData(theDrag,theItem,'PICT',(char *)*dragPic,&dataSize,0L);
+			GetFlavorData(theDrag,theItem,kPICTFileType,(char *)*dragPic,&dataSize,0L);
 			HUnlock((Handle)dragPic);
 			
 			/* どこにドラッグされたのかをチェック */
@@ -2502,7 +2502,7 @@ pascal short MyIconFamilyReceiveHandler(WindowPtr theWindow,void *handlerRefCon,
 					if (GetExtWindowKind(eWindow) == kWindowTypePaintWindow)
 					{
 						eWinRec=GetPaintWinRec(eWindow);
-						if (eWinRec->iconType.fileType == 'icns' && eWinRec->parentWindow == theWindow &&
+						if (eWinRec->iconType.fileType == kXIconFileType && eWinRec->parentWindow == theWindow &&
 								eWinRec->iconKind == iconKind)
 						{
 							SysBeep(0);
@@ -2595,7 +2595,7 @@ OSErr MyDoAddIconFamilyFlavors(WindowPtr fWindow,DragReference theDrag)
 	#pragma unused(fWindow)
 	OSErr	err;
 	
-	err=AddDragItemFlavor(theDrag,1,'PICT',0L,0L,0);
+	err=AddDragItemFlavor(theDrag,1,kPICTFileType,0L,0L,0);
 	
 	return err;
 }
@@ -2636,7 +2636,7 @@ pascal short MySendIconFamilyDataProc(FlavorType theType,void *dragSendRefCon,
 	fWinRec=dragSendRefCon;
 	
 	switch (theType) {
-		case 'PICT':
+		case kPICTFileType:
 			/* 渡すPICTデータを作成 */
 			picture=IPIconToPicture(&fWinRec->ipIcon,fWinRec->selectedIcon);
 			HLock((Handle)picture);

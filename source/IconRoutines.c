@@ -1171,7 +1171,7 @@ OSErr SaveAsIconDialog(Str255 filename,FSSpec *theFile,OSType *iconType,NavReply
 //		ActivateYDUPP	aUPP=NewActivateYDProc(MyActivate);
 		StandardFileReply	reply;
 		
-		*iconType = 'Icon';
+		*iconType = kFolderIconType;
 		ExportIconDialog(theFile->name,&reply,iconType);
 //		CustomPutFile(str,iconName,&reply,148,where,nil,nil,nil,aUPP,nil);
 //		DisposeRoutineDescriptor(aUPP);

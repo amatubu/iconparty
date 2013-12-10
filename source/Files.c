@@ -1084,11 +1084,11 @@ short SavePaintWindow(Boolean selectionFlag,Boolean saveAsFlag)
 			SaveAsPNG(theWindow,&saveFileSpec);
 			break;
 		
-		case 'Icon':
+		case kFolderIconType:
 			SaveAsIcon(theWindow,&saveFileSpec);
 			break;
 		
-		case 'IcoS':
+		case kSplitFolderIconType:
 			SaveAsSplitIcon(theWindow,&saveFileSpec);
 			break;
 		
@@ -1096,11 +1096,11 @@ short SavePaintWindow(Boolean selectionFlag,Boolean saveAsFlag)
 			SaveToFamily(theWindow);
 			break;
 		
-		case 'wIco':
+		case kWinIconType:
 			SaveAsWinIcon(theWindow,&saveFileSpec);
 			break;
 		
-		case 'wIcS':
+		case kSplitWinIconType:
 			SaveAsSplitWinIcon(theWindow,&saveFileSpec);
 			break;
 	}
@@ -2574,7 +2574,7 @@ void OpenClipboard(void)
 	{
 		err=GetCurrentScrap(&scrap);
 		if (err==noErr)
-			err=GetScrapFlavorSize(scrap,'PICT',&dataSize);
+			err=GetScrapFlavorSize(scrap,kPICTFileType,&dataSize);
 		else
 			dataSize=0;
 	}
@@ -2586,7 +2586,7 @@ void OpenClipboard(void)
 	#else
 	long	offset;
 	
-	dataSize=GetScrap(0,'PICT',&offset);
+	dataSize=GetScrap(0,kPICTFileType,&offset);
 	#endif
 	if (dataSize==0) return;
 	
@@ -2600,9 +2600,9 @@ void OpenClipboard(void)
 	}
 	
 	#if TARGET_API_MAC_CARBON
-	err=GetScrapFlavorData(scrap,'PICT',&dataSize,*picture);
+	err=GetScrapFlavorData(scrap,kPICTFileType,&dataSize,*picture);
 	#else
-	dataSize=GetScrap((Handle)picture,'PICT',&offset);
+	dataSize=GetScrap((Handle)picture,kPICTFileType,&offset);
 	#endif
 	
 #if 1
@@ -2635,13 +2635,13 @@ void OpenClipboard(void)
 	}
 	eWinRec=GetPaintWinRec(theWindow);
 	eWinRec->iconSize=picSize;
-	eWinRec->iconType.fileType='PICT';
+	eWinRec->iconType.fileType=kPICTFileType;
 	eWinRec->iconType.creatorCode=gPICTCreator;
 	
 	eWinRec->iconHasSaved=false;
 	eWinRec->iconHasChanged=false;
 	eWinRec->undoMode=umCannot;
-	MakeUntitledFileName('PICT',eWinRec->saveFileSpec.name);
+	MakeUntitledFileName(kPICTFileType,eWinRec->saveFileSpec.name);
 	
 	SetEditWindowTitle(theWindow);
 	
@@ -2685,7 +2685,7 @@ void DoRevertPaintWindow(WindowPtr theWindow)
 	/* 種類によって場合わけ */
 	switch (eWinRec->iconType.fileType)
 	{
-		case 'PICT':
+		case kPICTFileType:
 			theFile=eWinRec->saveFileSpec;
 			err=FSpGetFInfo(&theFile,&fInfo);
 			if (err!=noErr) /* ファイルが存在しないなどエラーが起こった場合はなにもしない */
@@ -2706,12 +2706,12 @@ void DoRevertPaintWindow(WindowPtr theWindow)
 			break;
 		
 		case kGIFFileType:
-		case 'Icon':
-		case 'wIco':
+		case kFolderIconType:
+		case kWinIconType:
 			SysBeep(0);
 			break;
 		
-		case 'icns':
+		case kXIconFileType:
 			fWindow=eWinRec->parentWindow;
 			iconKind=eWinRec->iconKind;
 			
@@ -2784,7 +2784,7 @@ void SetEditWindowTitle(WindowPtr theWindow)
 	
 	switch (eWinRec->iconType.fileType)
 	{
-		case 'icns':
+		case kXIconFileType:
 			GetIndString(title,130,eWinRec->iconKind+1+1);
 			GetIndString(temp,130,1);
 			PStrCat(temp,title);
@@ -3000,7 +3000,7 @@ short HandleOpenDoc(FSSpec *spec)
 				else
 				#endif
 				{
-					eWinRec->iconType.fileType='PICT';
+					eWinRec->iconType.fileType=kPICTFileType;
 					eWinRec->iconType.creatorCode=gPICTCreator;
 				}
 				eWinRec->iconHasSaved=false;
@@ -3035,7 +3035,7 @@ short HandleOpenDoc(FSSpec *spec)
 				/* Translate Managerが使用可能ならトランスレート、、、どうやるのかしら */
 				FileTranslationSpec	howToTranslate;
 				DocOpenMethod	howToOpen;
-				FileType	nativeTypes[64]={'PICT',0L};
+				FileType	nativeTypes[64]={kPICTFileType,0L};
 				long	response;
 				
 				err=Gestalt(gestaltTranslationAttr,&response);
@@ -3260,7 +3260,7 @@ Boolean IsMyPaintWinTypeAvailable(DragReference theDrag)
 		GetDragItemReferenceNumber(theDrag,index,&theItem);
 		
 		/* 'PICT' flavorの存在をチェック */
-		result=GetFlavorFlags(theDrag,theItem,'PICT',&theFlags);
+		result=GetFlavorFlags(theDrag,theItem,kPICTFileType,&theFlags);
 		if (result==noErr)
 			continue;
 		
@@ -3304,12 +3304,12 @@ pascal short MyPaintWinReceiveHandler(WindowPtr theWindow,void *handlerRefCon,
 	{
 		GetDragItemReferenceNumber(theDrag,index,&theItem);
 		
-		result=GetFlavorFlags(theDrag,theItem,'PICT',&theFlags);
+		result=GetFlavorFlags(theDrag,theItem,kPICTFileType,&theFlags);
 		if (result==noErr) /* 'PICT' */
 		{
 			PaintWinRec	*eWinRec;
 			
-			GetFlavorDataSize(theDrag,theItem,'PICT',&dataSize);
+			GetFlavorDataSize(theDrag,theItem,kPICTFileType,&dataSize);
 			dragPic=(PicHandle)NewHandle(dataSize);
 			if (dragPic==nil)
 			{
@@ -3318,7 +3318,7 @@ pascal short MyPaintWinReceiveHandler(WindowPtr theWindow,void *handlerRefCon,
 			}
 			
 			HLock((Handle)dragPic);
-			GetFlavorData(theDrag,theItem,'PICT',(char *)*dragPic,&dataSize,0L);
+			GetFlavorData(theDrag,theItem,kPICTFileType,(char *)*dragPic,&dataSize,0L);
 			HUnlock((Handle)dragPic);
 			
 			GetPort(&port);
