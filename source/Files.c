@@ -289,11 +289,11 @@ static short ConfigurePictSize(PaintWinPrefsRec *pRec)
 	do {
 		err=GetCurrentScrap(&scrap);
 		if (err!=noErr) break;
-		err=GetScrapFlavorSize(scrap,kPICTFileType,&dataSize);
+		err=GetScrapFlavorSize(scrap,kPICTClipType,&dataSize);
 		if (err!=noErr) break;
 	} while (false);
 	#else
-	dataSize=GetScrap(nil,kPICTFileType,&offset);
+	dataSize=GetScrap(nil,kPICTClipType,&offset);
 	#endif
 	if (dataSize>0)
 	{
@@ -304,9 +304,9 @@ static short ConfigurePictSize(PaintWinPrefsRec *pRec)
 		{
 			TempHLock((Handle)clipPic,&err);
 			#if CALL_NOT_IN_CARBON
-			dataSize=GetScrap((Handle)clipPic,kPICTFileType,&offset);
+			dataSize=GetScrap((Handle)clipPic,kPICTClipType,&offset);
 			#else
-			err=GetScrapFlavorData(scrap,kPICTFileType,&dataSize,*clipPic);
+			err=GetScrapFlavorData(scrap,kPICTClipType,&dataSize,*clipPic);
 			#endif
 			TempHUnlock((Handle)clipPic,&err);
 			
@@ -2574,7 +2574,7 @@ void OpenClipboard(void)
 	{
 		err=GetCurrentScrap(&scrap);
 		if (err==noErr)
-			err=GetScrapFlavorSize(scrap,kPICTFileType,&dataSize);
+			err=GetScrapFlavorSize(scrap,kPICTClipType,&dataSize);
 		else
 			dataSize=0;
 	}
@@ -2586,7 +2586,7 @@ void OpenClipboard(void)
 	#else
 	long	offset;
 	
-	dataSize=GetScrap(0,kPICTFileType,&offset);
+	dataSize=GetScrap(0,kPICTClipType,&offset);
 	#endif
 	if (dataSize==0) return;
 	
@@ -2600,9 +2600,9 @@ void OpenClipboard(void)
 	}
 	
 	#if TARGET_API_MAC_CARBON
-	err=GetScrapFlavorData(scrap,kPICTFileType,&dataSize,*picture);
+	err=GetScrapFlavorData(scrap,kPICTClipType,&dataSize,*picture);
 	#else
-	dataSize=GetScrap((Handle)picture,kPICTFileType,&offset);
+	dataSize=GetScrap((Handle)picture,kPICTClipType,&offset);
 	#endif
 	
 #if 1
@@ -2896,7 +2896,7 @@ short HandleOpenDoc(FSSpec *spec)
 	#else
 	fileType = fndrInfo.fdType;
 	#endif
-	if (fileType == 0 || fileType == 'TEXT')
+	if (fileType == 0 || fileType == kTextFileType)
 	{
 		err=GetFileTypeFromSuffix(spec->name,&fileType);
 	}
@@ -3260,7 +3260,7 @@ Boolean IsMyPaintWinTypeAvailable(DragReference theDrag)
 		GetDragItemReferenceNumber(theDrag,index,&theItem);
 		
 		/* 'PICT' flavorの存在をチェック */
-		result=GetFlavorFlags(theDrag,theItem,kPICTFileType,&theFlags);
+		result=GetFlavorFlags(theDrag,theItem,kPICTClipType,&theFlags);
 		if (result==noErr)
 			continue;
 		

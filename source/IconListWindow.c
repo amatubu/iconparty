@@ -1586,11 +1586,15 @@ void AddIPIconToList(WindowPtr iconWindow,const IPIconRec *ipIcon,ResType iconTy
 		IconFamilyHandle	iconFamily;
 		
 		err = IPIconToIconFamily(ipIcon,&iconFamily);
-		HLock((Handle)iconFamily);
-		SaveDataToResource(*iconFamily,GetHandleSize((Handle)iconFamily),kIconFamilyType,
-			newIcon.resID,newIcon.resName,newIcon.attrs);
-		HUnlock((Handle)iconFamily);
-		DisposeHandle((Handle)iconFamily);
+        if (err == noErr && iconFamily != nil) {
+            HLock((Handle)iconFamily);
+            SaveDataToResource(*iconFamily,GetHandleSize((Handle)iconFamily),kIconFamilyType,
+                newIcon.resID,newIcon.resName,newIcon.attrs);
+            HUnlock((Handle)iconFamily);
+            DisposeHandle((Handle)iconFamily);
+        } else {
+            return;
+        }
 		
 		iconType = kIconFamilyType;
 	}

@@ -140,7 +140,7 @@ OSErr	IPIconToIconFamily(const IPIconRec *ipIcon,IconFamilyHandle *iconFamily)
 	if (ipIcon->iconSuite == NULL)
 	{
 		UseResFile(gApplRefNum);
-		*iconFamily=(IconFamilyHandle)Get1Resource(kXIconFileType,2002);
+		*iconFamily=(IconFamilyHandle)Get1Resource(kXIconClipType,2002);
 		DetachResource((Handle)*iconFamily);
 		HUnlock((Handle)*iconFamily);
 		UseResFile(curRefNum);
@@ -151,7 +151,7 @@ OSErr	IPIconToIconFamily(const IPIconRec *ipIcon,IconFamilyHandle *iconFamily)
 		if (err==memFullErr)
 		{
 			UseResFile(gApplRefNum);
-			*iconFamily=(IconFamilyHandle)Get1Resource(kXIconFileType,2002);
+			*iconFamily=(IconFamilyHandle)Get1Resource(kXIconClipType,2002);
 			DetachResource((Handle)*iconFamily);
 			HUnlock((Handle)*iconFamily);
 			err=noErr;

@@ -55,6 +55,7 @@ enum {
 	kXIconFileType=OSSwapHostToBigInt32('icns'),
 	kPreferencesFileType=OSSwapHostToBigInt32('pref'),
 	kFolderType=OSSwapHostToBigInt32('fold'),
+    kTextFileType=OSSwapHostToBigInt32('TEXT'),
 	
 	kDeleteIconInfoType=OSSwapHostToBigInt32('iDel'),
 	kUpdateIconInfoType=OSSwapHostToBigInt32('iUpd'),
@@ -64,6 +65,11 @@ enum {
     kFolderIconType=OSSwapHostToBigInt32('Icon'),
     kSplitWinIconType=OSSwapHostToBigInt32('wIcS'),
     kSplitFolderIconType=OSSwapHostToBigInt32('IcoS'),
+};
+enum {
+    kTextClipType='TEXT',
+    kPICTClipType='PICT',
+    kXIconClipType='icns',
 };
 
 #define		kRatioWidth			30

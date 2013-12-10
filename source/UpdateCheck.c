@@ -126,7 +126,7 @@ static OSStatus IPDownloadCatalog(Str255 url_string,Handle *catalog)
 	BlockMoveData(&url_string[1],c,url_string[0]);
 	c[url_string[0]]=0x0;
 	
-	err=URLNewReference(c,&urlRef);
+	err=URLNewReference((const char*)c,&urlRef);
 	if (err!=noErr) return err;
 	
 	destHandle=NewHandle(0); /* とりあえず０バイトのハンドル */

@@ -226,12 +226,12 @@ void DoPaste(void)
 			eWinRec=GetPaintWinRec(theWindow);
 			
 			#if CALL_NOT_IN_CARBON
-			dataSize=GetScrap(nil,kPICTFileType,&offset);
+			dataSize=GetScrap(nil,kPICTClipType,&offset);
 			#else
 			{
 				err=GetCurrentScrap(&scrap);
 				if (err==noErr)
-					err=GetScrapFlavorSize(scrap,kPICTFileType,&dataSize);
+					err=GetScrapFlavorSize(scrap,kPICTClipType,&dataSize);
 				else
 					dataSize=0;
 			}
@@ -252,9 +252,9 @@ void DoPaste(void)
 			
 			TempHLock((Handle)loadedPic,&err);
 			#if CALL_NOT_IN_CARBON
-			dataSize=GetScrap((Handle)loadedPic,kPICTFileType,&offset);
+			dataSize=GetScrap((Handle)loadedPic,kPICTClipType,&offset);
 			#else
-			err=GetScrapFlavorData(scrap,kPICTFileType,&dataSize,*loadedPic);
+			err=GetScrapFlavorData(scrap,kPICTClipType,&dataSize,*loadedPic);
 			#endif
 			TempHUnlock((Handle)loadedPic,&err);
 			
@@ -872,12 +872,12 @@ void CopySelection(WindowPtr theWindow)
 		HLock((Handle)selectionPic);
 		err=MemError();
 		if (err!=noErr) break;
-		err=PutScrapFlavor(scrap,kPICTFileType,0,GetHandleSize((Handle)selectionPic),*selectionPic);
+		err=PutScrapFlavor(scrap,kPICTClipType,0,GetHandleSize((Handle)selectionPic),*selectionPic);
 	} while (false);
 	#else
 	err=ZeroScrap();
 	
-	err=PutScrap(dataSize,kPICTFileType,*selectionPic);
+	err=PutScrap(dataSize,kPICTClipType,*selectionPic);
 	if (err<0)
 	{
 		SysBeep(10);

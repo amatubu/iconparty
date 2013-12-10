@@ -1878,11 +1878,17 @@ void UpdatePasteMenu(void)
 	menu=GetMenuHandle(mFile);
 	#if TARGET_API_MAC_CARBON
 	err=GetCurrentScrap(&scrap);
-	if (err==noErr) err=GetScrapFlavorSize(scrap,kPICTFileType,&dataSize);
-	else dataSize=0;
+	if (err==noErr)
+    {
+        OSErr tempErr=GetScrapFlavorSize(scrap,kPICTClipType,&dataSize);
+    }
+	else
+    {
+        dataSize=0;
+    }
 	#else
 	
-	dataSize=GetScrap(0,kPICTFileType,&offset);
+	dataSize=GetScrap(0,kPICTClipType,&offset);
 	#endif
 	
 	if (dataSize>0)
@@ -1904,7 +1910,7 @@ void UpdatePasteMenu(void)
 		case kWindowTypeIconListWindow:
 			#if TARGET_API_MAC_CARBON
 			if (err==noErr) err=GetScrapFlavorSize(scrap,kLarge1BitMask,&dataSize);
-			if (dataSize==0) err=GetScrapFlavorSize(scrap,kXIconFileType,&dataSize);
+			if (dataSize==0) err=GetScrapFlavorSize(scrap,kXIconClipType,&dataSize);
 			#else
 			dataSize=GetScrap(0,kLarge1BitMask,&offset);
 			if (dataSize<=0 && gSystemVersion>=0x0850)
@@ -1917,13 +1923,20 @@ void UpdatePasteMenu(void)
 			if (fWinRec->selectedIcon >= 0)
 			{}
 			else if ((**fWinRec->iconNameTE).active)
+            {
 			#if TARGET_API_MAC_CARBON
-				if (err==noErr) err=GetScrapFlavorSize(scrap,'TEXT',&dataSize);
+				if (err==noErr)
+                {
+                    OSErr tempErr=GetScrapFlavorSize(scrap,kTextClipType,&dataSize);
+                }
 			#else
-				dataSize=GetScrap(0,'TEXT',&offset);
+				dataSize=GetScrap(0,kTextClipType,&offset);
 			#endif
+            }
 			else
+            {
 				dataSize=0;
+            }
 			break;
 		
 		default:

@@ -650,7 +650,7 @@ void SetIconFamilyWinTitle(WindowPtr fWindow)
 		
 		case kXIconFileType: /* X用アイコン or IconFamily */
 		case kWinIconType: /* Win用アイコン */
-		case 'ICN#': 
+		case kLarge1BitMask: 
 			SetWTitle(fWindow,fWinRec->theIconSpec.name);
 			break;
 		
@@ -1550,7 +1550,7 @@ void PasteToSelectedIcon(WindowPtr fWindow)
 	#if TARGET_API_MAC_CARBON
 	err=GetCurrentScrap(&scrap);
 	if (err==noErr)
-		err=GetScrapFlavorSize(scrap,kPICTFileType,&dataSize);
+		err=GetScrapFlavorSize(scrap,kPICTClipType,&dataSize);
 	else
 		dataSize=0;
 	#else
@@ -2223,7 +2223,7 @@ void MyIconFamilyContextMenu(Point globPt,WindowPtr fWindow)
 		OSErr		err;
 		
 		err=GetCurrentScrap(&scrap);
-		err=GetScrapFlavorSize(scrap,kPICTFileType,&dataSize);
+		err=GetScrapFlavorSize(scrap,kPICTClipType,&dataSize);
 	}
 	#else
 	{
