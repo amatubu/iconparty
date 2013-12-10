@@ -1671,7 +1671,6 @@ void TypeString(WindowPtr theWindow)
 	TextFont(applFont);
 	TextFace(normal);
 	
-    OSSwapHostToBigRect(&(*picture)->picFrame);
 	err=PutPictureIntoEditWin(picture,theWindow);
 //	KillPicture(picture);
 	TempDisposeHandle((Handle)picture,&tempErr);

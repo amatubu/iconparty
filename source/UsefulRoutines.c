@@ -877,6 +877,7 @@ OSErr TempOpenCPicture(OpenCPicParams *params)
 	dummyPict.picFrame=params->srcRect;
 	
 	/* ヘッダ部分の書き込み */
+    OSSwapHostToBigRect(&(dummyPict.picFrame));
 	BlockMoveData(&dummyPict,*mPictureHnd,sizeof(Picture));
 	mPictureSize=sizeof(Picture);
 	
