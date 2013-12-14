@@ -1536,7 +1536,9 @@ pascal OSErr GetDropDirectory (DragReference dragRef, FSSpecPtr fssOut)
 			if (!(err = AECoerceDesc(&dropLocAlias, typeFSS, &dropLocFSS)))
 			{
 				#if TARGET_API_MAC_CARBON
-				err = AEGetDescData(&dropLocFSS,&fssOut,sizeof(FSSpec));
+                FSSpecPtr dummyFSSPtr;
+				err = AEGetDescData(&dropLocFSS,&dummyFSSPtr,sizeof(FSSpec));
+				BlockMoveData(dummyFSSPtr,fssOut,sizeof(FSSpec));
 				#else
 				BlockMoveData(*(dropLocFSS.dataHandle),fssOut,sizeof(FSSpec));
 				

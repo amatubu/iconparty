@@ -117,7 +117,7 @@ OSErr IconFamilyToIPIconWithSelector(IconFamilyHandle theIconFamily,
 					else
 						ipIcon->it32Data = NULL;
 				}
-				else if (err == noIconDataAvailableErr) // 1.20b14
+				else if (err == noIconDataAvailableErr || err == paramErr) // 1.20b14
 				{
 					err = noErr;
 					ipIcon->it32Data = NULL;
@@ -143,7 +143,7 @@ OSErr IconFamilyToIPIconWithSelector(IconFamilyHandle theIconFamily,
 					else
 						ipIcon->t8mkData = NULL;
 				}
-				else if (err == noIconDataAvailableErr) // 1.20b14
+				else if (err == noIconDataAvailableErr || err == paramErr) // 1.20b14
 				{
 					err = noErr;
 					ipIcon->t8mkData = NULL;

@@ -3125,7 +3125,7 @@ pascal short MySendIconDataProc(FlavorType theType,void *dragSendRefCon,
 	id=iconDataPtr->resID;
 	
 	switch (theType) {
-		case 'fssP':
+		case kDragPromisedFlavor:
 			/* ファイルがドラッグされた位置をべる */
 			err=GetDropDirectory(theDrag,&spec);
 			if (err==noErr)
