@@ -1538,7 +1538,7 @@ void AddFileIconToIconList(WindowPtr iconWindow,FSSpec *theFile,short id,Boolean
 				Boolean		is32Exist;
 				short		alertMode;
 				
-				err=GetFileIPIcon(theFile,&ipIcon,(err!=noErr),&is32Exist,&alertMode);
+				err=GetFileIPIcon(theFile,&ipIcon,isDirectory,&is32Exist,&alertMode);
 				if (err!=noErr)
 				{
 					SysBeep(0);
@@ -2856,7 +2856,7 @@ Boolean IsMyIconListTypeAvailable(DragReference theDrag)
 		GetDragItemReferenceNumber(theDrag,index,&theItem);
 		
 		/* 'hfs ' flavorの存在をチェック */
-		result=GetFlavorFlags(theDrag,theItem,'hfs ',&theFlags);
+		result=GetFlavorFlags(theDrag,theItem,kDragFlavorTypeHFS,&theFlags);
 		if (result==noErr) continue;
 		
 		#if !TARGET_API_MAC_CARBON
@@ -2914,11 +2914,11 @@ pascal short MyIconListReceiveHandler(WindowPtr theWindow,void *handlerRefCon,
 	{
 		GetDragItemReferenceNumber(theDrag,index,&theItem);
 		
-		result=GetFlavorFlags(theDrag,theItem,'hfs ',&theFlags);
+		result=GetFlavorFlags(theDrag,theItem,kDragFlavorTypeHFS,&theFlags);
 		if (result==noErr)
 		{
-			GetFlavorDataSize(theDrag,theItem,'hfs ',&dataSize);
-			GetFlavorData(theDrag,theItem,'hfs ',(char *)&hfsFlavorData,&dataSize,0L);
+			GetFlavorDataSize(theDrag,theItem,kDragFlavorTypeHFS,&dataSize);
+			GetFlavorData(theDrag,theItem,kDragFlavorTypeHFS,(char *)&hfsFlavorData,&dataSize,0L);
 			
 			/* IDを記録 */
 			if (!gOtherPrefs.continuousIDs) id=MyUniqueID(iWinRec->iconList);

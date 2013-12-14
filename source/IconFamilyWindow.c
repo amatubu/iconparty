@@ -2526,11 +2526,11 @@ pascal short MyIconFamilyReceiveHandler(WindowPtr theWindow,void *handlerRefCon,
 		}
 /*		else
 		{
-			result=GetFlavorFlags(theDrag,theItem,'hfs ',&theFlags);
+			result=GetFlavorFlags(theDrag,theItem,kDragFlavorTypeHFS,&theFlags);
 			if (result==noErr)
 			{
-				GetFlavorDataSize(theDrag,theItem,'hfs ',&dataSize);
-				GetFlavorData(theDrag,theItem,'hfs ',(char *)&hfsFlavorData,&dataSize,0L);
+				GetFlavorDataSize(theDrag,theItem,kDragFlavorTypeHFS,&dataSize);
+				GetFlavorData(theDrag,theItem,kDragFlavorTypeHFS,(char *)&hfsFlavorData,&dataSize,0L);
 				*/
 				/* ファイルのアイコンを取得してリストに追加する */
 /*				AddFileIconToIconList(theWindow,&hfsFlavorData.fileSpec);

@@ -3265,7 +3265,7 @@ Boolean IsMyPaintWinTypeAvailable(DragReference theDrag)
 			continue;
 		
 		/* 'hfs ' flavorの存在をチェック */
-		result=GetFlavorFlags(theDrag,theItem,'hfs ',&theFlags);
+		result=GetFlavorFlags(theDrag,theItem,kDragFlavorTypeHFS,&theFlags);
 		if (result==noErr)
 			continue;
 		
@@ -3360,7 +3360,7 @@ pascal short MyPaintWinReceiveHandler(WindowPtr theWindow,void *handlerRefCon,
 		}
 		else
 		{
-			result=GetFlavorFlags(theDrag,theItem,'hfs ',&theFlags);
+			result=GetFlavorFlags(theDrag,theItem,kDragFlavorTypeHFS,&theFlags);
 			if (result==noErr) /* 'hfs ' */
 			{
 				IconSuiteRef	iconSuite;
@@ -3369,8 +3369,8 @@ pascal short MyPaintWinReceiveHandler(WindowPtr theWindow,void *handlerRefCon,
 				Str15			suffix;
 				PaintWinRec		*eWinRec;
 				
-				GetFlavorDataSize(theDrag,theItem,'hfs ',&dataSize);
-				GetFlavorData(theDrag,theItem,'hfs ',(char *)&hfsFlavorData,&dataSize,0L);
+				GetFlavorDataSize(theDrag,theItem,kDragFlavorTypeHFS,&dataSize);
+				GetFlavorData(theDrag,theItem,kDragFlavorTypeHFS,(char *)&hfsFlavorData,&dataSize,0L);
 				
 				GetSuffix(hfsFlavorData.fileSpec.name,suffix);
 				
