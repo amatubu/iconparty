@@ -3304,12 +3304,12 @@ pascal short MyPaintWinReceiveHandler(WindowPtr theWindow,void *handlerRefCon,
 	{
 		GetDragItemReferenceNumber(theDrag,index,&theItem);
 		
-		result=GetFlavorFlags(theDrag,theItem,kPICTFileType,&theFlags);
+		result=GetFlavorFlags(theDrag,theItem,kScrapFlavorTypePicture,&theFlags);
 		if (result==noErr) /* 'PICT' */
 		{
 			PaintWinRec	*eWinRec;
 			
-			GetFlavorDataSize(theDrag,theItem,kPICTFileType,&dataSize);
+			GetFlavorDataSize(theDrag,theItem,kScrapFlavorTypePicture,&dataSize);
 			dragPic=(PicHandle)NewHandle(dataSize);
 			if (dragPic==nil)
 			{
@@ -3318,7 +3318,7 @@ pascal short MyPaintWinReceiveHandler(WindowPtr theWindow,void *handlerRefCon,
 			}
 			
 			HLock((Handle)dragPic);
-			GetFlavorData(theDrag,theItem,kPICTFileType,(char *)*dragPic,&dataSize,0L);
+			GetFlavorData(theDrag,theItem,kScrapFlavorTypePicture,(char *)*dragPic,&dataSize,0L);
 			HUnlock((Handle)dragPic);
 			
 			GetPort(&port);

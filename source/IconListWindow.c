@@ -3041,7 +3041,7 @@ OSErr MyDoAddIconFlavors(WindowPtr iconWindow,DragReference theDrag)
 		i++;
 		
 		/* PromiseHFSを追加 */
-		err=AddDragItemFlavorTypePromiseHFS(theDrag,i,kFolderType,'MACS',0L,'fssP');
+		err=AddDragItemFlavorTypePromiseHFS(theDrag,i,kDragPseudoFileTypeDirectory,'MACS',0L,'fssP');
 		if (err==noErr)
 		{
 			#if !TARGET_API_MAC_CARBON

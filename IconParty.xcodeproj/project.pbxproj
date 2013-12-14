@@ -16,7 +16,6 @@
 		2FAEC28A185C1F8A00F70889 /* IconParty(carbon).rsrc.r in Rez */ = {isa = PBXBuildFile; fileRef = 2FAEC288185C1F8900F70889 /* IconParty(carbon).rsrc.r */; };
 		2FAEC28C185C1F9700F70889 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 0867D6AAFE840B52C02AAC07 /* InfoPlist.strings */; };
 		2FAEC28F185C209400F70889 /* IconParty.rsrc.r in Rez */ = {isa = PBXBuildFile; fileRef = 2FAEC28D185C209400F70889 /* IconParty.rsrc.r */; };
-		2FAEC291185C20A100F70889 /* IconParty(carbon).rsrc.r in Rez */ = {isa = PBXBuildFile; fileRef = 2FAEC288185C1F8900F70889 /* IconParty(carbon).rsrc.r */; };
 		2FE84A9007904CE0004E8DCB /* AESupport.h in Headers */ = {isa = PBXBuildFile; fileRef = F5F30457015C9E4101000001 /* AESupport.h */; };
 		2FE84A9107904CE0004E8DCB /* CustomSaveDialog.h in Headers */ = {isa = PBXBuildFile; fileRef = F5F30459015C9E4101000001 /* CustomSaveDialog.h */; };
 		2FE84A9207904CE0004E8DCB /* DebugMode.h in Headers */ = {isa = PBXBuildFile; fileRef = F5F3045A015C9E4101000001 /* DebugMode.h */; };
@@ -577,7 +576,6 @@
 				2FAEC264185C1BCC00F70889 /* Localized.r in Rez */,
 				2FAEC28A185C1F8A00F70889 /* IconParty(carbon).rsrc.r in Rez */,
 				2FAEC28F185C209400F70889 /* IconParty.rsrc.r in Rez */,
-				2FAEC291185C20A100F70889 /* IconParty(carbon).rsrc.r in Rez */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

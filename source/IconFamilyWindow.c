@@ -1399,14 +1399,14 @@ void CopySelectedIconPicture(IconFamilyWinRec *fWinRec)
 		HLock((Handle)picture);
 		err=MemError();
 		if (err!=noErr) break;
-		err=PutScrapFlavor(scrap,kPICTFileType,0,GetHandleSize((Handle)picture),*picture);
+		err=PutScrapFlavor(scrap,kPICTClipType,0,GetHandleSize((Handle)picture),*picture);
 		if (err!=noErr) break;
 		HUnlock((Handle)picture);
 	} while (false);
 	#else
 	err=ZeroScrap();
 	
-	err=PutScrap(dataSize,kPICTFileType,*picture);
+	err=PutScrap(dataSize,kPICTClipType,*picture);
 	#endif
 	
 	KillPicture(picture);
@@ -1554,7 +1554,7 @@ void PasteToSelectedIcon(WindowPtr fWindow)
 	else
 		dataSize=0;
 	#else
-	dataSize=GetScrap(nil,kPICTFileType,&offset);
+	dataSize=GetScrap(nil,kPICTClipType,&offset);
 	#endif
 	if (dataSize == 0) return;
 	
@@ -1566,13 +1566,13 @@ void PasteToSelectedIcon(WindowPtr fWindow)
 	}
 	
 	/* クリップボードから読み込む */
-	#if TARGET_API_MAC_CARBON
-	err=GetScrapFlavorData(scrap,kPICTFileType,&dataSize,*picture);
-	#else
 	TempHLock((Handle)picture,&err);
-	dataSize=GetScrap((Handle)picture,kPICTFileType,&offset);
-	TempHUnlock((Handle)picture,&err);
+	#if TARGET_API_MAC_CARBON
+	err=GetScrapFlavorData(scrap,kPICTClipType,&dataSize,*picture);
+	#else
+	dataSize=GetScrap((Handle)picture,kPICTClipType,&offset);
 	#endif
+	TempHUnlock((Handle)picture,&err);
 	
 	SavePictureToIconData(picture,fWinRec,true);
 	
@@ -2229,7 +2229,7 @@ void MyIconFamilyContextMenu(Point globPt,WindowPtr fWindow)
 	{
 		long	offset;
 		
-		dataSize=GetScrap(0,kPICTFileType,&offset);
+		dataSize=GetScrap(0,kPICTClipType,&offset);
 	}
 	#endif
 	if (dataSize<=0) MyDisableMenuItem(menu,piPaste);
@@ -2415,7 +2415,7 @@ Boolean IsMyIconFamilyTypeAvailable(DragReference theDrag)
 		GetDragItemReferenceNumber(theDrag,index,&theItem);
 		
 		/* 'PICT' flavorの存在をチェック */
-		result=GetFlavorFlags(theDrag,theItem,kPICTFileType,&theFlags);
+		result=GetFlavorFlags(theDrag,theItem,kPICTClipType,&theFlags);
 		if (result==noErr)
 			continue;
 		
@@ -2452,7 +2452,7 @@ pascal short MyIconFamilyReceiveHandler(WindowPtr theWindow,void *handlerRefCon,
 	{
 		GetDragItemReferenceNumber(theDrag,index,&theItem);
 		
-		result=GetFlavorFlags(theDrag,theItem,kPICTFileType,&theFlags);
+		result=GetFlavorFlags(theDrag,theItem,kPICTClipType,&theFlags);
 		if (result==noErr)
 		{
 			short	i,iconKind=-1;
@@ -2461,7 +2461,7 @@ pascal short MyIconFamilyReceiveHandler(WindowPtr theWindow,void *handlerRefCon,
 			
 			GlobalToLocal(&localMouse);
 			
-			GetFlavorDataSize(theDrag,theItem,kPICTFileType,&dataSize);
+			GetFlavorDataSize(theDrag,theItem,kScrapFlavorTypePicture,&dataSize);
 			dragPic=(PicHandle)NewHandle(dataSize);
 			if (dragPic==nil)
 			{
@@ -2470,7 +2470,7 @@ pascal short MyIconFamilyReceiveHandler(WindowPtr theWindow,void *handlerRefCon,
 			}
 			
 			HLock((Handle)dragPic);
-			GetFlavorData(theDrag,theItem,kPICTFileType,(char *)*dragPic,&dataSize,0L);
+			GetFlavorData(theDrag,theItem,kScrapFlavorTypePicture,(char *)*dragPic,&dataSize,0L);
 			HUnlock((Handle)dragPic);
 			
 			/* どこにドラッグされたのかをチェック */
@@ -2595,7 +2595,7 @@ OSErr MyDoAddIconFamilyFlavors(WindowPtr fWindow,DragReference theDrag)
 	#pragma unused(fWindow)
 	OSErr	err;
 	
-	err=AddDragItemFlavor(theDrag,1,kPICTFileType,0L,0L,0);
+	err=AddDragItemFlavor(theDrag,1,kScrapFlavorTypePicture,0L,0L,0);
 	
 	return err;
 }
@@ -2636,7 +2636,7 @@ pascal short MySendIconFamilyDataProc(FlavorType theType,void *dragSendRefCon,
 	fWinRec=dragSendRefCon;
 	
 	switch (theType) {
-		case kPICTFileType:
+		case kScrapFlavorTypePicture:
 			/* 渡すPICTデータを作成 */
 			picture=IPIconToPicture(&fWinRec->ipIcon,fWinRec->selectedIcon);
 			HLock((Handle)picture);

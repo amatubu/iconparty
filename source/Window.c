@@ -3937,7 +3937,7 @@ OSErr MyDoAddPaintWinFlavors(WindowPtr eWindow,DragReference theDrag)
 	#pragma unused(eWindow)
 	OSErr	err;
 	
-	err=AddDragItemFlavor(theDrag,1,kPICTFileType,0L,0L,0);
+	err=AddDragItemFlavor(theDrag,1,kScrapFlavorTypePicture,0L,0L,0);
 	
 	return err;
 }
@@ -3977,11 +3977,11 @@ pascal short MySendPaintWinDataProc(FlavorType theType,void *dragSendRefCon,
 	eWindow=dragSendRefCon;
 	
 	switch (theType) {
-		case kPICTFileType:
+		case kScrapFlavorTypePicture:
 			/* 渡すPICTデータを作成 */
 			picture=GetSelectionPic(eWindow,false);
 			HLock((Handle)picture);
-			err=SetDragItemFlavorData(theDrag,theItem,kPICTFileType,*picture,
+			err=SetDragItemFlavorData(theDrag,theItem,kScrapFlavorTypePicture,*picture,
 											GetHandleSize((Handle)picture),0L);
 			HUnlock((Handle)picture);
 			

@@ -440,7 +440,8 @@ void GetDesktopColor(void)
 	}
 	
 	#else
-	
+	return;
+    
 	Point		mousePt;
 	Boolean		result=true;
 	RGBColor	newColor;
