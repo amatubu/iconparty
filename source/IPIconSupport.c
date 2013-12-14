@@ -61,7 +61,39 @@ OSErr IconFamilyToIPIconWithSelector(IconFamilyHandle theIconFamily,
 	long		dataSize;
 	
 	if (ipSelector->selector != 0)
+    {
 		err=IconFamilyToIconSuite(theIconFamily,ipSelector->selector,&ipIcon->iconSuite);
+        if (err==noErr) {
+            /* Mac OS X 10.8 (Mavericks) で動作させると、32ビットデータがコピーされないので、
+             手作業でコピーする */
+            if (ipSelector->selector|kLarge32BitData)
+            {
+                Handle  dummyHandle;
+                dummyHandle = NewHandle(0);
+                err=GetIconFamilyData(theIconFamily,kLarge32BitData,dummyHandle);
+                if (err==noErr) {
+                    dataSize=GetHandleSize(dummyHandle);
+                    err=AddIconToSuite(dummyHandle,ipIcon->iconSuite,kLarge32BitData);
+                } else {
+                    DisposeHandle(dummyHandle);
+                    err=noErr;
+                }
+            }
+            if (ipSelector->selector|kSmall32BitData)
+            {
+                Handle  dummyHandle;
+                dummyHandle = NewHandle(0);
+                err=GetIconFamilyData(theIconFamily,kSmall32BitData,dummyHandle);
+                if (err==noErr) {
+                    dataSize=GetHandleSize(dummyHandle);
+                    err=AddIconToSuite(dummyHandle,ipIcon->iconSuite,kSmall32BitData);
+                } else {
+                    DisposeHandle(dummyHandle);
+                    err=noErr;
+                }
+            }
+        }
+    }
 	else
 		ipIcon->iconSuite = NULL;
 	
