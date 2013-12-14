@@ -916,7 +916,11 @@ void DrawIPIconPreview(const IPIconRec *ipIcon)
 			EraseRect(&r);
 			#endif
 			break;
-	}
+
+        default:
+			EraseRect(&r);
+			break;
+}
 	
 	if (ipIcon!=NULL)
 	{
