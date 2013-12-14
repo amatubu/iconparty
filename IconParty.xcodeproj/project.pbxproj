@@ -727,6 +727,7 @@
 					"-Wmost",
 					"-Wno-four-char-constants",
 					"-Wno-unknown-pragmas",
+					"-Wno-deprecated",
 				);
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = YES;
@@ -764,6 +765,7 @@
 					"-Wmost",
 					"-Wno-four-char-constants",
 					"-Wno-unknown-pragmas",
+					"-Wno-deprecated",
 				);
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = NO;
@@ -798,6 +800,7 @@
 					"-Wmost",
 					"-Wno-four-char-constants",
 					"-Wno-unknown-pragmas",
+					"-Wno-deprecated",
 				);
 				WRAPPER_EXTENSION = app;
 			};
@@ -831,6 +834,7 @@
 					"-Wmost",
 					"-Wno-four-char-constants",
 					"-Wno-unknown-pragmas",
+					"-Wno-deprecated",
 				);
 				WRAPPER_EXTENSION = app;
 			};
@@ -839,6 +843,7 @@
 		2FF861BD0AC1671500060991 /* Development */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				INSTALL_PATH = /Applications;
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
 			};
 			name = Development;
@@ -846,6 +851,7 @@
 		2FF861BE0AC1671500060991 /* Deployment */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				INSTALL_PATH = /Applications;
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
 			};
 			name = Deployment;
@@ -853,6 +859,7 @@
 		2FF861BF0AC1671500060991 /* GCC3 */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				INSTALL_PATH = /Applications;
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
 			};
 			name = GCC3;
@@ -860,6 +867,7 @@
 		2FF861C00AC1671500060991 /* Default */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				INSTALL_PATH = /Applications;
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
 			};
 			name = Default;
