@@ -797,6 +797,8 @@ void UpdateFavoritePalette(WindowPtr theWindow)
 	short		i;
 	Rect		r;
 	
+    if (gFavoriteColors==NULL) return;
+    
 	colorNum = (*gFavoriteColors)->ctSize + 1;
 	GetWindowPortBounds(theWindow,&r);
 	if (colorNum == 0)
@@ -1468,7 +1470,8 @@ void ClickFavoritePalette(Point mousePt,Boolean optDown,Boolean cmdDown)
 	ColorSpec	*cspec;
 	
 	if (mousePt.h<0 || mousePt.v<0) return;
-	
+	if (gFavoriteColors==NULL) return;
+    
 	colorNum = (*gFavoriteColors)->ctSize + 1;
 	cspec = &((*gFavoriteColors)->ctTable[0]);
 	

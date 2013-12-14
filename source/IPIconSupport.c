@@ -708,6 +708,11 @@ OSErr	IPIconHas32Icons(const IPIconRec *ipIcon,Boolean *is32Exist)
 	short	iconList32[]={kL32Data,kL8Mask,kS32Data,kS8Mask,kT32Data,kT8Mask};
 	short	i;
 	
+    if (ipIcon->it32Data || ipIcon->t8mkData) {
+        *is32Exist = true;
+        return noErr;
+    }
+    
 	for (i=0; i<6; i++)
 	{
 		err=GetDataFromIPIcon(&dataHandle,ipIcon,iconList32[i]);

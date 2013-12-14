@@ -472,6 +472,7 @@ WindowPtr MakeFamilyWindow(Point windPos,Boolean is32Exist,FSSpec *theFile,
 		{
 			case kFolderIconType: /* アイコン付きフォルダ */
 			case kXIconFileType: /* X用アイコン */
+            case kIconFamilyType: /* X用アイコン(アイコンリストウィンドウから開いた場合) */
 			case 0L:
 				if (isIconServicesAvailable)
 				{
