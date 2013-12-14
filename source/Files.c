@@ -1227,7 +1227,7 @@ void SaveAsPict(WindowPtr theWindow,const FSSpec *theFile)
 	}
 	if (fRef>0)
 	{	
-		short	ratio=eWinRec->ratio;
+		short	ratio=OSSwapHostToBigInt16(eWinRec->ratio);
 		
 		err=AddDataToPrefs(&ratio,sizeof(ratio),kIconPartyCreator,128,"\pmag");
 		
