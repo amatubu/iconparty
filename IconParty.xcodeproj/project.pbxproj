@@ -267,7 +267,7 @@
 			isa = PBXGroup;
 			children = (
 				F5F62AE9015DD41E01000001 /* zlib123 */,
-				F5F62AE8015DD3ED01000001 /* lpng1053 */,
+				F5F62AE8015DD3ED01000001 /* lpng1060 */,
 				F5F30456015C9E4101000001 /* Headers */,
 				2F985F5F06D386C300CD45C1 /* MoreFilesX */,
 				F5F589EF02E19BF101A80002 /* UpdateCursor.c */,
@@ -398,7 +398,7 @@
 			path = source/Headers;
 			sourceTree = "<group>";
 		};
-		F5F62AE8015DD3ED01000001 /* lpng1053 */ = {
+		F5F62AE8015DD3ED01000001 /* lpng1060 */ = {
 			isa = PBXGroup;
 			children = (
 				F59C07DC02309B3301A80002 /* png.c */,
@@ -420,8 +420,8 @@
 				F59C07EC02309B3401A80002 /* pngwtran.c */,
 				F59C07ED02309B3401A80002 /* pngwutil.c */,
 			);
-			name = lpng1053;
-			path = ../lib/lpng1053;
+			name = lpng1060;
+			path = ../lib/lpng1060;
 			sourceTree = SOURCE_ROOT;
 		};
 		F5F62AE9015DD41E01000001 /* zlib123 */ = {
