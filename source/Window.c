@@ -2917,7 +2917,7 @@ void HiliteSelectedColor(short palNo,Boolean hilite)
 		
 		case 3:
 			/* お気に入り */
-			if (gCurrentColor.isTransparent) return;
+			if (gCurrentColor.isTransparent || gFavoriteColors == NULL) return;
 			
 			SetPortWindowPort((theWindow = FavoritePalette));
 			{

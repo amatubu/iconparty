@@ -371,7 +371,7 @@ OSErr SetPenCursorMain(short width,short height,RGBColor *crsrColor)
 		{
 			*ul=0;
 			for (j=0; j<16; j++)
-				*ul+=((UInt32)((curs.data[i] >> j) & 1)) << (j*2);
+				*ul+=OSSwapHostToBigInt32(((UInt32)((OSSwapBigToHostInt16(curs.data[i]) >> j) & 1)) << (j*2));
 			ul++;
 		}
 		
