@@ -1566,6 +1566,23 @@ void CancelSelect(ListHandle theList)
 		LSetSelect(false,theCell,theList);
 }
 
+/* FSSpecからFinderInfoを得る */
+OSErr FSpGetFinderInfo(const FSSpec *theFile, FileInfo *info) {
+	FSRef			fileRef;
+	OSErr			err;
+
+	/* まず、FSRefに変換 */
+	err = FSpMakeFSRef(theFile,&fileRef);
+	if (err != noErr) return err;
+	
+	FSCatalogInfo catInfo;
+	err = FSGetCatalogInfo(&fileRef, kFSCatInfoFinderInfo, &catInfo, NULL, NULL, NULL);
+	if ( err == noErr )
+		info = (FileInfo*)catInfo.finderInfo;
+
+	return err;
+}
+
 /* Unicode関連 */
 /* FSSpecからファイル名を得る（Unicode対応） */
 void FSpGetFileName(const FSSpec *theFile,Str255 filename)

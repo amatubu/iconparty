@@ -1261,7 +1261,6 @@ OSErr SetExternalApplication(FSSpec *theFile)
 OSErr GetCreatorFromFile(OSType *creator)
 {
 	FSSpec	spec;
-	FInfo	info;
 	OSErr	err=noErr;
 	#if !TARGET_API_MAC_CARBON
 	ModalFilterYDUPP	mfydUPP=NewModalFilterYDUPP(MyGetFileModalFilter);
@@ -1295,9 +1294,19 @@ OSErr GetCreatorFromFile(OSType *creator)
 	if (err==noErr)
 	{
 		/* 選択されたファイルのクリエータコードを求め表示する */
+#if 1
+		FInfo	info;
+
 		err=FSpGetFInfo(&spec,&info);
 		if (err==noErr)
-			*creator=info.fdCreator;
+			*creator=OSSwapHostToBigInt32(info.fdCreator);
+#else
+		FileInfo	info;
+		
+		err=FSpGetFinderInfo(&spec,&info);
+		if (err==noErr)
+			*creator=OSSwapHostToBigInt32(info.fileCreator);
+#endif
 	}
 	else err=userCanceledErr;
 	

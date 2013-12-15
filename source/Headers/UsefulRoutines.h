@@ -112,6 +112,9 @@ pascal OSErr GetDropDirectory (DragReference dragRef, FSSpecPtr fssOut);
 /* lists */
 void	CancelSelect(ListHandle theList);
 
+/* finder info */
+OSErr	FSpGetFinderInfo(const FSSpec *theFile, FileInfo *info);
+
 /* unicode */
 void	FSpGetFileName(const FSSpec *theFile,Str255 filename);
 
