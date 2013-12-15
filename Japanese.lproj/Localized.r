@@ -20,8 +20,8 @@ resource 'vers' (1,purgeable)
 	beta, /* release stage */
 	0x00, /* non-final release # */
 	verJapan,
-	"1.30b1",
-	"1.30b1 (c) naoki iimura, 1997-2011"
+	"1.30b2",
+	"1.30b2 (c) naoki iimura, 1997-2013"
 };
 
 resource 'vers' (2,purgeable)
@@ -31,7 +31,7 @@ resource 'vers' (2,purgeable)
 	beta,
 	0x00,
 	verJapan,
-	"1.30b1",
+	"1.30b2",
 	"256 colors painting tool & icon editor"
 };
 
