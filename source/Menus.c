@@ -531,7 +531,7 @@ void About(void)
 	{
 		EventRecord	theEvent;
 		
-		if (WaitNextEvent(everyEvent,&theEvent,0,nil))
+		if (WaitNextEvent(everyEvent,&theEvent,0,nil)) {
 			if (IsDialogEvent(&theEvent))
 			{
 				char		theChar;
@@ -637,6 +637,7 @@ void About(void)
 						break;
 				}
 			}
+        }
 		#if !TARGET_API_MAC_CARBON
 		else
 		{
@@ -1881,6 +1882,7 @@ void UpdatePasteMenu(void)
 	if (err==noErr)
     {
         OSErr tempErr=GetScrapFlavorSize(scrap,kPICTClipType,&dataSize);
+#pragma unused(tempErr)
     }
 	else
     {
@@ -1928,6 +1930,7 @@ void UpdatePasteMenu(void)
 				if (err==noErr)
                 {
                     OSErr tempErr=GetScrapFlavorSize(scrap,kTextClipType,&dataSize);
+#pragma unused(tempErr)
                 }
 			#else
 				dataSize=GetScrap(0,kTextClipType,&offset);

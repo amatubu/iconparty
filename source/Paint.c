@@ -2211,15 +2211,17 @@ OSErr PaintOffPort(WindowPtr theWindow,short mode,Point pt,Boolean shiftDown)
 	RGBForeColor(&newColor);
 	
 	/* 筆圧処理 */
-	if (transparency)
+	if (transparency) {
 		if (usePressure && IsTabletInUse())
 		{
 			/* タブレット使用時 */
 			Pressure2Ratio(&blendRatio2);
 			OpColor(&blendRatio2);
 		}
-		else
+		else {
 			OpColor(&gBlendRatio);
+        }
+    }
 	
 	prevPt=mousePt;
 	SetGWorld(cPort,cDevice);
@@ -2415,11 +2417,13 @@ dispEnd2:
 		ToRealPos(&mousePt,ratio);
 		AddPt(offsetPt,&mousePt);
 		
-		if (shiftDown) /* シフトが押されていれば、それなりの処理をする */
-			if (moveHorizontal)
+		if (shiftDown) { /* シフトが押されていれば、それなりの処理をする */
+			if (moveHorizontal) {
 				mousePt.v=prevPt.v;
-			else
+			} else {
 				mousePt.h=prevPt.h;
+            }
+        }
 		
 		if (EqualPt(mousePt,prevPt)) continue; /* 結果的に動いていなければ無視 */
 		
@@ -3978,11 +3982,13 @@ void SortRect(Rect *dragRect,Boolean shiftDown)
 	short	h=1;
 	
 	/* 1.20b12修正 */
-	if (shiftDown)
-		if (((gToolPrefs.gridMode>>4)& 0x0f) == 1) /* 32*32 */
+	if (shiftDown) {
+		if (((gToolPrefs.gridMode>>4)& 0x0f) == 1) { /* 32*32 */
 			h = 32;
-		else
+		} else {
 			h = 16;
+        }
+    }
 	
 	if (dragRect->bottom<dragRect->top)
 	{

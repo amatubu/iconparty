@@ -1591,9 +1591,10 @@ void SavePictureToIconData(PicHandle picture,IconFamilyWinRec *fWinRec,Boolean c
 	short		iconKind=fWinRec->selectedIcon,tempKind=fWinRec->selectedIcon;
 	WindowPtr	fWindow=GetWindowFromPort((**fWinRec->iconNameTE).inPort);
 	
-	if (!convertMaskFlag)
+	if (!convertMaskFlag) {
 		if (iconKind == kL1Mask) tempKind=kL1Data;
 		else if (iconKind == kS1Mask) tempKind=kS1Data;
+    }
 	
 	/* アイコンデータに変換 */
 	dataHandle=PictureToIcon(picture,tempKind);

@@ -705,6 +705,7 @@
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_MODEL_TUNING = "";
 				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_WARN_ABOUT_DEPRECATED_FUNCTIONS = NO;
 				HEADER_SEARCH_PATHS = (
 					/Users/sent/Private/prog/lib/MoreFilesX,
 					/Users/sent/Private/prog/lib/zlib123,
@@ -726,6 +727,7 @@
 					"-Wno-four-char-constants",
 					"-Wno-unknown-pragmas",
 					"-Wno-deprecated",
+					"-Wno-self-assign",
 				);
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = YES;
@@ -743,6 +745,7 @@
 				FRAMEWORK_SEARCH_PATHS = "";
 				GCC_MODEL_TUNING = "";
 				GCC_OPTIMIZATION_LEVEL = 3;
+				GCC_WARN_ABOUT_DEPRECATED_FUNCTIONS = NO;
 				HEADER_SEARCH_PATHS = (
 					/Volumes/External/Private/prog/lib/MoreFilesX,
 					/Volumes/External/Private/prog/lib/zlib121,
@@ -764,6 +767,7 @@
 					"-Wno-four-char-constants",
 					"-Wno-unknown-pragmas",
 					"-Wno-deprecated",
+					"-Wno-self-assign",
 				);
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = NO;
@@ -778,6 +782,7 @@
 				FRAMEWORK_SEARCH_PATHS = "";
 				GCC_MODEL_TUNING = "";
 				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_WARN_ABOUT_DEPRECATED_FUNCTIONS = NO;
 				HEADER_SEARCH_PATHS = (
 					/Volumes/External/Private/prog/lib/MoreFilesX,
 					/Volumes/External/Private/prog/lib/zlib121,
@@ -799,6 +804,7 @@
 					"-Wno-four-char-constants",
 					"-Wno-unknown-pragmas",
 					"-Wno-deprecated",
+					"-Wno-self-assign",
 				);
 				WRAPPER_EXTENSION = app;
 			};
@@ -812,6 +818,7 @@
 				FRAMEWORK_SEARCH_PATHS = "";
 				GCC_MODEL_TUNING = "";
 				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_WARN_ABOUT_DEPRECATED_FUNCTIONS = NO;
 				HEADER_SEARCH_PATHS = (
 					/Volumes/External/Private/prog/lib/MoreFilesX,
 					/Volumes/External/Private/prog/lib/zlib121,
@@ -833,6 +840,7 @@
 					"-Wno-four-char-constants",
 					"-Wno-unknown-pragmas",
 					"-Wno-deprecated",
+					"-Wno-self-assign",
 				);
 				WRAPPER_EXTENSION = app;
 			};

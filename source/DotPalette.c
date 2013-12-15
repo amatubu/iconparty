@@ -807,7 +807,7 @@ pascal Boolean EditLibDialogFilter(DialogPtr theDialog,EventRecord *theEvent,sho
 		case keyDown:
 		case autoKey:
 			key=theEvent->message & charCodeMask;
-			if ((theEvent->modifiers & cmdKey)!=0)
+			if ((theEvent->modifiers & cmdKey)!=0) {
 				if (key==kPeriod)
 					key=kEscapeKey;
 				else if (key == 'K')
@@ -816,6 +816,7 @@ pascal Boolean EditLibDialogFilter(DialogPtr theDialog,EventRecord *theEvent,sho
 					HiliteButton(theDialog,*theItemHit);
 					eventHandled=true;
 				}
+            }
 			
 			switch (key)
 			{

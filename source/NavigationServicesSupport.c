@@ -168,20 +168,25 @@ static pascal Boolean myChooseAppFilterProc(AEDesc* theItem, void* info, NavCall
 	Boolean 		display = false;
 	NavFileOrFolderInfo* 	theInfo = (NavFileOrFolderInfo*)info;
 	
-	if ( theItem->descriptorType == typeFSS )
+	if ( theItem->descriptorType == typeFSS ) {
 		if ( theInfo->isFolder )
 		{
 			if ( theInfo->fileAndFolder.folderInfo.folderType == '????' &&
-				( theInfo->fileAndFolder.folderInfo.folderCreator == '????' ))
+				( theInfo->fileAndFolder.folderInfo.folderCreator == '????' )) {
 				display = true;	// it's a normal folder so allow it
-			else
-				if ( theInfo->fileAndFolder.folderInfo.folderType == 'APPL' )
+			} else {
+				if ( theInfo->fileAndFolder.folderInfo.folderType == 'APPL' ) {
 					display = true;	// it's a package application so allow it
+                }
+            }
 		}
-		else
+		else {
 			// it's a file:
-			if ( theInfo->fileAndFolder.fileInfo.finderInfo.fdType == 'APPL' )
+			if ( theInfo->fileAndFolder.fileInfo.finderInfo.fdType == 'APPL' ) {
 				display = true;
+            }
+        }
+    }
 				
 	return display;
 }
@@ -368,13 +373,15 @@ OSErr SaveFileWithNav(FSSpec *theFile,OSType *fileType,NavReplyRecord *theReply,
 		Size		actualSize;
 		
 		*fileType=gFileTypeList[saveData.selItem-1];
-		if (saveData.splitFlag)
-			if (*fileType == kFolderIconType)
+		if (saveData.splitFlag) {
+			if (*fileType == kFolderIconType) {
 				*fileType = kSplitFolderIconType;
-			else if (*fileType == kWinIconType)
+			} else if (*fileType == kWinIconType) {
 				*fileType = kSplitWinIconType;
-			else
+			} else {
 				saveData.splitFlag = false;
+            }
+        }
 		
 		/* 保存されるファイルのFSSpecを得る */
 		err=AEGetNthPtr(&theReply->selection,1,typeFSS,&keyword,&typeCode,
