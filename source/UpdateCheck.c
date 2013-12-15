@@ -125,7 +125,25 @@ static OSStatus IPDownloadCatalog(Str255 url_string,Handle *catalog)
 	/* C文字列に変換 */
 	BlockMoveData(&url_string[1],c,url_string[0]);
 	c[url_string[0]]=0x0;
-	
+#if 0
+    CFStringRef url = CFStringCreateWithCString( kCFAllocatorDefault, c, kCFStringEncodingASCII);
+    CFURLRef myURL = CFURLCreateWithString(kCFAllocatorDefault, url, NULL);
+    CFHTTPMessageRef myRequest =
+        CFHTTPMessageCreateRequest(kCFAllocatorDefault, CFSTR("GET"), myURL,
+                               kCFHTTPVersion1_1);
+
+    CFReadStreamRef myReadStream = CFReadStreamCreateForHTTPRequest(kCFAllocatorDefault, myRequest);
+    while ( !CFReadStreamOpen(myReadStream) );
+    CFHTTPMessageRef myResponse = (CFHTTPMessageRef)CFReadStreamCopyProperty(myReadStream, kCFStreamPropertyHTTPResponseHeader);
+    CFStringRef myStatusLine = CFHTTPMessageCopyResponseStatusLine(myResponse);
+    
+    CFDataRef mySerializedRequest = CFHTTPMessageCopySerializedMessage(myResponse);
+    CFIndex length = CFDataGetLength(mySerializedRequest);
+    destHandle=NewHandle(length);
+    CFDataGetBytes(mySerializedRequest, CFRangeMake(0, length), (UInt8 *)*destHandle);
+    
+    return noErr;
+#else
 	err=URLNewReference((const char*)c,&urlRef);
 	if (err!=noErr) return err;
 	
@@ -144,6 +162,7 @@ static OSStatus IPDownloadCatalog(Str255 url_string,Handle *catalog)
 	*catalog=destHandle;
 	
 	return err;
+#endif
 }
 
 /* ダウンロードしたカタログを分析 */
