@@ -266,7 +266,7 @@
 		20286C2AFDCF999611CA2CEA /* Sources */ = {
 			isa = PBXGroup;
 			children = (
-				F5F62AE9015DD41E01000001 /* zlib123 */,
+				F5F62AE9015DD41E01000001 /* zlib128 */,
 				F5F62AE8015DD3ED01000001 /* lpng1060 */,
 				F5F30456015C9E4101000001 /* Headers */,
 				2F985F5F06D386C300CD45C1 /* MoreFilesX */,
@@ -424,7 +424,7 @@
 			path = ../lib/lpng1060;
 			sourceTree = SOURCE_ROOT;
 		};
-		F5F62AE9015DD41E01000001 /* zlib123 */ = {
+		F5F62AE9015DD41E01000001 /* zlib128 */ = {
 			isa = PBXGroup;
 			children = (
 				F5F62B10015DD47401000001 /* inffixed.h */,
@@ -447,8 +447,8 @@
 				F5F62B3E015DD8CB01000001 /* trees.h */,
 				F5F62B3F015DD8CB01000001 /* trees.c */,
 			);
-			name = zlib123;
-			path = ../lib/zlib123;
+			name = zlib128;
+			path = ../lib/zlib128;
 			sourceTree = SOURCE_ROOT;
 		};
 /* End PBXGroup section */
