@@ -602,9 +602,13 @@ Boolean IsValidIconSuite(IconSuiteRef iconSuite)
 	OSErr	err;
 	
 	err=GetIconFromSuite(&h,iconSuite,kLarge1BitMask);
-	if (h == nil)
+	if (h == nil) {
 		err=GetIconFromSuite(&h,iconSuite,kSmall1BitMask);
+		if (h == nil) {
+			err=GetIconFromSuite(&h,iconSuite,kLarge8BitMask);
 			if (h == nil) return false;
+		}
+	}
 	return true;
 }
 

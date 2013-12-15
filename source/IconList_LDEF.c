@@ -123,6 +123,9 @@ static void MyLDEFDraw(Boolean selected,Rect *cellRect,Cell theCell,short dataOf
 		/* とりあえずアイコンを読み込む */
 		err=MyLDEFGetIconSuite(&iconSuite,iconListRec,cellData);
 		err=GetIconFromSuite(&h,iconSuite,kLarge1BitMask);
+		if (err!=noErr || h==nil) {
+			err=GetIconFromSuite(&h,iconSuite,kLarge8BitMask);
+		}
 		smallFlag=(h==nil);
 		
 		/* アイコンの表示位置 */
