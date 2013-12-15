@@ -216,7 +216,6 @@
 		F5F62B1A015DD47401000001 /* zutil.c */ = {isa = PBXFileReference; fileEncoding = 18446744071562067968; lastKnownFileType = sourcecode.c.c; path = zutil.c; sourceTree = "<group>"; };
 		F5F62B1B015DD47401000001 /* zlib.h */ = {isa = PBXFileReference; fileEncoding = 18446744071562067968; lastKnownFileType = sourcecode.c.h; path = zlib.h; sourceTree = "<group>"; };
 		F5F62B1C015DD47401000001 /* inffast.c */ = {isa = PBXFileReference; fileEncoding = 18446744071562067968; lastKnownFileType = sourcecode.c.c; path = inffast.c; sourceTree = "<group>"; };
-		F5F62B21015DD47401000001 /* gzio.c */ = {isa = PBXFileReference; fileEncoding = 18446744071562067968; lastKnownFileType = sourcecode.c.c; path = gzio.c; sourceTree = "<group>"; };
 		F5F62B22015DD47401000001 /* deflate.h */ = {isa = PBXFileReference; fileEncoding = 18446744071562067968; lastKnownFileType = sourcecode.c.h; path = deflate.h; sourceTree = "<group>"; };
 		F5F62B23015DD47401000001 /* deflate.c */ = {isa = PBXFileReference; fileEncoding = 18446744071562067968; lastKnownFileType = sourcecode.c.c; path = deflate.c; sourceTree = "<group>"; };
 		F5F62B24015DD47401000001 /* crc32.c */ = {isa = PBXFileReference; fileEncoding = 18446744071562067968; lastKnownFileType = sourcecode.c.c; path = crc32.c; sourceTree = "<group>"; };
@@ -438,7 +437,6 @@
 				F5F62B1A015DD47401000001 /* zutil.c */,
 				F5F62B1B015DD47401000001 /* zlib.h */,
 				F5F62B1C015DD47401000001 /* inffast.c */,
-				F5F62B21015DD47401000001 /* gzio.c */,
 				F5F62B22015DD47401000001 /* deflate.h */,
 				F5F62B23015DD47401000001 /* deflate.c */,
 				F5F62B24015DD47401000001 /* crc32.c */,
