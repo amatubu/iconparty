@@ -1,3 +1,7 @@
 *.xcodeproj/xcuserdata/*
 *.xcodeproj/project.xcworkspace
+*.rtf
+*.zip
+External\ source/*
+build/*
 
