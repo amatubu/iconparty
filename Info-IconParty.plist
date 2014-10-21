@@ -135,7 +135,7 @@
 	<key>CFBundleExecutable</key>
 	<string>IconParty</string>
 	<key>CFBundleGetInfoString</key>
-	<string>IconParty 1.30b2 (c) 2002-2013, naoki iimura</string>
+	<string>IconParty 1.30b3 (c) 2002-2014, naoki iimura</string>
 	<key>CFBundleIconFile</key>
 	<string>IconParty.icns</string>
 	<key>CFBundleIdentifier</key>
@@ -147,7 +147,7 @@
 	<key>CFBundlePackageType</key>
 	<string>BNDL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>IconParty 1.30b2</string>
+	<string>IconParty 1.30b3</string>
 	<key>CFBundleSignature</key>
 	<string>Ipty</string>
 	<key>CFBundleVersion</key>

@@ -1,5 +1,5 @@
 /* Localized versions of Info.plist keys */
 
 CFBundleName = "IconParty";
-CFBundleShortVersionString = "IconParty version 1.30b2";
-CFBundleGetInfoString = "IconParty version 1.30b2, Copyright 1997-2013 naoki iimura.";
+CFBundleShortVersionString = "IconParty version 1.30b3";
+CFBundleGetInfoString = "IconParty version 1.30b3, Copyright 1997-2014 naoki iimura.";

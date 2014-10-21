@@ -684,23 +684,42 @@ void DoBucket(WindowPtr theWindow,Point pt,Boolean cmdDown)
 	{
 		OSErr	err;
 		RgnHandle	fillRgn;
-		MyBitMapRec	fillBM;
+		PixMapHandle	fillBM;
+		CGrafPtr	fillPort;
+		CGrafPtr	tempPort;
 		Pattern	pat;
 		
-		/* 塗る範囲を求める */
-		err=NewBitMap(&fillBM,&effectRect);
+		/* Mac OS X でのバグを回避するため、24ビットのオフスクリーンを用意する */
+		err=NewGWorld(&tempPort,24,&effectRect,0L,0L,0);
 		if (err!=noErr)
 		{
+			ErrorAlertFromResource(PAINTERR_RESID, PAINTERR1);
+			return;
+		}
+		SetGWorld(tempPort,0);
+		LockPixels(GetGWorldPixMap(tempPort));
+		CopyBits(GetPortBitMapForCopyBits(eWinRec->editDataPtr),
+				 GetPortBitMapForCopyBits(tempPort),
+				 &effectRect,&effectRect,srcCopy,nil);
+		UnlockPixels(GetGWorldPixMap(tempPort));
+		
+		/* 塗る範囲を求める */
+		err=NewGWorld(&fillPort,1,&effectRect,0L,0L,0);
+		if (err!=noErr)
+		{
+			DisposeGWorld(fillPort);
 			ErrorAlertFromResource(PAINTERR_RESID,PAINTERR1);
 			return;
 		}
+		fillBM = GetGWorldPixMap(fillPort);
+		LockPixels(fillBM);
 		
 		if (srcIsTransparent) /* 透明色 */
 		{
 			/* マスクだけを考慮 */
 			SetGWorld(eWinRec->currentMask,0);
 			MyLockPixels(currentMask);
-			SeedCFill(GetPortBitMapForCopyBits(eWinRec->currentMask),&fillBM.bmp,
+			SeedCFill(GetPortBitMapForCopyBits(eWinRec->currentMask),(BitMap*)*fillBM,
 				&effectRect,&effectRect,mousePt.h,mousePt.v,nil,0);
 			MyUnlockPixels(currentMask);
 		}
@@ -709,43 +728,45 @@ void DoBucket(WindowPtr theWindow,Point pt,Boolean cmdDown)
 			RGBColor	newColor;
 			Boolean		isWhite;
 			
-			SetGWorld(eWinRec->editDataPtr,0);
-			LockPixels(GetGWorldPixMap(eWinRec->editDataPtr));
+			SetGWorld(tempPort,0);
+			LockPixels(GetGWorldPixMap(tempPort));
 			GetCPixel(mousePt.h,mousePt.v,&newColor);
 			isWhite= (newColor.red == 0xffff && newColor.blue == 0xffff && newColor.green == 0xffff);
 			if (isWhite) /* 白の時はマスクにより画像を反転し、透明部分と区別する */
 			{
 				CopyBits(GetPortBitMapForCopyBits(eWinRec->currentMask),
-					GetPortBitMapForCopyBits(eWinRec->editDataPtr),
+					GetPortBitMapForCopyBits(tempPort),
 					&effectRect,&effectRect,srcXor,nil);
 			}
 			
-			SeedCFill(GetPortBitMapForCopyBits(eWinRec->editDataPtr),&fillBM.bmp,
+			SeedCFill(GetPortBitMapForCopyBits(tempPort),(BitMap*)*fillBM,
 				&effectRect,&effectRect,mousePt.h,mousePt.v,nil,0);
 			
 			if (isWhite) /* 白 */
 			{
 				CopyBits(GetPortBitMapForCopyBits(eWinRec->currentMask),
-					GetPortBitMapForCopyBits(eWinRec->editDataPtr),
+					GetPortBitMapForCopyBits(tempPort),
 					&effectRect,&effectRect,srcXor,nil);
 			}
 			
-			UnlockPixels(GetGWorldPixMap(eWinRec->editDataPtr));
+			UnlockPixels(GetGWorldPixMap(tempPort));
 		}
 		SetGWorld(cPort,cDevice);
 		
 		/* もとまった範囲をリージョンにする */
 		fillRgn=NewRgn();
-		err=BitMapToRegion(fillRgn,&fillBM.bmp);
+		err=BitMapToRegion(fillRgn,(BitMap*)*fillBM);
 		if (err!=noErr)
 		{
 			ErrorAlertFromResource(PAINTERR_RESID,PAINTERR1);
-			DisposeBitMap(&fillBM);
+			DisposeGWorld(fillPort);
 			DisposeRgn(fillRgn);
 			return;
 		}
 		
-		err=DisposeBitMap(&fillBM);
+		DisposeGWorld(tempPort);
+		UnlockPixels(fillBM);
+		DisposeGWorld(fillPort);
 		
 		GoOffPort(theWindow);
 		

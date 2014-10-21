@@ -40,4 +40,4 @@ IconParty
  にて配布します。
 
 
-2013.12.15 naoki iimura
+2014.10.21 naoki iimura
