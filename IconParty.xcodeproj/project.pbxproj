@@ -227,10 +227,10 @@
 		F5F62B26015DD47401000001 /* compress.c */ = {isa = PBXFileReference; fileEncoding = 18446744071562067968; lastKnownFileType = sourcecode.c.c; path = compress.c; sourceTree = "<group>"; };
 		F5F62B3E015DD8CB01000001 /* trees.h */ = {isa = PBXFileReference; fileEncoding = 18446744071562067968; lastKnownFileType = sourcecode.c.h; path = trees.h; sourceTree = "<group>"; };
 		F5F62B3F015DD8CB01000001 /* trees.c */ = {isa = PBXFileReference; fileEncoding = 18446744071562067968; lastKnownFileType = sourcecode.c.c; path = trees.c; sourceTree = "<group>"; };
-		F5F9367102B322E101A80002 /* Japanese */ = {isa = PBXFileReference; fileEncoding = 18446744071562067968; lastKnownFileType = sourcecode.rez; name = Japanese; path = Japanese.lproj/Localized.r; sourceTree = "<group>"; };
+		F5F9367102B322E101A80002 /* Japanese */ = {isa = PBXFileReference; fileEncoding = 2147486209; lastKnownFileType = sourcecode.rez; name = Japanese; path = Japanese.lproj/Localized.r; sourceTree = "<group>"; };
 		F5F9367202B322E101A80002 /* English */ = {isa = PBXFileReference; fileEncoding = 18446744071562067968; lastKnownFileType = sourcecode.rez; name = English; path = English.lproj/Localized.r; sourceTree = "<group>"; };
 		F5F9367502B3276B01A80002 /* English */ = {isa = PBXFileReference; fileEncoding = 18446744071562067968; lastKnownFileType = sourcecode.rez; name = English; path = English.lproj/ErrorMessages.r; sourceTree = "<group>"; };
-		F5F9367A02B3296001A80002 /* Japanese */ = {isa = PBXFileReference; fileEncoding = 18446744071562067968; lastKnownFileType = sourcecode.rez; name = Japanese; path = Japanese.lproj/ErrorMessages.r; sourceTree = "<group>"; };
+		F5F9367A02B3296001A80002 /* Japanese */ = {isa = PBXFileReference; fileEncoding = 2147486209; lastKnownFileType = sourcecode.rez; name = Japanese; path = Japanese.lproj/ErrorMessages.r; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
